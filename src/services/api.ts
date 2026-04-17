@@ -3,9 +3,10 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 const DEFAULT_API_URL = 'http://localhost:3000';
 const API_TIMEOUT_MS = 10000;
 
+type TokenProvider = () => Promise<string | null>;
 type UnauthorizedHandler = () => void;
 
-let accessToken: string | null = null;
+let tokenProvider: TokenProvider | null = null;
 let unauthorizedHandler: UnauthorizedHandler | null = null;
 
 export const api = axios.create({
@@ -13,21 +14,24 @@ export const api = axios.create({
   timeout: API_TIMEOUT_MS,
 });
 
-export function setApiAccessToken(token: string | null) {
-  accessToken = token;
-}
-
-export function clearApiAccessToken() {
-  accessToken = null;
+export function setTokenProvider(provider: TokenProvider | null) {
+  tokenProvider = provider;
 }
 
 export function setUnauthorizedHandler(handler: UnauthorizedHandler | null) {
   unauthorizedHandler = handler;
 }
 
-function withAuthorizationHeader(config: InternalAxiosRequestConfig) {
-  if (accessToken) {
-    config.headers.Authorization = `Bearer ${accessToken}`;
+async function withAuthorizationHeader(config: InternalAxiosRequestConfig) {
+  if (tokenProvider) {
+    try {
+      const token = await tokenProvider();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch {
+      // Token not available — request proceeds without auth
+    }
   }
 
   return config;
@@ -35,7 +39,6 @@ function withAuthorizationHeader(config: InternalAxiosRequestConfig) {
 
 function handleApiError(error: AxiosError) {
   if (error.response?.status === 401) {
-    clearApiAccessToken();
     unauthorizedHandler?.();
   }
 

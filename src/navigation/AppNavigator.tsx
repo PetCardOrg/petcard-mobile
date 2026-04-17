@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { enableScreens } from 'react-native-screens';
 
+import { useAuth } from '../contexts/AuthContext';
 import { LoginScreen } from '../screens/Auth/LoginScreen';
 import { DewormingScreen } from '../screens/HealthRecords/DewormingScreen';
 import { MedicationScreen } from '../screens/HealthRecords/MedicationScreen';
@@ -12,18 +12,14 @@ import { PetRegistrationScreen } from '../screens/PetRegistration/PetRegistratio
 import { colors } from '../utils/theme';
 import type { AuthStackParamList, HealthRecordsStackParamList, MainTabParamList } from './types';
 
-enableScreens();
-
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainTabs = createBottomTabNavigator<MainTabParamList>();
 const HealthStack = createNativeStackNavigator<HealthRecordsStackParamList>();
 
-function AuthNavigator({ onSignIn }: { onSignIn: () => void }) {
+function AuthNavigator() {
   return (
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
-      <AuthStack.Screen name="Login">
-        {() => <LoginScreen onSimulateLogin={onSignIn} />}
-      </AuthStack.Screen>
+      <AuthStack.Screen component={LoginScreen} name="Login" />
     </AuthStack.Navigator>
   );
 }
@@ -53,7 +49,7 @@ function HealthRecordsNavigator() {
   );
 }
 
-function MainNavigator({ onSignOut }: { onSignOut: () => void }) {
+function MainNavigator() {
   return (
     <MainTabs.Navigator
       screenOptions={{
@@ -70,9 +66,7 @@ function MainNavigator({ onSignOut }: { onSignOut: () => void }) {
         },
       }}
     >
-      <MainTabs.Screen name="Home" options={{ title: 'Home' }}>
-        {() => <HomeScreen onSimulateLogout={onSignOut} />}
-      </MainTabs.Screen>
+      <MainTabs.Screen component={HomeScreen} name="Home" options={{ title: 'Home' }} />
       <MainTabs.Screen component={PetRegistrationScreen} name="Pets" options={{ title: 'Pets' }} />
       <MainTabs.Screen
         component={HealthRecordsNavigator}
@@ -84,11 +78,28 @@ function MainNavigator({ onSignOut }: { onSignOut: () => void }) {
 }
 
 export function AppNavigator() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { isAuthenticated, isLoading } = useAuth();
 
-  if (!isAuthenticated) {
-    return <AuthNavigator onSignIn={() => setIsAuthenticated(true)} />;
+  if (isLoading) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator color={colors.primary} size="large" />
+      </View>
+    );
   }
 
-  return <MainNavigator onSignOut={() => setIsAuthenticated(false)} />;
+  if (!isAuthenticated) {
+    return <AuthNavigator />;
+  }
+
+  return <MainNavigator />;
 }
+
+const styles = StyleSheet.create({
+  loading: {
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    flex: 1,
+    justifyContent: 'center',
+  },
+});

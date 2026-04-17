@@ -1,46 +1,64 @@
-import { Text, View, StyleSheet } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 
 import { ScreenContainer } from '../../components/ui/ScreenContainer';
+import { useAuth } from '../../contexts/AuthContext';
 import { colors, radii, spacing } from '../../utils/theme';
 
-type LoginScreenProps = {
-  onSimulateLogin: () => void;
-};
+export function LoginScreen() {
+  const { isLoading, error, login } = useAuth();
 
-export function LoginScreen({ onSimulateLogin }: LoginScreenProps) {
+  const handleLogin = async () => {
+    try {
+      await login();
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : '';
+      if (message === 'a0.session.user_cancelled') {
+        return;
+      }
+      Alert.alert('Erro no login', 'Não foi possível realizar o login. Tente novamente.');
+    }
+  };
+
   return (
     <ScreenContainer
-      actionLabel="Simular login"
-      onActionPress={onSimulateLogin}
+      actionLabel={isLoading ? undefined : 'Entrar'}
+      onActionPress={handleLogin}
       subtitle="Carteira digital de saúde para acompanhar vacinas, vermifugações e medicações dos seus pets."
-      title="Login Screen"
+      title="PetCard"
     >
-      <View style={styles.callout}>
-        <Text style={styles.calloutTitle}>Auth Stack ativo</Text>
-        <Text style={styles.calloutText}>
-          Esta tela será substituída pelo fluxo Auth0 na PC-038.
-        </Text>
-      </View>
+      {isLoading ? (
+        <ActivityIndicator color={colors.primary} size="large" style={styles.loader} />
+      ) : null}
+
+      {error ? (
+        <View style={styles.callout}>
+          <Text style={styles.calloutTitle}>Erro de autenticação</Text>
+          <Text style={styles.calloutText}>{error.message}</Text>
+        </View>
+      ) : null}
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
+  loader: {
+    marginVertical: spacing.lg,
+  },
   callout: {
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.border,
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
     borderRadius: radii.md,
     borderWidth: 1,
     padding: spacing.md,
   },
   calloutTitle: {
-    color: colors.primaryDark,
+    color: '#991B1B',
     fontSize: 16,
     fontWeight: '800',
     marginBottom: spacing.xs,
   },
   calloutText: {
-    color: colors.text,
+    color: '#7F1D1D',
     fontSize: 14,
     lineHeight: 20,
   },

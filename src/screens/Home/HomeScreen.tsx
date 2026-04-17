@@ -1,26 +1,33 @@
-import { Text, View, StyleSheet } from 'react-native';
+import { Alert, Text, View, StyleSheet } from 'react-native';
 
 import { ScreenContainer } from '../../components/ui/ScreenContainer';
+import { useAuth } from '../../contexts/AuthContext';
 import { colors, radii, spacing } from '../../utils/theme';
 
-type HomeScreenProps = {
-  onSimulateLogout: () => void;
-};
+export function HomeScreen() {
+  const { user, logout } = useAuth();
 
-export function HomeScreen({ onSimulateLogout }: HomeScreenProps) {
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch {
+      Alert.alert('Erro', 'Não foi possível sair. Tente novamente.');
+    }
+  };
+
   return (
     <ScreenContainer
-      secondaryActionLabel="Voltar para Login"
-      onSecondaryActionPress={onSimulateLogout}
+      secondaryActionLabel="Sair"
+      onSecondaryActionPress={handleLogout}
       subtitle="Área inicial do tutor. A lista real de pets entra na PC-039."
-      title="Home Screen"
+      title="Home"
     >
-      <View style={styles.panel}>
-        <Text style={styles.panelTitle}>Main Tabs ativo</Text>
-        <Text style={styles.panelText}>
-          Use as abas Home, Pets e Saúde para navegar pelos placeholders.
-        </Text>
-      </View>
+      {user?.name ? (
+        <View style={styles.panel}>
+          <Text style={styles.panelTitle}>Olá, {user.name}</Text>
+          <Text style={styles.panelText}>{user.email}</Text>
+        </View>
+      ) : null}
     </ScreenContainer>
   );
 }
