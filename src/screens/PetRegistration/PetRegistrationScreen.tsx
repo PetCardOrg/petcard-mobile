@@ -3,8 +3,8 @@ import { ScreenContainer } from '../../components/ui/ScreenContainer';
 export function PetRegistrationScreen() {
   return (
     <ScreenContainer
-      subtitle="Formulário de cadastro de pet será implementado na PC-040."
-      title="Pet Registration Screen"
+      subtitle="Em breve você poderá cadastrar seus pets por aqui."
+      title="Cadastrar Pet"
     />
   );
 }

@@ -45,21 +45,22 @@ const styles = StyleSheet.create({
     marginVertical: spacing.lg,
   },
   callout: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: colors.dangerSoft,
     borderColor: '#FECACA',
     borderRadius: radii.md,
     borderWidth: 1,
     padding: spacing.md,
   },
   calloutTitle: {
-    color: '#991B1B',
+    color: colors.danger,
     fontSize: 16,
     fontWeight: '800',
     marginBottom: spacing.xs,
   },
   calloutText: {
-    color: '#7F1D1D',
+    color: colors.danger,
     fontSize: 14,
     lineHeight: 20,
+    opacity: 0.85,
   },
 });

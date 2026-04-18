@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 
-import { colors, radii, spacing } from '../../utils/theme';
+import { colors, radii, spacing, typography } from '../../utils/theme';
 
 type ScreenContainerProps = {
   title: string;
@@ -28,9 +29,8 @@ export function ScreenContainer({
       <View style={styles.container}>
         <View style={styles.header}>
           <View style={styles.logoMark}>
-            <Text style={styles.logoText}>P</Text>
+            <Ionicons color={colors.white} name="paw" size={20} />
           </View>
-          <Text style={styles.brand}>PetCard</Text>
         </View>
 
         <View style={styles.content}>
@@ -86,27 +86,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 40,
   },
-  logoText: {
-    color: colors.white,
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  brand: {
-    color: colors.text,
-    fontSize: 22,
-    fontWeight: '800',
-  },
   content: {
     flex: 1,
     justifyContent: 'center',
   },
   title: {
+    ...typography.h1,
     color: colors.text,
-    fontSize: 30,
-    fontWeight: '800',
     marginBottom: spacing.sm,
   },
   subtitle: {
+    ...typography.body,
     color: colors.muted,
     fontSize: 16,
     lineHeight: 24,
@@ -120,9 +110,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   primaryButtonText: {
+    ...typography.button,
     color: colors.white,
     fontSize: 16,
-    fontWeight: '700',
   },
   secondaryButton: {
     alignItems: 'center',
@@ -134,9 +124,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   secondaryButtonText: {
+    ...typography.button,
     color: colors.primaryDark,
     fontSize: 16,
-    fontWeight: '700',
   },
   pressed: {
     opacity: 0.82,
