@@ -35,6 +35,7 @@ type AuthContextValue = {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isReady: boolean;
   error: Error | null;
   login: () => Promise<void>;
   logout: () => Promise<void>;
@@ -69,6 +70,7 @@ async function clearTokens() {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   const discovery = useAutoDiscovery(`https://${AUTH0_DOMAIN}`);
@@ -178,15 +180,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearTokens().then(() => setUser(null));
     });
 
+    setIsReady(true);
+
     return () => {
       setTokenProvider(null);
       setUnauthorizedHandler(null);
+      setIsReady(false);
     };
   }, [discovery]);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, isAuthenticated, isLoading, error, login, logout }),
-    [user, isAuthenticated, isLoading, error, login, logout],
+    () => ({ user, isAuthenticated, isLoading, isReady, error, login, logout }),
+    [user, isAuthenticated, isLoading, isReady, error, login, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

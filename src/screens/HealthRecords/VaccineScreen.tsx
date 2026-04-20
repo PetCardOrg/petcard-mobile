@@ -12,8 +12,8 @@ export function VaccineScreen({ navigation }: VaccineScreenProps) {
       onActionPress={() => navigation.navigate('Deworming')}
       secondaryActionLabel="Ver medicações"
       onSecondaryActionPress={() => navigation.navigate('Medication')}
-      subtitle="Registros de vacina do pet selecionado entram na PC-041."
-      title="Vaccine Screen"
+      subtitle="Os registros de vacinas dos seus pets serão exibidos aqui em breve."
+      title="Vacinas"
     />
   );
 }
