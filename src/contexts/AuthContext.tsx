@@ -1,3 +1,8 @@
+// Auth0 authentication via expo-auth-session (PKCE flow) instead of react-native-auth0.
+// Chosen for compatibility with Expo managed workflow — avoids native module linking
+// and custom dev client builds. Trade-off: no built-in logout endpoint call or session
+// management from the SDK, so those are handled manually (see logout and tokenProvider).
+
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
   exchangeCodeAsync,
@@ -20,7 +25,10 @@ const AUTH0_SCOPE = 'openid profile email offline_access';
 
 const STORE_ACCESS_TOKEN = 'auth_access_token';
 const STORE_REFRESH_TOKEN = 'auth_refresh_token';
+const STORE_EXPIRES_AT = 'auth_expires_at';
 const STORE_USER = 'auth_user';
+
+const TOKEN_EXPIRY_BUFFER_MS = 60_000;
 
 const redirectUri = makeRedirectUri({ scheme: 'petcard' });
 
@@ -53,10 +61,19 @@ async function fetchUserInfo(accessToken: string): Promise<User> {
   return response.json();
 }
 
-async function saveTokens(accessToken: string, refreshToken: string | null, user: User) {
+async function saveTokens(
+  accessToken: string,
+  refreshToken: string | null,
+  user: User,
+  expiresIn: number | undefined,
+) {
   await SecureStore.setItemAsync(STORE_ACCESS_TOKEN, accessToken);
   if (refreshToken) {
     await SecureStore.setItemAsync(STORE_REFRESH_TOKEN, refreshToken);
+  }
+  if (expiresIn) {
+    const expiresAt = Date.now() + expiresIn * 1000;
+    await SecureStore.setItemAsync(STORE_EXPIRES_AT, expiresAt.toString());
   }
   await SecureStore.setItemAsync(STORE_USER, JSON.stringify(user));
 }
@@ -64,7 +81,15 @@ async function saveTokens(accessToken: string, refreshToken: string | null, user
 async function clearTokens() {
   await SecureStore.deleteItemAsync(STORE_ACCESS_TOKEN);
   await SecureStore.deleteItemAsync(STORE_REFRESH_TOKEN);
+  await SecureStore.deleteItemAsync(STORE_EXPIRES_AT);
   await SecureStore.deleteItemAsync(STORE_USER);
+}
+
+function isTokenExpired(): Promise<boolean> {
+  return SecureStore.getItemAsync(STORE_EXPIRES_AT).then((raw: string | null) => {
+    if (!raw) return true;
+    return Date.now() >= Number(raw) - TOKEN_EXPIRY_BUFFER_MS;
+  });
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -126,7 +151,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
 
         const userInfo = await fetchUserInfo(tokenResult.accessToken);
-        await saveTokens(tokenResult.accessToken, tokenResult.refreshToken ?? null, userInfo);
+        await saveTokens(
+          tokenResult.accessToken,
+          tokenResult.refreshToken ?? null,
+          userInfo,
+          tokenResult.expiresIn,
+        );
         setUser(userInfo);
       } catch (e) {
         setError(e instanceof Error ? e : new Error('Authentication failed'));
@@ -145,6 +175,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await clearTokens();
     setUser(null);
     setError(null);
+
+    const returnTo = encodeURIComponent(redirectUri);
+    const logoutUrl = `https://${AUTH0_DOMAIN}/v2/logout?client_id=${AUTH0_CLIENT_ID}&returnTo=${returnTo}`;
+    await WebBrowser.openAuthSessionAsync(logoutUrl, redirectUri);
   }, []);
 
   // Connect token provider to api.ts
@@ -155,7 +189,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const accessToken = await SecureStore.getItemAsync(STORE_ACCESS_TOKEN);
       if (!accessToken) return null;
 
-      // Try to refresh if we have a refresh token
+      const expired = await isTokenExpired();
+      if (!expired) return accessToken;
+
+      // Token expired or about to expire — try to refresh
       const refreshToken = await SecureStore.getItemAsync(STORE_REFRESH_TOKEN);
       if (refreshToken) {
         try {
@@ -166,6 +203,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await SecureStore.setItemAsync(STORE_ACCESS_TOKEN, tokenResult.accessToken);
           if (tokenResult.refreshToken) {
             await SecureStore.setItemAsync(STORE_REFRESH_TOKEN, tokenResult.refreshToken);
+          }
+          if (tokenResult.expiresIn) {
+            const expiresAt = Date.now() + tokenResult.expiresIn * 1000;
+            await SecureStore.setItemAsync(STORE_EXPIRES_AT, expiresAt.toString());
           }
           return tokenResult.accessToken;
         } catch {

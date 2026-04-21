@@ -10,11 +10,7 @@ export function LoginScreen() {
   const handleLogin = async () => {
     try {
       await login();
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : '';
-      if (message === 'a0.session.user_cancelled') {
-        return;
-      }
+    } catch {
       Alert.alert('Erro no login', 'Não foi possível realizar o login. Tente novamente.');
     }
   };
