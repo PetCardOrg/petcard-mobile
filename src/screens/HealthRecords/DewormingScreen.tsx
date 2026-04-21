@@ -23,35 +23,15 @@ import type {
 import { useFocusEffect } from '@react-navigation/native';
 import { isAxiosError } from 'axios';
 
+import { PetHeader } from '../../components/domain/PetHeader';
+import { PetSelector } from '../../components/domain/PetSelector';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { FAB } from '../../components/ui/FAB';
 import { usePets } from '../../hooks/usePets';
 import { dewormingService } from '../../services';
+import { formatDateDisplay, formatDateInput, parseDate } from '../../utils/dateUtils';
 import { colors, radii, spacing, typography } from '../../utils/theme';
-
-function formatDateDisplay(dateStr: string): string {
-  const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (!match) return dateStr;
-  return `${match[3]}/${match[2]}/${match[1]}`;
-}
-
-function formatDateInput(text: string): string {
-  const digits = text.replace(/\D/g, '');
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
-}
-
-function parseDate(text: string): string | undefined {
-  const match = text.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (!match) return undefined;
-  const [, day, month, year] = match;
-  const date = new Date(`${year}-${month}-${day}T00:00:00`);
-  if (isNaN(date.getTime())) return undefined;
-  if (date.getDate() !== Number(day) || date.getMonth() + 1 !== Number(month)) return undefined;
-  return `${year}-${month}-${day}`;
-}
 
 type FormErrors = {
   productName?: string;
@@ -183,57 +163,14 @@ export function DewormingScreen() {
 
   // --- Pet selector ---
   if (!selectedPet) {
-    if (isPetsLoading) {
-      return (
-        <View style={styles.centered}>
-          <ActivityIndicator color={colors.primary} size="large" />
-        </View>
-      );
-    }
-
-    if (pets.length === 0) {
-      return (
-        <View style={styles.centered}>
-          <EmptyState
-            icon="paw-outline"
-            title="Nenhum pet cadastrado"
-            description="Cadastre um pet primeiro para registrar vermifugações."
-          />
-        </View>
-      );
-    }
-
     return (
-      <View style={styles.container}>
-        <View style={styles.logoMark}>
-          <Ionicons color={colors.white} name="paw" size={20} />
-        </View>
-        <Text style={styles.sectionTitle}>Selecione o pet</Text>
-        <Text style={styles.sectionSubtitle}>
-          Escolha o pet para visualizar e registrar vermifugações.
-        </Text>
-        <FlatList
-          data={pets}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.petListContent}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => handleSelectPet(item)}
-              style={({ pressed }) => [styles.petItem, pressed && styles.pressed]}
-            >
-              <View style={styles.petItemIcon}>
-                <Ionicons color={colors.primary} name="paw" size={24} />
-              </View>
-              <View style={styles.petItemInfo}>
-                <Text style={styles.petItemName}>{item.name}</Text>
-                {item.breed ? <Text style={styles.petItemBreed}>{item.breed}</Text> : null}
-              </View>
-              <Ionicons color={colors.muted} name="chevron-forward" size={20} />
-            </Pressable>
-          )}
-        />
-      </View>
+      <PetSelector
+        pets={pets}
+        isLoading={isPetsLoading}
+        onSelectPet={handleSelectPet}
+        subtitle="Escolha o pet para visualizar e registrar vermifugações."
+        emptyDescription="Cadastre um pet primeiro para registrar vermifugações."
+      />
     );
   }
 
@@ -277,11 +214,7 @@ export function DewormingScreen() {
   return (
     <View style={styles.container}>
       {/* Pet header */}
-      <Pressable onPress={() => setSelectedPet(null)} style={styles.petHeader}>
-        <Ionicons color={colors.primaryDark} name="arrow-back" size={20} />
-        <Text style={styles.petHeaderName}>{selectedPet.name}</Text>
-        <Text style={styles.petHeaderChange}>Trocar</Text>
-      </Pressable>
+      <PetHeader petName={selectedPet.name} onBack={() => setSelectedPet(null)} />
 
       {/* Content */}
       {isLoading ? (
@@ -472,81 +405,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
-  },
-
-  // Logo
-  logoMark: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radii.md,
-    height: 40,
-    justifyContent: 'center',
-    marginBottom: spacing.lg,
-    width: 40,
-  },
-
-  // Pet selector
-  sectionTitle: {
-    ...typography.h2,
-    color: colors.text,
-  },
-  sectionSubtitle: {
-    ...typography.body,
-    color: colors.muted,
-    marginBottom: spacing.lg,
-    marginTop: spacing.xs,
-  },
-  petListContent: {
-    gap: spacing.sm,
-    paddingBottom: spacing.xl,
-  },
-  petItem: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: spacing.md,
-    padding: spacing.md,
-  },
-  petItemIcon: {
-    alignItems: 'center',
-    backgroundColor: colors.primarySoft,
-    borderRadius: 22,
-    height: 44,
-    justifyContent: 'center',
-    width: 44,
-  },
-  petItemInfo: {
-    flex: 1,
-  },
-  petItemName: {
-    ...typography.h3,
-    color: colors.text,
-  },
-  petItemBreed: {
-    ...typography.bodySmall,
-    color: colors.muted,
-    marginTop: 2,
-  },
-
-  // Pet header
-  petHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
-    paddingVertical: spacing.sm,
-  },
-  petHeaderName: {
-    ...typography.h3,
-    color: colors.text,
-    flex: 1,
-  },
-  petHeaderChange: {
-    ...typography.label,
-    color: colors.primary,
   },
 
   // List

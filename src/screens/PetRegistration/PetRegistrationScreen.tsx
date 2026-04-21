@@ -25,6 +25,7 @@ import { isAxiosError } from 'axios';
 
 import { petService, uploadService } from '../../services';
 import type { MainTabParamList } from '../../navigation/types';
+import { formatDateInput, parseDate } from '../../utils/dateUtils';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 
 type PetFormData = Omit<CreatePetRequest, 'photo_url'>;
@@ -82,23 +83,6 @@ const BREED_SUGGESTIONS: Record<Species, string[]> = {
   ],
   [Species.OTHER]: [],
 };
-
-function formatDateInput(text: string): string {
-  const digits = text.replace(/\D/g, '');
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
-}
-
-function parseDate(text: string): string | undefined {
-  const match = text.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (!match) return undefined;
-  const [, day, month, year] = match;
-  const date = new Date(`${year}-${month}-${day}T00:00:00`);
-  if (isNaN(date.getTime())) return undefined;
-  if (date.getDate() !== Number(day) || date.getMonth() + 1 !== Number(month)) return undefined;
-  return `${year}-${month}-${day}`;
-}
 
 export function PetRegistrationScreen() {
   const navigation = useNavigation<MaterialTopTabNavigationProp<MainTabParamList>>();
