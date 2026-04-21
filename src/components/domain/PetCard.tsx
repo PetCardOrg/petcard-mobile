@@ -1,59 +1,15 @@
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Sex, Species, type PetResponseDto } from '@petcardorg/shared';
+import { Species, type PetResponseDto } from '@petcardorg/shared';
 
 import { calculateAge } from '../../utils/calculateAge';
+import { getPhotoUrl, SEX_CONFIG, SPECIES_CONFIG } from '../../utils/petConfig';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 
 type PetCardProps = {
   pet: PetResponseDto;
   onPress: (pet: PetResponseDto) => void;
 };
-
-const SPECIES_CONFIG: Record<
-  Species,
-  {
-    backgroundColor: string;
-    color: string;
-    icon: keyof typeof MaterialCommunityIcons.glyphMap;
-    label: string;
-  }
-> = {
-  [Species.DOG]: {
-    backgroundColor: colors.primarySoft,
-    color: colors.primaryDark,
-    icon: 'dog',
-    label: 'Cachorro',
-  },
-  [Species.CAT]: {
-    backgroundColor: '#F0EBFF',
-    color: '#6B48C8',
-    icon: 'cat',
-    label: 'Gato',
-  },
-  [Species.BIRD]: {
-    backgroundColor: colors.successSoft,
-    color: '#16866B',
-    icon: 'bird',
-    label: 'Ave',
-  },
-  [Species.OTHER]: {
-    backgroundColor: colors.warningSoft,
-    color: '#8A650F',
-    icon: 'paw',
-    label: 'Outro',
-  },
-};
-
-const SEX_CONFIG: Record<Sex, { icon: keyof typeof Ionicons.glyphMap; label: string }> = {
-  [Sex.FEMALE]: { icon: 'female', label: 'Fêmea' },
-  [Sex.MALE]: { icon: 'male', label: 'Macho' },
-};
-
-function getPhotoUrl(pet: PetResponseDto): string | null {
-  const url = pet.photo_url;
-  return typeof url === 'string' && url.trim().length > 0 ? url : null;
-}
 
 export function PetCard({ pet, onPress }: PetCardProps) {
   const species = SPECIES_CONFIG[pet.species] ?? SPECIES_CONFIG[Species.OTHER];

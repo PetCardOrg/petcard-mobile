@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     gap: spacing.md,
-    paddingBottom: spacing.xl,
+    paddingBottom: 96,
   },
   emptyListContent: {
     flexGrow: 1,
