@@ -17,7 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Species, Sex } from '@petcardorg/shared';
-import type { CreatePetDto } from '@petcardorg/shared';
+import type { CreatePetRequest } from '@petcardorg/shared';
 import { useNavigation } from '@react-navigation/native';
 import type { MaterialTopTabNavigationProp } from '@react-navigation/material-top-tabs';
 import * as ImagePicker from 'expo-image-picker';
@@ -27,7 +27,7 @@ import { petService, uploadService } from '../../services';
 import type { MainTabParamList } from '../../navigation/types';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 
-type PetFormData = Omit<CreatePetDto, 'tutor_id' | 'photo_url'>;
+type PetFormData = Omit<CreatePetRequest, 'photo_url'>;
 
 const SPECIES_OPTIONS: { label: string; value: Species }[] = [
   { label: 'Cachorro', value: Species.DOG },
@@ -197,7 +197,7 @@ export function PetRegistrationScreen() {
       await petService.createPet({
         ...payload,
         ...(photoUrl ? { photo_url: photoUrl } : {}),
-      } as CreatePetDto);
+      });
 
       Alert.alert('Sucesso', 'Pet cadastrado com sucesso!', [
         { text: 'OK', onPress: () => navigation.navigate('Home') },
