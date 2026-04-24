@@ -17,7 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Species, Sex } from '@petcardorg/shared';
-import type { CreatePetRequest } from '@petcardorg/shared';
+import type { CreatePetDto } from '@petcardorg/shared';
 import { useNavigation } from '@react-navigation/native';
 import type { MaterialTopTabNavigationProp } from '@react-navigation/material-top-tabs';
 import * as ImagePicker from 'expo-image-picker';
@@ -28,7 +28,7 @@ import type { MainTabParamList } from '../../navigation/types';
 import { formatDateInput, parseDate } from '../../utils/dateUtils';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 
-type PetFormData = Omit<CreatePetRequest, 'photo_url'>;
+type PetFormData = Omit<CreatePetDto, 'photo_url'>;
 
 const SPECIES_OPTIONS: { label: string; value: Species }[] = [
   { label: 'Cachorro', value: Species.DOG },

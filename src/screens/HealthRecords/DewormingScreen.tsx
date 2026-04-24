@@ -39,6 +39,11 @@ type FormErrors = {
   nextDoseAt?: string;
 };
 
+function isoToDisplay(iso: string): string {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
+}
+
 export function DewormingScreen() {
   const { pets, isLoading: isPetsLoading } = usePets();
 
@@ -50,6 +55,7 @@ export function DewormingScreen() {
 
   // Form state
   const [modalVisible, setModalVisible] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<DewormingRecordResponseDto | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [productName, setProductName] = useState('');
   const [appliedAt, setAppliedAt] = useState('');
@@ -107,11 +113,47 @@ export function DewormingScreen() {
     setVeterinarianName('');
     setNotes('');
     setFormErrors({});
+    setEditingRecord(null);
   }
 
-  function openModal() {
+  function openCreateModal() {
     resetForm();
     setModalVisible(true);
+  }
+
+  function openEditModal(record: DewormingRecordResponseDto) {
+    setEditingRecord(record);
+    setProductName(record.product_name);
+    setAppliedAt(isoToDisplay(record.applied_at));
+    setNextDoseAt(record.next_dose_at ? isoToDisplay(record.next_dose_at) : '');
+    setVeterinarianName(record.veterinarian_name ?? '');
+    setNotes(record.notes ?? '');
+    setFormErrors({});
+    setModalVisible(true);
+  }
+
+  function confirmDelete(record: DewormingRecordResponseDto) {
+    Alert.alert('Excluir vermifugação', `Deseja excluir o registro de "${record.product_name}"?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Excluir',
+        style: 'destructive',
+        onPress: () => void handleDelete(record.id),
+      },
+    ]);
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      await dewormingService.deleteDeworming(id);
+      void loadDewormings();
+    } catch (err) {
+      let message = 'Não foi possível excluir a vermifugação.';
+      if (isAxiosError(err) && err.response?.data?.message) {
+        message = String(err.response.data.message);
+      }
+      Alert.alert('Erro', message);
+    }
   }
 
   function validateForm(): boolean {
@@ -134,24 +176,37 @@ export function DewormingScreen() {
 
     setIsSubmitting(true);
     try {
-      const payload: CreateDewormingRecordDto = {
-        pet_id: selectedPet.id,
-        product_name: productName.trim(),
-        applied_at: parseDate(appliedAt)!,
-      };
+      if (editingRecord) {
+        await dewormingService.updateDeworming(editingRecord.id, {
+          product_name: productName.trim(),
+          applied_at: parseDate(appliedAt)!,
+          next_dose_at: nextDoseAt.trim() ? parseDate(nextDoseAt) : undefined,
+          veterinarian_name: veterinarianName.trim() || undefined,
+          notes: notes.trim() || undefined,
+        });
+        setModalVisible(false);
+        Alert.alert('Sucesso', 'Vermifugação atualizada com sucesso!');
+      } else {
+        const payload: CreateDewormingRecordDto = {
+          pet_id: selectedPet.id,
+          product_name: productName.trim(),
+          applied_at: parseDate(appliedAt)!,
+        };
 
-      const parsedNextDose = nextDoseAt.trim() ? parseDate(nextDoseAt) : undefined;
-      if (parsedNextDose) payload.next_dose_at = parsedNextDose;
-      if (veterinarianName.trim()) payload.veterinarian_name = veterinarianName.trim();
-      if (notes.trim()) payload.notes = notes.trim();
+        const parsedNextDose = nextDoseAt.trim() ? parseDate(nextDoseAt) : undefined;
+        if (parsedNextDose) payload.next_dose_at = parsedNextDose;
+        if (veterinarianName.trim()) payload.veterinarian_name = veterinarianName.trim();
+        if (notes.trim()) payload.notes = notes.trim();
 
-      await dewormingService.createDeworming(payload);
-
-      setModalVisible(false);
-      Alert.alert('Sucesso', 'Vermifugação registrada com sucesso!');
+        await dewormingService.createDeworming(payload);
+        setModalVisible(false);
+        Alert.alert('Sucesso', 'Vermifugação registrada com sucesso!');
+      }
       void loadDewormings();
     } catch (err) {
-      let message = 'Não foi possível registrar a vermifugação. Tente novamente.';
+      let message = editingRecord
+        ? 'Não foi possível atualizar a vermifugação.'
+        : 'Não foi possível registrar a vermifugação. Tente novamente.';
       if (isAxiosError(err) && err.response?.data?.message) {
         message = String(err.response.data.message);
       }
@@ -181,6 +236,12 @@ export function DewormingScreen() {
         <View style={styles.cardHeader}>
           <Ionicons color={colors.success} name="shield-checkmark" size={20} />
           <Text style={styles.cardName}>{item.product_name}</Text>
+          <Pressable onPress={() => openEditModal(item)} hitSlop={8} style={styles.actionButton}>
+            <Ionicons color={colors.primaryDark} name="create-outline" size={18} />
+          </Pressable>
+          <Pressable onPress={() => confirmDelete(item)} hitSlop={8} style={styles.actionButton}>
+            <Ionicons color={colors.danger} name="trash-outline" size={18} />
+          </Pressable>
         </View>
 
         <View style={styles.cardDetails}>
@@ -232,7 +293,7 @@ export function DewormingScreen() {
             title="Nenhuma vermifugação registrada"
             description="Registre a primeira vermifugação do seu pet."
             actionLabel="Adicionar vermifugação"
-            onActionPress={openModal}
+            onActionPress={openCreateModal}
           />
         </View>
       ) : (
@@ -254,7 +315,7 @@ export function DewormingScreen() {
 
       {/* FAB */}
       {!isLoading && !error && dewormings.length > 0 ? (
-        <FAB accessibilityLabel="Adicionar vermifugação" onPress={openModal} />
+        <FAB accessibilityLabel="Adicionar vermifugação" onPress={openCreateModal} />
       ) : null}
 
       {/* Form Modal */}
@@ -271,7 +332,9 @@ export function DewormingScreen() {
           >
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Nova vermifugação</Text>
+                <Text style={styles.modalTitle}>
+                  {editingRecord ? 'Editar vermifugação' : 'Nova vermifugação'}
+                </Text>
                 <Pressable onPress={() => setModalVisible(false)}>
                   <Ionicons color={colors.muted} name="close" size={24} />
                 </Pressable>
@@ -381,7 +444,9 @@ export function DewormingScreen() {
                   {isSubmitting ? (
                     <ActivityIndicator color={colors.white} size="small" />
                   ) : (
-                    <Text style={styles.submitButtonText}>Registrar vermifugação</Text>
+                    <Text style={styles.submitButtonText}>
+                      {editingRecord ? 'Salvar alterações' : 'Registrar vermifugação'}
+                    </Text>
                   )}
                 </Pressable>
               </ScrollView>
@@ -428,6 +493,9 @@ const styles = StyleSheet.create({
     ...typography.h3,
     color: colors.text,
     flex: 1,
+  },
+  actionButton: {
+    padding: spacing.xs,
   },
   cardDetails: {
     gap: spacing.xs,

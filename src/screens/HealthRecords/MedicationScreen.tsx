@@ -41,6 +41,11 @@ function isMedicationActive(item: MedicationRecordResponseDto): boolean {
   return endDate >= today;
 }
 
+function isoToDisplay(iso: string): string {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
+}
+
 type FormErrors = {
   medicationName?: string;
   dosage?: string;
@@ -60,6 +65,7 @@ export function MedicationScreen() {
 
   // Form state
   const [modalVisible, setModalVisible] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<MedicationRecordResponseDto | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [medicationName, setMedicationName] = useState('');
   const [dosage, setDosage] = useState('');
@@ -119,11 +125,48 @@ export function MedicationScreen() {
     setEndDate('');
     setNotes('');
     setFormErrors({});
+    setEditingRecord(null);
   }
 
-  function openModal() {
+  function openCreateModal() {
     resetForm();
     setModalVisible(true);
+  }
+
+  function openEditModal(record: MedicationRecordResponseDto) {
+    setEditingRecord(record);
+    setMedicationName(record.medication_name);
+    setDosage(record.dosage);
+    setFrequency(record.frequency);
+    setStartDate(isoToDisplay(record.start_date));
+    setEndDate(record.end_date ? isoToDisplay(record.end_date) : '');
+    setNotes(record.notes ?? '');
+    setFormErrors({});
+    setModalVisible(true);
+  }
+
+  function confirmDelete(record: MedicationRecordResponseDto) {
+    Alert.alert('Excluir medicação', `Deseja excluir o registro de "${record.medication_name}"?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Excluir',
+        style: 'destructive',
+        onPress: () => void handleDelete(record.id),
+      },
+    ]);
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      await medicationService.deleteMedication(id);
+      void loadMedications();
+    } catch (err) {
+      let message = 'Não foi possível excluir a medicação.';
+      if (isAxiosError(err) && err.response?.data?.message) {
+        message = String(err.response.data.message);
+      }
+      Alert.alert('Erro', message);
+    }
   }
 
   function validateForm(): boolean {
@@ -148,25 +191,39 @@ export function MedicationScreen() {
 
     setIsSubmitting(true);
     try {
-      const payload: CreateMedicationRecordDto = {
-        pet_id: selectedPet.id,
-        medication_name: medicationName.trim(),
-        dosage: dosage.trim(),
-        frequency: frequency.trim(),
-        start_date: parseDate(startDate)!,
-      };
+      if (editingRecord) {
+        await medicationService.updateMedication(editingRecord.id, {
+          medication_name: medicationName.trim(),
+          dosage: dosage.trim(),
+          frequency: frequency.trim(),
+          start_date: parseDate(startDate)!,
+          end_date: endDate.trim() ? parseDate(endDate) : undefined,
+          notes: notes.trim() || undefined,
+        });
+        setModalVisible(false);
+        Alert.alert('Sucesso', 'Medicação atualizada com sucesso!');
+      } else {
+        const payload: CreateMedicationRecordDto = {
+          pet_id: selectedPet.id,
+          medication_name: medicationName.trim(),
+          dosage: dosage.trim(),
+          frequency: frequency.trim(),
+          start_date: parseDate(startDate)!,
+        };
 
-      const parsedEndDate = endDate.trim() ? parseDate(endDate) : undefined;
-      if (parsedEndDate) payload.end_date = parsedEndDate;
-      if (notes.trim()) payload.notes = notes.trim();
+        const parsedEndDate = endDate.trim() ? parseDate(endDate) : undefined;
+        if (parsedEndDate) payload.end_date = parsedEndDate;
+        if (notes.trim()) payload.notes = notes.trim();
 
-      await medicationService.createMedication(payload);
-
-      setModalVisible(false);
-      Alert.alert('Sucesso', 'Medicação registrada com sucesso!');
+        await medicationService.createMedication(payload);
+        setModalVisible(false);
+        Alert.alert('Sucesso', 'Medicação registrada com sucesso!');
+      }
       void loadMedications();
     } catch (err) {
-      let message = 'Não foi possível registrar a medicação. Tente novamente.';
+      let message = editingRecord
+        ? 'Não foi possível atualizar a medicação.'
+        : 'Não foi possível registrar a medicação. Tente novamente.';
       if (isAxiosError(err) && err.response?.data?.message) {
         message = String(err.response.data.message);
       }
@@ -205,6 +262,12 @@ export function MedicationScreen() {
               {active ? 'Ativa' : 'Concluída'}
             </Text>
           </View>
+          <Pressable onPress={() => openEditModal(item)} hitSlop={8} style={styles.actionButton}>
+            <Ionicons color={colors.primaryDark} name="create-outline" size={18} />
+          </Pressable>
+          <Pressable onPress={() => confirmDelete(item)} hitSlop={8} style={styles.actionButton}>
+            <Ionicons color={colors.danger} name="trash-outline" size={18} />
+          </Pressable>
         </View>
 
         <View style={styles.cardDetails}>
@@ -257,7 +320,7 @@ export function MedicationScreen() {
             title="Nenhuma medicação registrada"
             description="Registre a primeira medicação do seu pet."
             actionLabel="Adicionar medicação"
-            onActionPress={openModal}
+            onActionPress={openCreateModal}
           />
         </View>
       ) : (
@@ -279,7 +342,7 @@ export function MedicationScreen() {
 
       {/* FAB */}
       {!isLoading && !error && medications.length > 0 ? (
-        <FAB accessibilityLabel="Adicionar medicação" onPress={openModal} />
+        <FAB accessibilityLabel="Adicionar medicação" onPress={openCreateModal} />
       ) : null}
 
       {/* Form Modal */}
@@ -296,7 +359,9 @@ export function MedicationScreen() {
           >
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Nova medicação</Text>
+                <Text style={styles.modalTitle}>
+                  {editingRecord ? 'Editar medicação' : 'Nova medicação'}
+                </Text>
                 <Pressable onPress={() => setModalVisible(false)}>
                   <Ionicons color={colors.muted} name="close" size={24} />
                 </Pressable>
@@ -429,7 +494,9 @@ export function MedicationScreen() {
                   {isSubmitting ? (
                     <ActivityIndicator color={colors.white} size="small" />
                   ) : (
-                    <Text style={styles.submitButtonText}>Registrar medicação</Text>
+                    <Text style={styles.submitButtonText}>
+                      {editingRecord ? 'Salvar alterações' : 'Registrar medicação'}
+                    </Text>
                   )}
                 </Pressable>
               </ScrollView>
@@ -496,6 +563,9 @@ const styles = StyleSheet.create({
   },
   statusTextDone: {
     color: colors.muted,
+  },
+  actionButton: {
+    padding: spacing.xs,
   },
   cardDetails: {
     gap: spacing.xs,
