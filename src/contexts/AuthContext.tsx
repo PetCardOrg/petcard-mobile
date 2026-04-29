@@ -18,9 +18,11 @@ import { setTokenProvider, setUnauthorizedHandler } from '../services/api';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const AUTH0_DOMAIN = 'dev-3ctynkt3ic4soew6.us.auth0.com';
-const AUTH0_CLIENT_ID = 'CtwyNYEawT7g2BKffN1VcXyii2jgDJN0';
-const AUTH0_AUDIENCE = 'https://api.petcard.local';
+const AUTH0_DOMAIN = process.env.EXPO_PUBLIC_AUTH0_DOMAIN ?? 'dev-3ctynkt3ic4soew6.us.auth0.com';
+const AUTH0_CLIENT_ID =
+  process.env.EXPO_PUBLIC_AUTH0_CLIENT_ID ?? 'CtwyNYEawT7g2BKffN1VcXyii2jgDJN0';
+const AUTH0_AUDIENCE = process.env.EXPO_PUBLIC_AUTH0_AUDIENCE ?? 'https://api.petcard.local';
+const AUTH0_SCHEME = process.env.EXPO_PUBLIC_AUTH0_SCHEME ?? 'petcard';
 const AUTH0_SCOPE = 'openid profile email offline_access';
 
 const STORE_ACCESS_TOKEN = 'auth_access_token';
@@ -30,7 +32,7 @@ const STORE_USER = 'auth_user';
 
 const TOKEN_EXPIRY_BUFFER_MS = 60_000;
 
-const redirectUri = makeRedirectUri({ scheme: 'petcard' });
+const redirectUri = makeRedirectUri({ scheme: AUTH0_SCHEME });
 
 type User = {
   sub: string;
@@ -85,7 +87,7 @@ async function clearTokens() {
   await SecureStore.deleteItemAsync(STORE_USER);
 }
 
-function isTokenExpired(): Promise<boolean> {
+async function isTokenExpired(): Promise<boolean> {
   return SecureStore.getItemAsync(STORE_EXPIRES_AT).then((raw: string | null) => {
     if (!raw) return true;
     return Date.now() >= Number(raw) - TOKEN_EXPIRY_BUFFER_MS;
