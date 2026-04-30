@@ -10,6 +10,10 @@ export type HomeStackParamList = {
     petId: string;
     petName: string;
   };
+  DigitalWallet: {
+    petId: string;
+    petName: string;
+  };
 };
 
 export type MainTabParamList = {

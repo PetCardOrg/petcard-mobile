@@ -272,6 +272,17 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
         ) : null}
       </View>
 
+      {/* Digital Wallet button */}
+      <Pressable
+        accessibilityLabel="Abrir carteira digital"
+        accessibilityRole="button"
+        onPress={() => navigation.navigate('DigitalWallet', { petId: pet.id, petName: pet.name })}
+        style={({ pressed }) => [styles.walletBtn, pressed && styles.pressed]}
+      >
+        <Ionicons color={colors.white} name="card-outline" size={18} />
+        <Text style={styles.walletBtnText}>Carteira Digital</Text>
+      </Pressable>
+
       {/* Action buttons */}
       <View style={styles.actionsRow}>
         <Pressable
@@ -509,6 +520,23 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
     height: StyleSheet.hairlineWidth,
     marginVertical: spacing.md,
+  },
+
+  // Wallet button
+  walletBtn: {
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    backgroundColor: colors.primary,
+    borderRadius: radii.md,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'center',
+    marginTop: spacing.lg,
+    paddingVertical: 14,
+  },
+  walletBtnText: {
+    ...typography.button,
+    color: colors.white,
   },
 
   // Action buttons
