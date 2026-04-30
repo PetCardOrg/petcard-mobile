@@ -1,4 +1,5 @@
 export * from './api';
+export * as cardService from './card.service';
 export * as tutorService from './tutor.service';
 export * as petService from './pet.service';
 export * as vaccineService from './vaccine.service';

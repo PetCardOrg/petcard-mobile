@@ -11,6 +11,7 @@ import { LoginScreen } from '../screens/Auth/LoginScreen';
 import { DewormingScreen } from '../screens/HealthRecords/DewormingScreen';
 import { MedicationScreen } from '../screens/HealthRecords/MedicationScreen';
 import { VaccineScreen } from '../screens/HealthRecords/VaccineScreen';
+import { DigitalWalletScreen } from '../screens/DigitalWallet/DigitalWalletScreen';
 import { HomeScreen } from '../screens/Home/HomeScreen';
 import { PetDetailsScreen } from '../screens/Home/PetDetailsScreen';
 import { PetRegistrationScreen } from '../screens/PetRegistration/PetRegistrationScreen';
@@ -56,6 +57,11 @@ function HomeNavigator() {
         component={PetDetailsScreen}
         name="PetDetails"
         options={({ route }) => ({ title: route.params.petName })}
+      />
+      <HomeStack.Screen
+        component={DigitalWalletScreen}
+        name="DigitalWallet"
+        options={{ title: 'Carteira Digital' }}
       />
     </HomeStack.Navigator>
   );
@@ -124,7 +130,9 @@ function MainNavigator() {
         name="Home"
         options={({ route }) => ({
           title: 'Home',
-          swipeEnabled: getFocusedRouteNameFromRoute(route) !== 'PetDetails',
+          swipeEnabled:
+            getFocusedRouteNameFromRoute(route) !== 'PetDetails' &&
+            getFocusedRouteNameFromRoute(route) !== 'DigitalWallet',
           tabBarIcon: ({ color }) => <Ionicons color={color} name="home-outline" size={22} />,
         })}
       />
