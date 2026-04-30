@@ -6,6 +6,7 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -172,6 +173,24 @@ export function DigitalWalletScreen({ route }: Props) {
     );
   }
 
+  async function handleShare() {
+    if (!wallet?.public_url) {
+      Alert.alert(
+        'Link indisponível',
+        'A carteira digital ainda não possui um link público. Tente regenerar o QR Code.',
+      );
+      return;
+    }
+
+    try {
+      await Share.share({
+        message: `Veja a carteira digital de ${wallet.pet_name}: ${wallet.public_url}`,
+      });
+    } catch {
+      // User cancelled — not an error
+    }
+  }
+
   if (isLoading) {
     return (
       <View style={styles.centered}>
@@ -308,6 +327,22 @@ export function DigitalWalletScreen({ route }: Props) {
       </View>
 
       <View style={styles.actionsRow}>
+        <Pressable
+          accessibilityLabel="Compartilhar link da carteira digital"
+          accessibilityRole="button"
+          disabled={!wallet.public_url}
+          onPress={handleShare}
+          style={({ pressed }) => [
+            styles.actionBtn,
+            styles.shareBtn,
+            !wallet.public_url && styles.disabledBtn,
+            pressed && !!wallet.public_url && styles.pressed,
+          ]}
+        >
+          <Ionicons color={colors.white} name="share-outline" size={18} />
+          <Text style={styles.shareBtnText}>Compartilhar</Text>
+        </Pressable>
+
         <Pressable
           accessibilityLabel="Regenerar QR Code"
           accessibilityRole="button"
@@ -551,6 +586,14 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     justifyContent: 'center',
     paddingVertical: 14,
+  },
+  shareBtn: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  shareBtnText: {
+    ...typography.button,
+    color: colors.white,
   },
   regenerateBtn: {
     backgroundColor: colors.primarySoft,
