@@ -183,11 +183,18 @@ export function DigitalWalletScreen({ route }: Props) {
     }
 
     try {
-      await Share.share({
+      const result = await Share.share({
         message: `Veja a carteira digital de ${wallet.pet_name}: ${wallet.public_url}`,
       });
+
+      if (result.action === Share.dismissedAction) {
+        return;
+      }
     } catch {
-      // User cancelled — not an error
+      Alert.alert(
+        'Erro ao compartilhar',
+        'Não foi possível abrir o compartilhamento da carteira digital.',
+      );
     }
   }
 
