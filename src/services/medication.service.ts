@@ -7,11 +7,10 @@ import type {
 import { api } from './api';
 
 const MEDICATIONS_ENDPOINT = '/medications';
+const getMedicationsByPetEndpoint = (petId: string) => `/pets/${petId}/medications`;
 
 export async function getMedicationsByPet(petId: string): Promise<MedicationRecordResponseDto[]> {
-  const { data } = await api.get<MedicationRecordResponseDto[]>(MEDICATIONS_ENDPOINT, {
-    params: { petId },
-  });
+  const { data } = await api.get<MedicationRecordResponseDto[]>(getMedicationsByPetEndpoint(petId));
   return data;
 }
 
@@ -23,7 +22,10 @@ export async function getMedicationById(id: string): Promise<MedicationRecordRes
 export async function createMedication(
   payload: CreateMedicationRecordDto,
 ): Promise<MedicationRecordResponseDto> {
-  const { data } = await api.post<MedicationRecordResponseDto>(MEDICATIONS_ENDPOINT, payload);
+  const { data } = await api.post<MedicationRecordResponseDto>(
+    getMedicationsByPetEndpoint(payload.pet_id),
+    payload,
+  );
   return data;
 }
 

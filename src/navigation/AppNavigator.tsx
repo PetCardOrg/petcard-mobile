@@ -1,4 +1,6 @@
-import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -9,22 +11,28 @@ import { LoginScreen } from '../screens/Auth/LoginScreen';
 import { DewormingScreen } from '../screens/HealthRecords/DewormingScreen';
 import { MedicationScreen } from '../screens/HealthRecords/MedicationScreen';
 import { VaccineScreen } from '../screens/HealthRecords/VaccineScreen';
+import { DigitalWalletScreen } from '../screens/DigitalWallet/DigitalWalletScreen';
 import { HomeScreen } from '../screens/Home/HomeScreen';
 import { PetDetailsScreen } from '../screens/Home/PetDetailsScreen';
 import { PetRegistrationScreen } from '../screens/PetRegistration/PetRegistrationScreen';
 import { ProfileScreen } from '../screens/Profile/ProfileScreen';
-import { colors } from '../utils/theme';
-import type {
-  AuthStackParamList,
-  HealthRecordsStackParamList,
-  HomeStackParamList,
-  MainTabParamList,
-} from './types';
+import { colors, radii, spacing, typography } from '../utils/theme';
+import type { AuthStackParamList, HomeStackParamList, MainTabParamList } from './types';
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const HomeStack = createNativeStackNavigator<HomeStackParamList>();
 const MainTabs = createMaterialTopTabNavigator<MainTabParamList>();
-const HealthStack = createNativeStackNavigator<HealthRecordsStackParamList>();
+
+const healthTabs = [
+  { key: 'vaccines', label: 'Vacinas', icon: 'medkit-outline' as const, Screen: VaccineScreen },
+  { key: 'dewormings', label: 'Vermífugos', icon: 'bug-outline' as const, Screen: DewormingScreen },
+  {
+    key: 'medications',
+    label: 'Medicações',
+    icon: 'bandage-outline' as const,
+    Screen: MedicationScreen,
+  },
+];
 
 function AuthNavigator() {
   return (
@@ -50,32 +58,43 @@ function HomeNavigator() {
         name="PetDetails"
         options={({ route }) => ({ title: route.params.petName })}
       />
+      <HomeStack.Screen
+        component={DigitalWalletScreen}
+        name="DigitalWallet"
+        options={{ title: 'Carteira Digital' }}
+      />
     </HomeStack.Navigator>
   );
 }
 
 function HealthRecordsNavigator() {
+  const [activeTab, setActiveTab] = useState(healthTabs[0].key);
+  const ActiveScreen = healthTabs.find((t) => t.key === activeTab)!.Screen;
+  const insets = useSafeAreaInsets();
+
   return (
-    <HealthStack.Navigator
-      screenOptions={{
-        contentStyle: { backgroundColor: colors.background },
-        headerShadowVisible: false,
-        headerTintColor: colors.primaryDark,
-        headerTitleStyle: { color: colors.text, fontWeight: '700' },
-      }}
-    >
-      <HealthStack.Screen component={VaccineScreen} name="Vaccine" options={{ title: 'Vacinas' }} />
-      <HealthStack.Screen
-        component={DewormingScreen}
-        name="Deworming"
-        options={{ title: 'Vermifugações' }}
-      />
-      <HealthStack.Screen
-        component={MedicationScreen}
-        name="Medication"
-        options={{ title: 'Medicações' }}
-      />
-    </HealthStack.Navigator>
+    <View style={healthStyles.container}>
+      <View style={[healthStyles.segmentedControl, { marginTop: insets.top + spacing.sm }]}>
+        {healthTabs.map((tab) => {
+          const isActive = tab.key === activeTab;
+          return (
+            <Pressable
+              key={tab.key}
+              onPress={() => setActiveTab(tab.key)}
+              style={[healthStyles.segment, isActive && healthStyles.segmentActive]}
+            >
+              <Ionicons name={tab.icon} size={16} color={isActive ? colors.white : colors.muted} />
+              <Text style={[healthStyles.segmentText, isActive && healthStyles.segmentTextActive]}>
+                {tab.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <View style={healthStyles.content}>
+        <ActiveScreen />
+      </View>
+    </View>
   );
 }
 
@@ -111,7 +130,9 @@ function MainNavigator() {
         name="Home"
         options={({ route }) => ({
           title: 'Home',
-          swipeEnabled: getFocusedRouteNameFromRoute(route) !== 'PetDetails',
+          swipeEnabled:
+            getFocusedRouteNameFromRoute(route) !== 'PetDetails' &&
+            getFocusedRouteNameFromRoute(route) !== 'DigitalWallet',
           tabBarIcon: ({ color }) => <Ionicons color={color} name="home-outline" size={22} />,
         })}
       />
@@ -126,13 +147,9 @@ function MainNavigator() {
       <MainTabs.Screen
         component={HealthRecordsNavigator}
         name="Health"
-        options={({ route }) => {
-          const focused = getFocusedRouteNameFromRoute(route);
-          return {
-            title: 'Saúde',
-            swipeEnabled: !focused || focused === 'Vaccine',
-            tabBarIcon: ({ color }) => <Ionicons color={color} name="heart-outline" size={22} />,
-          };
+        options={{
+          title: 'Saúde',
+          tabBarIcon: ({ color }) => <Ionicons color={color} name="heart-outline" size={22} />,
         }}
       />
       <MainTabs.Screen
@@ -171,5 +188,42 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     flex: 1,
     justifyContent: 'center',
+  },
+});
+
+const healthStyles = StyleSheet.create({
+  container: {
+    backgroundColor: colors.background,
+    flex: 1,
+  },
+  segmentedControl: {
+    flexDirection: 'row',
+    backgroundColor: colors.border,
+    borderRadius: radii.md,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    padding: 3,
+  },
+  segment: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    paddingVertical: 10,
+    borderRadius: radii.md - 2,
+  },
+  segmentActive: {
+    backgroundColor: colors.primaryDark,
+  },
+  segmentText: {
+    ...typography.caption,
+    color: colors.muted,
+  },
+  segmentTextActive: {
+    color: colors.white,
+  },
+  content: {
+    flex: 1,
   },
 });

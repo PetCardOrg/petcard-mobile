@@ -39,6 +39,11 @@ type FormErrors = {
   nextDoseAt?: string;
 };
 
+function isoToDisplay(iso: string): string {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
+}
+
 export function VaccineScreen() {
   const { pets, isLoading: isPetsLoading } = usePets();
 
@@ -50,6 +55,7 @@ export function VaccineScreen() {
 
   // Form state
   const [modalVisible, setModalVisible] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<VaccineRecordResponseDto | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [vaccineName, setVaccineName] = useState('');
   const [appliedAt, setAppliedAt] = useState('');
@@ -107,11 +113,47 @@ export function VaccineScreen() {
     setVeterinarianName('');
     setNotes('');
     setFormErrors({});
+    setEditingRecord(null);
   }
 
-  function openModal() {
+  function openCreateModal() {
     resetForm();
     setModalVisible(true);
+  }
+
+  function openEditModal(record: VaccineRecordResponseDto) {
+    setEditingRecord(record);
+    setVaccineName(record.vaccine_name);
+    setAppliedAt(isoToDisplay(record.applied_at));
+    setNextDoseAt(record.next_dose_at ? isoToDisplay(record.next_dose_at) : '');
+    setVeterinarianName(record.veterinarian_name ?? '');
+    setNotes(record.notes ?? '');
+    setFormErrors({});
+    setModalVisible(true);
+  }
+
+  function confirmDelete(record: VaccineRecordResponseDto) {
+    Alert.alert('Excluir vacina', `Deseja excluir o registro de "${record.vaccine_name}"?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Excluir',
+        style: 'destructive',
+        onPress: () => void handleDelete(record.id),
+      },
+    ]);
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      await vaccineService.deleteVaccine(id);
+      void loadVaccines();
+    } catch (err) {
+      let message = 'Não foi possível excluir a vacina.';
+      if (isAxiosError(err) && err.response?.data?.message) {
+        message = String(err.response.data.message);
+      }
+      Alert.alert('Erro', message);
+    }
   }
 
   function validateForm(): boolean {
@@ -134,24 +176,37 @@ export function VaccineScreen() {
 
     setIsSubmitting(true);
     try {
-      const payload: CreateVaccineRecordDto = {
-        pet_id: selectedPet.id,
-        vaccine_name: vaccineName.trim(),
-        applied_at: parseDate(appliedAt)!,
-      };
+      if (editingRecord) {
+        await vaccineService.updateVaccine(editingRecord.id, {
+          vaccine_name: vaccineName.trim(),
+          applied_at: parseDate(appliedAt)!,
+          next_dose_at: nextDoseAt.trim() ? parseDate(nextDoseAt) : undefined,
+          veterinarian_name: veterinarianName.trim() || undefined,
+          notes: notes.trim() || undefined,
+        });
+        setModalVisible(false);
+        Alert.alert('Sucesso', 'Vacina atualizada com sucesso!');
+      } else {
+        const payload: CreateVaccineRecordDto = {
+          pet_id: selectedPet.id,
+          vaccine_name: vaccineName.trim(),
+          applied_at: parseDate(appliedAt)!,
+        };
 
-      const parsedNextDose = nextDoseAt.trim() ? parseDate(nextDoseAt) : undefined;
-      if (parsedNextDose) payload.next_dose_at = parsedNextDose;
-      if (veterinarianName.trim()) payload.veterinarian_name = veterinarianName.trim();
-      if (notes.trim()) payload.notes = notes.trim();
+        const parsedNextDose = nextDoseAt.trim() ? parseDate(nextDoseAt) : undefined;
+        if (parsedNextDose) payload.next_dose_at = parsedNextDose;
+        if (veterinarianName.trim()) payload.veterinarian_name = veterinarianName.trim();
+        if (notes.trim()) payload.notes = notes.trim();
 
-      await vaccineService.createVaccine(payload);
-
-      setModalVisible(false);
-      Alert.alert('Sucesso', 'Vacina registrada com sucesso!');
+        await vaccineService.createVaccine(payload);
+        setModalVisible(false);
+        Alert.alert('Sucesso', 'Vacina registrada com sucesso!');
+      }
       void loadVaccines();
     } catch (err) {
-      let message = 'Não foi possível registrar a vacina. Tente novamente.';
+      let message = editingRecord
+        ? 'Não foi possível atualizar a vacina.'
+        : 'Não foi possível registrar a vacina. Tente novamente.';
       if (isAxiosError(err) && err.response?.data?.message) {
         message = String(err.response.data.message);
       }
@@ -181,6 +236,12 @@ export function VaccineScreen() {
         <View style={styles.vaccineHeader}>
           <Ionicons color={colors.primary} name="medkit" size={20} />
           <Text style={styles.vaccineName}>{item.vaccine_name}</Text>
+          <Pressable onPress={() => openEditModal(item)} hitSlop={8} style={styles.actionButton}>
+            <Ionicons color={colors.primaryDark} name="create-outline" size={18} />
+          </Pressable>
+          <Pressable onPress={() => confirmDelete(item)} hitSlop={8} style={styles.actionButton}>
+            <Ionicons color={colors.danger} name="trash-outline" size={18} />
+          </Pressable>
         </View>
 
         <View style={styles.vaccineDetails}>
@@ -232,7 +293,7 @@ export function VaccineScreen() {
             title="Nenhuma vacina registrada"
             description="Registre a primeira vacina do seu pet."
             actionLabel="Adicionar vacina"
-            onActionPress={openModal}
+            onActionPress={openCreateModal}
           />
         </View>
       ) : (
@@ -254,7 +315,7 @@ export function VaccineScreen() {
 
       {/* FAB */}
       {!isLoading && !error && vaccines.length > 0 ? (
-        <FAB accessibilityLabel="Adicionar vacina" onPress={openModal} />
+        <FAB accessibilityLabel="Adicionar vacina" onPress={openCreateModal} />
       ) : null}
 
       {/* Form Modal */}
@@ -271,7 +332,9 @@ export function VaccineScreen() {
           >
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Nova vacina</Text>
+                <Text style={styles.modalTitle}>
+                  {editingRecord ? 'Editar vacina' : 'Nova vacina'}
+                </Text>
                 <Pressable onPress={() => setModalVisible(false)}>
                   <Ionicons color={colors.muted} name="close" size={24} />
                 </Pressable>
@@ -381,7 +444,9 @@ export function VaccineScreen() {
                   {isSubmitting ? (
                     <ActivityIndicator color={colors.white} size="small" />
                   ) : (
-                    <Text style={styles.submitButtonText}>Registrar vacina</Text>
+                    <Text style={styles.submitButtonText}>
+                      {editingRecord ? 'Salvar alterações' : 'Registrar vacina'}
+                    </Text>
                   )}
                 </Pressable>
               </ScrollView>
@@ -428,6 +493,9 @@ const styles = StyleSheet.create({
     ...typography.h3,
     color: colors.text,
     flex: 1,
+  },
+  actionButton: {
+    padding: spacing.xs,
   },
   vaccineDetails: {
     gap: spacing.xs,

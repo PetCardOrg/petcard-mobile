@@ -1,9 +1,18 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Sex, Species, type PetResponseDto } from '@petcardorg/shared';
+import {
+  Sex,
+  Species,
+  type CarteiraDigitalResponseDto,
+  type PetResponseDto,
+} from '@petcardorg/shared';
 
 import { colors } from './theme';
 
-export function getPhotoUrl(pet: PetResponseDto): string | null {
+type PetLikeWithPhoto =
+  | Pick<PetResponseDto, 'photo_url'>
+  | Pick<CarteiraDigitalResponseDto, 'photo_url'>;
+
+export function getPhotoUrl(pet: PetLikeWithPhoto): string | null {
   const url = pet.photo_url;
   if (typeof url !== 'string' || url.trim().length === 0) return null;
   if (!url.startsWith('https://')) return null;

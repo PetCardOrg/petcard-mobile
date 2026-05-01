@@ -1,4 +1,4 @@
-import type { CreatePetRequest, PetResponseDto, UpdatePetDto } from '@petcardorg/shared';
+import type { CreatePetDto, PetResponseDto, UpdatePetDto } from '@petcardorg/shared';
 
 import { api } from './api';
 
@@ -14,7 +14,7 @@ export async function getPetById(id: string): Promise<PetResponseDto> {
   return data;
 }
 
-export async function createPet(payload: CreatePetRequest): Promise<PetResponseDto> {
+export async function createPet(payload: CreatePetDto): Promise<PetResponseDto> {
   const { data } = await api.post<PetResponseDto>(PETS_ENDPOINT, payload);
   return data;
 }

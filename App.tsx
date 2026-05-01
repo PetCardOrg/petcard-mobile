@@ -1,5 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider } from './src/contexts/AuthContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
@@ -19,11 +20,13 @@ const navigationTheme = {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <NavigationContainer theme={navigationTheme}>
-        <StatusBar style="dark" />
-        <AppNavigator />
-      </NavigationContainer>
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <NavigationContainer theme={navigationTheme}>
+          <StatusBar style="dark" />
+          <AppNavigator />
+        </NavigationContainer>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

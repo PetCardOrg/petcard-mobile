@@ -7,11 +7,10 @@ import type {
 import { api } from './api';
 
 const DEWORMINGS_ENDPOINT = '/dewormings';
+const getDewormingsByPetEndpoint = (petId: string) => `/pets/${petId}/dewormings`;
 
 export async function getDewormingsByPet(petId: string): Promise<DewormingRecordResponseDto[]> {
-  const { data } = await api.get<DewormingRecordResponseDto[]>(DEWORMINGS_ENDPOINT, {
-    params: { petId },
-  });
+  const { data } = await api.get<DewormingRecordResponseDto[]>(getDewormingsByPetEndpoint(petId));
   return data;
 }
 
@@ -23,7 +22,10 @@ export async function getDewormingById(id: string): Promise<DewormingRecordRespo
 export async function createDeworming(
   payload: CreateDewormingRecordDto,
 ): Promise<DewormingRecordResponseDto> {
-  const { data } = await api.post<DewormingRecordResponseDto>(DEWORMINGS_ENDPOINT, payload);
+  const { data } = await api.post<DewormingRecordResponseDto>(
+    getDewormingsByPetEndpoint(payload.pet_id),
+    payload,
+  );
   return data;
 }
 
