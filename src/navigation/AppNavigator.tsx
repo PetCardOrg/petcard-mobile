@@ -16,6 +16,7 @@ import { HomeScreen } from '../screens/Home/HomeScreen';
 import { PetDetailsScreen } from '../screens/Home/PetDetailsScreen';
 import { PetRegistrationScreen } from '../screens/PetRegistration/PetRegistrationScreen';
 import { ProfileScreen } from '../screens/Profile/ProfileScreen';
+import { ClinicSearchScreen } from '../screens/ClinicSearch/ClinicSearchScreen';
 import { colors, radii, spacing, typography } from '../utils/theme';
 import type { AuthStackParamList, HomeStackParamList, MainTabParamList } from './types';
 
@@ -150,6 +151,15 @@ function MainNavigator() {
         options={{
           title: 'Saúde',
           tabBarIcon: ({ color }) => <Ionicons color={color} name="heart-outline" size={22} />,
+        }}
+      />
+      <MainTabs.Screen
+        component={ClinicSearchScreen}
+        name="Clinics"
+        options={{
+          title: 'Clínicas',
+          swipeEnabled: false,
+          tabBarIcon: ({ color }) => <Ionicons color={color} name="map-outline" size={22} />,
         }}
       />
       <MainTabs.Screen
