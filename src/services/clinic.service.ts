@@ -8,6 +8,7 @@ type FindNearbyClinicsParams = {
   lat: number;
   lng: number;
   radiusKm: number;
+  specialty?: string;
   limit?: number;
   offset?: number;
 };
