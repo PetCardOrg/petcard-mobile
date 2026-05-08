@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { ClinicaResponseDto } from '@petcardorg/shared';
 
@@ -15,6 +15,29 @@ function formatDistance(meters: number): string {
     return `${Math.round(meters)} m`;
   }
   return `${(meters / 1000).toFixed(1)} km`;
+}
+
+function sanitizePhone(phone: string): string {
+  return phone.replace(/[^+\d]/g, '');
+}
+
+async function handleCall(phone: string | undefined) {
+  if (!phone) {
+    Alert.alert('Telefone indisponível', 'Esta clínica não possui telefone cadastrado.');
+    return;
+  }
+
+  const url = `tel:${sanitizePhone(phone)}`;
+  try {
+    const supported = await Linking.canOpenURL(url);
+    if (!supported) {
+      Alert.alert('Não foi possível ligar', 'Seu dispositivo não suporta chamadas telefônicas.');
+      return;
+    }
+    await Linking.openURL(url);
+  } catch {
+    Alert.alert('Erro', 'Não foi possível abrir o discador.');
+  }
 }
 
 export function ClinicDetailCard({ clinic, onDismiss, bottomInset }: ClinicDetailCardProps) {
@@ -66,6 +89,20 @@ export function ClinicDetailCard({ clinic, onDismiss, bottomInset }: ClinicDetai
             </Text>
           </View>
         </View>
+
+        <Pressable
+          onPress={() => handleCall(clinic.phone)}
+          style={({ pressed }) => [
+            styles.callButton,
+            !clinic.phone && styles.callButtonDisabled,
+            pressed && styles.pressed,
+          ]}
+        >
+          <Ionicons name="call" size={18} color={clinic.phone ? colors.white : colors.muted} />
+          <Text style={[styles.callButtonText, !clinic.phone && styles.callButtonTextDisabled]}>
+            {clinic.phone ? 'Ligar para a clínica' : 'Telefone indisponível'}
+          </Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -143,5 +180,28 @@ const styles = StyleSheet.create({
   distanceText: {
     color: colors.primary,
     fontWeight: '700',
+  },
+  callButton: {
+    alignItems: 'center',
+    backgroundColor: colors.success,
+    borderRadius: radii.md,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'center',
+    marginTop: spacing.sm,
+    paddingVertical: 12,
+  },
+  callButtonDisabled: {
+    backgroundColor: colors.border,
+  },
+  callButtonText: {
+    ...typography.button,
+    color: colors.white,
+  },
+  callButtonTextDisabled: {
+    color: colors.muted,
+  },
+  pressed: {
+    opacity: 0.82,
   },
 });
