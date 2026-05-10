@@ -1,31 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import type { ClinicaResponseDto } from '@petcardorg/shared';
+import type { PlacesClinicResponseDto } from '@petcardorg/shared';
 
 import { colors, radii, spacing, typography } from '../../utils/theme';
 import * as clinicService from '../../services/clinic.service';
+import { useAuth } from '../../contexts/AuthContext';
 import { ClinicDetailCard } from './ClinicDetailCard';
 
 const RADIUS_OPTIONS = [5, 10, 25, 50];
-const SPECIALTY_OPTIONS = [
-  'Clínica geral',
-  'Emergência 24h',
-  'Ortopedia',
-  'Dermatologia',
-  'Exóticos',
-];
 
 const DEFAULT_DELTA = 0.05;
 
@@ -33,26 +19,27 @@ type ScreenState = 'loading' | 'permission_denied' | 'error' | 'empty' | 'succes
 
 export function ClinicSearchScreen() {
   const insets = useSafeAreaInsets();
+  const { isReady } = useAuth();
   const mapRef = useRef<MapView>(null);
 
   const [state, setState] = useState<ScreenState>('loading');
   const [errorMessage, setErrorMessage] = useState('');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [clinics, setClinics] = useState<ClinicaResponseDto[]>([]);
-  const [selectedClinic, setSelectedClinic] = useState<ClinicaResponseDto | null>(null);
+  const [clinics, setClinics] = useState<PlacesClinicResponseDto[]>([]);
+  const [selectedClinic, setSelectedClinic] = useState<PlacesClinicResponseDto | null>(null);
   const [isSearching, setIsSearching] = useState(false);
 
   const [selectedRadius, setSelectedRadius] = useState(10);
-  const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
+  const [openNowFilter, setOpenNowFilter] = useState(false);
 
   const loadClinics = useCallback(
-    async (lat: number, lng: number, radiusKm: number, specialty: string | null) => {
+    async (lat: number, lng: number, radiusKm: number, openNow: boolean) => {
       try {
-        const data = await clinicService.findNearbyClinics({
+        const data = await clinicService.findNearbyPlaces({
           lat,
           lng,
           radiusKm,
-          specialty: specialty ?? undefined,
+          openNow: openNow || undefined,
         });
         setClinics(data);
         setState(data.length === 0 ? 'empty' : 'success');
@@ -85,23 +72,25 @@ export function ClinicSearchScreen() {
         lng: location.coords.longitude,
       };
       setUserLocation(coords);
-      await loadClinics(coords.lat, coords.lng, selectedRadius, selectedSpecialty);
+      await loadClinics(coords.lat, coords.lng, selectedRadius, openNowFilter);
     } catch {
       setErrorMessage('Não foi possível obter sua localização.');
       setState('error');
     }
-  }, [loadClinics, selectedRadius, selectedSpecialty]);
+  }, [loadClinics, selectedRadius, openNowFilter]);
 
   useEffect(() => {
-    requestLocationAndLoad();
-  }, []);
+    if (isReady) {
+      requestLocationAndLoad();
+    }
+  }, [isReady]);
 
   const applyFilters = useCallback(
-    async (radiusKm: number, specialty: string | null) => {
+    async (radiusKm: number, openNow: boolean) => {
       if (!userLocation) return;
       setSelectedClinic(null);
       setIsSearching(true);
-      await loadClinics(userLocation.lat, userLocation.lng, radiusKm, specialty);
+      await loadClinics(userLocation.lat, userLocation.lng, radiusKm, openNow);
       setIsSearching(false);
     },
     [userLocation, loadClinics],
@@ -110,21 +99,19 @@ export function ClinicSearchScreen() {
   const handleRadiusChange = useCallback(
     (radius: number) => {
       setSelectedRadius(radius);
-      applyFilters(radius, selectedSpecialty);
+      applyFilters(radius, openNowFilter);
     },
-    [applyFilters, selectedSpecialty],
+    [applyFilters, openNowFilter],
   );
 
-  const handleSpecialtyChange = useCallback(
-    (specialty: string | null) => {
-      setSelectedSpecialty(specialty);
-      applyFilters(selectedRadius, specialty);
-    },
-    [applyFilters, selectedRadius],
-  );
+  const handleOpenNowToggle = useCallback(() => {
+    const newValue = !openNowFilter;
+    setOpenNowFilter(newValue);
+    applyFilters(selectedRadius, newValue);
+  }, [applyFilters, selectedRadius, openNowFilter]);
 
   const handleMarkerPress = useCallback(
-    (e: { stopPropagation: () => void }, clinic: ClinicaResponseDto) => {
+    (e: { stopPropagation: () => void }, clinic: PlacesClinicResponseDto) => {
       e.stopPropagation();
       setSelectedClinic(clinic);
     },
@@ -198,7 +185,7 @@ export function ClinicSearchScreen() {
       <MapView
         ref={mapRef}
         style={styles.map}
-        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+        provider={PROVIDER_GOOGLE}
         initialRegion={initialRegion}
         showsUserLocation
         showsMyLocationButton
@@ -206,14 +193,14 @@ export function ClinicSearchScreen() {
       >
         {clinics.map((clinic) => (
           <Marker
-            key={clinic.id}
+            key={clinic.placeId}
             coordinate={{
-              latitude: clinic.coordinates.coordinates[1],
-              longitude: clinic.coordinates.coordinates[0],
+              latitude: clinic.coordinates.lat,
+              longitude: clinic.coordinates.lng,
             }}
             onPress={(e) => handleMarkerPress(e, clinic)}
           >
-            <View style={styles.markerContainer}>
+            <View style={[styles.markerContainer, clinic.openNow === false && styles.markerClosed]}>
               <Ionicons name="medkit" size={20} color={colors.white} />
             </View>
           </Marker>
@@ -242,55 +229,46 @@ export function ClinicSearchScreen() {
               </Text>
             </Pressable>
           ))}
-        </ScrollView>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filtersContent}
-        >
+
+          <View style={styles.chipDivider} />
+
           <Pressable
-            onPress={() => handleSpecialtyChange(null)}
-            style={[styles.chip, selectedSpecialty === null && styles.chipActive]}
+            onPress={handleOpenNowToggle}
+            style={[styles.chip, openNowFilter && styles.chipActive]}
           >
-            <Text style={[styles.chipText, selectedSpecialty === null && styles.chipTextActive]}>
-              Todas
+            <Ionicons
+              name="time-outline"
+              size={14}
+              color={openNowFilter ? colors.white : colors.text}
+            />
+            <Text style={[styles.chipText, openNowFilter && styles.chipTextActive]}>
+              Aberto agora
             </Text>
           </Pressable>
-          {SPECIALTY_OPTIONS.map((spec) => (
-            <Pressable
-              key={spec}
-              onPress={() => handleSpecialtyChange(spec)}
-              style={[styles.chip, selectedSpecialty === spec && styles.chipActive]}
-            >
-              <Text style={[styles.chipText, selectedSpecialty === spec && styles.chipTextActive]}>
-                {spec}
-              </Text>
-            </Pressable>
-          ))}
         </ScrollView>
       </View>
 
       {isSearching && (
-        <View style={[styles.searchingOverlay, { top: insets.top + spacing.sm + 88 }]}>
+        <View style={[styles.searchingOverlay, { top: insets.top + spacing.sm + 52 }]}>
           <ActivityIndicator color={colors.primary} size="small" />
           <Text style={styles.searchingText}>Atualizando...</Text>
         </View>
       )}
 
       {state === 'empty' && !isSearching && (
-        <View style={[styles.emptyOverlay, { top: insets.top + spacing.sm + 88 }]}>
+        <View style={[styles.emptyOverlay, { top: insets.top + spacing.sm + 52 }]}>
           <View style={styles.emptyCard}>
             <Ionicons name="search-outline" size={20} color={colors.muted} />
-            <Text style={styles.emptyText}>Nenhuma clínica encontrada com os filtros atuais</Text>
+            <Text style={styles.emptyText}>Nenhuma clínica veterinária encontrada nesta área</Text>
           </View>
         </View>
       )}
 
       {state === 'error' && userLocation && !isSearching && (
-        <View style={[styles.emptyOverlay, { top: insets.top + spacing.sm + 88 }]}>
+        <View style={[styles.emptyOverlay, { top: insets.top + spacing.sm + 52 }]}>
           <Pressable
             style={styles.emptyCard}
-            onPress={() => applyFilters(selectedRadius, selectedSpecialty)}
+            onPress={() => applyFilters(selectedRadius, openNowFilter)}
           >
             <Ionicons name="alert-circle-outline" size={20} color={colors.danger} />
             <Text style={styles.emptyText}>
@@ -382,12 +360,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 36,
   },
+  markerClosed: {
+    backgroundColor: colors.muted,
+  },
   filtersContainer: {
     left: 0,
     position: 'absolute',
     right: 0,
   },
   filtersContent: {
+    alignItems: 'center',
     gap: spacing.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
@@ -415,6 +397,11 @@ const styles = StyleSheet.create({
   },
   chipTextActive: {
     color: colors.white,
+  },
+  chipDivider: {
+    backgroundColor: colors.border,
+    height: 20,
+    width: 1,
   },
   searchingOverlay: {
     alignItems: 'center',
