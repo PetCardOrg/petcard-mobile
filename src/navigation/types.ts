@@ -20,6 +20,7 @@ export type MainTabParamList = {
   Home: NavigatorScreenParams<HomeStackParamList> | undefined;
   Pets: undefined;
   Health: undefined;
+  Clinics: undefined;
   Profile: undefined;
 };
 
