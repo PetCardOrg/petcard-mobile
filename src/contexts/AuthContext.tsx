@@ -18,11 +18,20 @@ import { setTokenProvider, setUnauthorizedHandler } from '../services/api';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const AUTH0_DOMAIN = process.env.EXPO_PUBLIC_AUTH0_DOMAIN ?? 'dev-3ctynkt3ic4soew6.us.auth0.com';
-const AUTH0_CLIENT_ID =
-  process.env.EXPO_PUBLIC_AUTH0_CLIENT_ID ?? 'CtwyNYEawT7g2BKffN1VcXyii2jgDJN0';
-const AUTH0_AUDIENCE = process.env.EXPO_PUBLIC_AUTH0_AUDIENCE ?? 'https://api.petcard.local';
-const AUTH0_SCHEME = process.env.EXPO_PUBLIC_AUTH0_SCHEME ?? 'petcard';
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value || value.trim().length === 0) {
+    throw new Error(
+      `Missing required environment variable: ${name}. Set it in your .env file (see .env.example).`,
+    );
+  }
+  return value;
+}
+
+const AUTH0_DOMAIN = requireEnv('EXPO_PUBLIC_AUTH0_DOMAIN');
+const AUTH0_CLIENT_ID = requireEnv('EXPO_PUBLIC_AUTH0_CLIENT_ID');
+const AUTH0_AUDIENCE = requireEnv('EXPO_PUBLIC_AUTH0_AUDIENCE');
+const AUTH0_SCHEME = requireEnv('EXPO_PUBLIC_AUTH0_SCHEME');
 const AUTH0_SCOPE = 'openid profile email offline_access';
 
 const STORE_ACCESS_TOKEN = 'auth_access_token';
