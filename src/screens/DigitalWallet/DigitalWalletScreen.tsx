@@ -17,6 +17,7 @@ import { Species } from '@petcardorg/shared';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { isAxiosError } from 'axios';
+import { useTranslation } from 'react-i18next';
 
 import { ErrorState } from '../../components/ui/ErrorState';
 import type { HomeStackParamList } from '../../navigation/types';
@@ -40,6 +41,7 @@ function SummaryCard({
   primaryValue: number | null;
   secondaryValue: number | null;
 }) {
+  const { t } = useTranslation();
   const isUnavailable = primaryValue == null || secondaryValue == null;
 
   return (
@@ -50,8 +52,12 @@ function SummaryCard({
       <Text style={styles.summaryLabel}>{label}</Text>
       {isUnavailable ? (
         <>
-          <Text style={styles.summaryUnavailableValue}>Indisponível</Text>
-          <Text style={styles.summaryUnavailableHint}>Atualize para tentar novamente</Text>
+          <Text style={styles.summaryUnavailableValue}>
+            {t('digitalWallet.summary.unavailable')}
+          </Text>
+          <Text style={styles.summaryUnavailableHint}>
+            {t('digitalWallet.summary.unavailableHint')}
+          </Text>
         </>
       ) : (
         <>
@@ -66,6 +72,7 @@ function SummaryCard({
 }
 
 export function DigitalWalletScreen({ route }: Props) {
+  const { t } = useTranslation();
   const [wallet, setWallet] = useState<CarteiraDigitalResponseDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -142,28 +149,28 @@ export function DigitalWalletScreen({ route }: Props) {
     if (!wallet) return;
 
     Alert.alert(
-      'Regenerar QR Code',
-      'O QR Code atual será substituído por um novo. Deseja continuar?',
+      t('digitalWallet.actions.regenerateTitle'),
+      t('digitalWallet.actions.regenerateMessage'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Regenerar',
+          text: t('digitalWallet.actions.regenerateConfirm'),
           onPress: async () => {
             setIsRegenerating(true);
             try {
               const hadQrCodeBefore = !!wallet.qr_code_url;
               await cardService.regenerateQrCode(wallet.pet_id);
               Alert.alert(
-                'QR Code solicitado',
-                'Um novo QR Code está sendo gerado. Vamos atualizar esta tela por alguns segundos para buscar a versão mais recente.',
+                t('digitalWallet.actions.regenerateRequestedTitle'),
+                t('digitalWallet.actions.regenerateRequestedMessage'),
               );
               await pollWalletAfterRegeneration(hadQrCodeBefore);
             } catch (err) {
-              let message = 'Não foi possível regenerar o QR Code.';
+              let message = t('digitalWallet.actions.regenerateError');
               if (isAxiosError(err) && err.response?.data?.message) {
                 message = String(err.response.data.message);
               }
-              Alert.alert('Erro', message);
+              Alert.alert(t('common.error'), message);
             } finally {
               setIsRegenerating(false);
             }
@@ -176,15 +183,18 @@ export function DigitalWalletScreen({ route }: Props) {
   async function handleShare() {
     if (!wallet?.public_url) {
       Alert.alert(
-        'Link indisponível',
-        'A carteira digital ainda não possui um link público. Tente regenerar o QR Code.',
+        t('digitalWallet.actions.shareUnavailableTitle'),
+        t('digitalWallet.actions.shareUnavailableMessage'),
       );
       return;
     }
 
     try {
       const result = await Share.share({
-        message: `Veja a carteira digital de ${wallet.pet_name}: ${wallet.public_url}`,
+        message: t('digitalWallet.actions.shareMessage', {
+          petName: wallet.pet_name,
+          url: wallet.public_url,
+        }),
       });
 
       if (result.action === Share.dismissedAction) {
@@ -192,8 +202,8 @@ export function DigitalWalletScreen({ route }: Props) {
       }
     } catch {
       Alert.alert(
-        'Erro ao compartilhar',
-        'Não foi possível abrir o compartilhamento da carteira digital.',
+        t('digitalWallet.actions.shareErrorTitle'),
+        t('digitalWallet.actions.shareErrorMessage'),
       );
     }
   }
@@ -209,7 +219,7 @@ export function DigitalWalletScreen({ route }: Props) {
   if (error || !wallet) {
     return (
       <View style={styles.centeredPadded}>
-        <ErrorState message="Não foi possível carregar a carteira digital." onRetry={loadWallet} />
+        <ErrorState message={t('digitalWallet.errorLoading')} onRetry={loadWallet} />
       </View>
     );
   }
@@ -270,23 +280,21 @@ export function DigitalWalletScreen({ route }: Props) {
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
           <Ionicons color={colors.primary} name="calendar-outline" size={20} />
-          <Text style={styles.statLabel}>Idade</Text>
+          <Text style={styles.statLabel}>{t('digitalWallet.age')}</Text>
           <Text style={styles.statValue}>{age}</Text>
         </View>
         {wallet.weight != null ? (
           <View style={styles.statCard}>
             <Ionicons color={colors.primary} name="fitness-outline" size={20} />
-            <Text style={styles.statLabel}>Peso</Text>
+            <Text style={styles.statLabel}>{t('digitalWallet.weight')}</Text>
             <Text style={styles.statValue}>{wallet.weight} kg</Text>
           </View>
         ) : null}
       </View>
 
       <View style={styles.qrSection}>
-        <Text style={styles.sectionTitle}>QR Code da Carteira</Text>
-        <Text style={styles.sectionDescription}>
-          Escaneie o QR Code para acessar o histórico de saúde do pet.
-        </Text>
+        <Text style={styles.sectionTitle}>{t('digitalWallet.qrSection.title')}</Text>
+        <Text style={styles.sectionDescription}>{t('digitalWallet.qrSection.description')}</Text>
 
         {hasQrCode && qrImageUrl ? (
           <View style={styles.qrContainer}>
@@ -295,39 +303,35 @@ export function DigitalWalletScreen({ route }: Props) {
         ) : (
           <View style={styles.qrPlaceholder}>
             <Ionicons color={colors.muted} name="qr-code-outline" size={48} />
-            <Text style={styles.qrPlaceholderText}>
-              QR Code ainda não gerado. Aguarde alguns instantes ou solicite uma nova geração.
-            </Text>
+            <Text style={styles.qrPlaceholderText}>{t('digitalWallet.qrSection.placeholder')}</Text>
           </View>
         )}
       </View>
 
       <View style={styles.summarySection}>
-        <Text style={styles.sectionTitle}>Resumo de Saúde</Text>
-        <Text style={styles.sectionDescription}>
-          Visão rápida dos registros de vacinas, vermífugos e medicações do pet.
-        </Text>
+        <Text style={styles.sectionTitle}>{t('digitalWallet.summary.title')}</Text>
+        <Text style={styles.sectionDescription}>{t('digitalWallet.summary.description')}</Text>
 
         <View style={styles.summaryGrid}>
           <SummaryCard
             icon="medkit-outline"
-            label="Vacinas"
+            label={t('digitalWallet.summary.vaccines')}
             primaryValue={wallet.vaccines_count}
-            secondaryLabel="com próxima dose"
+            secondaryLabel={t('digitalWallet.summary.withNextDose')}
             secondaryValue={wallet.upcoming_vaccines_count}
           />
           <SummaryCard
             icon="bug-outline"
-            label="Vermífugos"
+            label={t('digitalWallet.summary.dewormings')}
             primaryValue={wallet.dewormings_count}
-            secondaryLabel="com próxima dose"
+            secondaryLabel={t('digitalWallet.summary.withNextDose')}
             secondaryValue={wallet.upcoming_dewormings_count}
           />
           <SummaryCard
             icon="bandage-outline"
-            label="Medicações"
+            label={t('digitalWallet.summary.medications')}
             primaryValue={wallet.medications_count}
-            secondaryLabel="ativas"
+            secondaryLabel={t('digitalWallet.summary.active')}
             secondaryValue={wallet.active_medications_count}
           />
         </View>
@@ -335,7 +339,7 @@ export function DigitalWalletScreen({ route }: Props) {
 
       <View style={styles.actionsRow}>
         <Pressable
-          accessibilityLabel="Compartilhar link da carteira digital"
+          accessibilityLabel={t('digitalWallet.actions.shareAccessibility')}
           accessibilityRole="button"
           disabled={!wallet.public_url}
           onPress={handleShare}
@@ -347,11 +351,11 @@ export function DigitalWalletScreen({ route }: Props) {
           ]}
         >
           <Ionicons color={colors.white} name="share-outline" size={18} />
-          <Text style={styles.shareBtnText}>Compartilhar</Text>
+          <Text style={styles.shareBtnText}>{t('digitalWallet.actions.share')}</Text>
         </Pressable>
 
         <Pressable
-          accessibilityLabel="Regenerar QR Code"
+          accessibilityLabel={t('digitalWallet.actions.regenerateAccessibility')}
           accessibilityRole="button"
           disabled={isRegenerating}
           onPress={handleRegenerate}
@@ -367,7 +371,7 @@ export function DigitalWalletScreen({ route }: Props) {
           ) : (
             <>
               <Ionicons color={colors.primaryDark} name="refresh-outline" size={18} />
-              <Text style={styles.regenerateBtnText}>Regenerar QR</Text>
+              <Text style={styles.regenerateBtnText}>{t('digitalWallet.actions.regenerate')}</Text>
             </>
           )}
         </Pressable>

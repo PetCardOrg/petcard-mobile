@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../contexts/AuthContext';
 import { LoginScreen } from '../screens/Auth/LoginScreen';
@@ -24,17 +25,6 @@ const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const HomeStack = createNativeStackNavigator<HomeStackParamList>();
 const MainTabs = createMaterialTopTabNavigator<MainTabParamList>();
 
-const healthTabs = [
-  { key: 'vaccines', label: 'Vacinas', icon: 'medkit-outline' as const, Screen: VaccineScreen },
-  { key: 'dewormings', label: 'Vermífugos', icon: 'bug-outline' as const, Screen: DewormingScreen },
-  {
-    key: 'medications',
-    label: 'Medicações',
-    icon: 'bandage-outline' as const,
-    Screen: MedicationScreen,
-  },
-];
-
 function AuthNavigator() {
   return (
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
@@ -44,6 +34,8 @@ function AuthNavigator() {
 }
 
 function HomeNavigator() {
+  const { t } = useTranslation();
+
   return (
     <HomeStack.Navigator
       screenOptions={{
@@ -62,15 +54,37 @@ function HomeNavigator() {
       <HomeStack.Screen
         component={DigitalWalletScreen}
         name="DigitalWallet"
-        options={{ title: 'Carteira Digital' }}
+        options={{ title: t('digitalWallet.title') }}
       />
     </HomeStack.Navigator>
   );
 }
 
 function HealthRecordsNavigator() {
+  const { t } = useTranslation();
+  const healthTabs = [
+    {
+      key: 'vaccines',
+      label: t('healthRecords.tabs.vaccines'),
+      icon: 'medkit-outline' as const,
+      Screen: VaccineScreen,
+    },
+    {
+      key: 'dewormings',
+      label: t('healthRecords.tabs.dewormings'),
+      icon: 'bug-outline' as const,
+      Screen: DewormingScreen,
+    },
+    {
+      key: 'medications',
+      label: t('healthRecords.tabs.medications'),
+      icon: 'bandage-outline' as const,
+      Screen: MedicationScreen,
+    },
+  ];
+
   const [activeTab, setActiveTab] = useState(healthTabs[0].key);
-  const ActiveScreen = healthTabs.find((t) => t.key === activeTab)!.Screen;
+  const ActiveScreen = healthTabs.find((tab) => tab.key === activeTab)!.Screen;
   const insets = useSafeAreaInsets();
 
   return (
@@ -100,6 +114,8 @@ function HealthRecordsNavigator() {
 }
 
 function MainNavigator() {
+  const { t } = useTranslation();
+
   return (
     <MainTabs.Navigator
       tabBarPosition="bottom"
@@ -130,7 +146,7 @@ function MainNavigator() {
         component={HomeNavigator}
         name="Home"
         options={({ route }) => ({
-          title: 'Home',
+          title: t('tabs.home'),
           swipeEnabled:
             getFocusedRouteNameFromRoute(route) !== 'PetDetails' &&
             getFocusedRouteNameFromRoute(route) !== 'DigitalWallet',
@@ -141,7 +157,7 @@ function MainNavigator() {
         component={PetRegistrationScreen}
         name="Pets"
         options={{
-          title: 'Pets',
+          title: t('tabs.pets'),
           tabBarIcon: ({ color }) => <Ionicons color={color} name="paw-outline" size={22} />,
         }}
       />
@@ -149,7 +165,7 @@ function MainNavigator() {
         component={HealthRecordsNavigator}
         name="Health"
         options={{
-          title: 'Saúde',
+          title: t('tabs.health'),
           tabBarIcon: ({ color }) => <Ionicons color={color} name="heart-outline" size={22} />,
         }}
       />
@@ -157,7 +173,7 @@ function MainNavigator() {
         component={ClinicSearchScreen}
         name="Clinics"
         options={{
-          title: 'Clínicas',
+          title: t('tabs.clinics'),
           swipeEnabled: false,
           tabBarIcon: ({ color }) => <Ionicons color={color} name="map-outline" size={22} />,
         }}
@@ -166,7 +182,7 @@ function MainNavigator() {
         component={ProfileScreen}
         name="Profile"
         options={{
-          title: 'Perfil',
+          title: t('tabs.profile'),
           tabBarIcon: ({ color }) => <Ionicons color={color} name="person-outline" size={22} />,
         }}
       />

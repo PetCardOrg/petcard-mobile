@@ -1,4 +1,5 @@
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { ScreenContainer } from '../../components/ui/ScreenContainer';
 import { useAuth } from '../../contexts/AuthContext';
@@ -6,21 +7,22 @@ import { colors, radii, spacing } from '../../utils/theme';
 
 export function LoginScreen() {
   const { isLoading, error, login } = useAuth();
+  const { t } = useTranslation();
 
   const handleLogin = async () => {
     try {
       await login();
     } catch {
-      Alert.alert('Erro no login', 'Não foi possível realizar o login. Tente novamente.');
+      Alert.alert(t('login.errorTitle'), t('login.errorMessage'));
     }
   };
 
   return (
     <ScreenContainer
-      actionLabel={isLoading ? undefined : 'Entrar'}
+      actionLabel={isLoading ? undefined : t('login.button')}
       onActionPress={handleLogin}
-      subtitle="Carteira digital de saúde para acompanhar vacinas, vermifugações e medicações dos seus pets."
-      title="PetCard"
+      subtitle={t('login.subtitle')}
+      title={t('login.title')}
     >
       {isLoading ? (
         <ActivityIndicator color={colors.primary} size="large" style={styles.loader} />
@@ -28,7 +30,7 @@ export function LoginScreen() {
 
       {error ? (
         <View style={styles.callout}>
-          <Text style={styles.calloutTitle}>Erro de autenticação</Text>
+          <Text style={styles.calloutTitle}>{t('login.authErrorTitle')}</Text>
           <Text style={styles.calloutText}>{error.message}</Text>
         </View>
       ) : null}

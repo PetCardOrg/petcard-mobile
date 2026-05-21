@@ -19,6 +19,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { isAxiosError } from 'axios';
+import { useTranslation } from 'react-i18next';
 
 import { petService, uploadService } from '../../services';
 import type { HomeStackParamList } from '../../navigation/types';
@@ -60,6 +61,8 @@ type EditFormErrors = {
 };
 
 export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
+  const { t } = useTranslation();
+
   const [pet, setPet] = useState<PetResponseDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -111,10 +114,7 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
   async function handlePickEditImage() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert(
-        'Permissão necessária',
-        'Precisamos de acesso à galeria para selecionar uma foto.',
-      );
+      Alert.alert(t('petDetails.permissionRequired'), t('petDetails.permissionGallery'));
       return;
     }
 
@@ -132,9 +132,9 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
 
   function validateEditForm(): boolean {
     const errors: EditFormErrors = {};
-    if (!editName.trim()) errors.name = 'Nome é obrigatório';
+    if (!editName.trim()) errors.name = t('validation.nameRequired');
     if (editBirthDate.length > 0 && !parseDate(editBirthDate)) {
-      errors.birthDate = 'Data inválida. Use DD/MM/AAAA';
+      errors.birthDate = t('validation.dateInvalid');
     }
     setEditFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -167,13 +167,13 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
       setPet(updated);
       navigation.setParams({ petName: updated.name });
       setEditModalVisible(false);
-      Alert.alert('Sucesso', 'Pet atualizado com sucesso!');
+      Alert.alert(t('petDetails.editModal.successTitle'), t('petDetails.editModal.successMessage'));
     } catch (err) {
-      let message = 'Não foi possível atualizar o pet.';
+      let message = t('petDetails.editModal.errorMessage');
       if (isAxiosError(err) && err.response?.data?.message) {
         message = String(err.response.data.message);
       }
-      Alert.alert('Erro', message);
+      Alert.alert(t('common.error'), message);
     } finally {
       setIsSubmitting(false);
     }
@@ -182,12 +182,12 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
   function confirmDelete() {
     if (!pet) return;
     Alert.alert(
-      'Excluir pet',
-      `Deseja excluir "${pet.name}"? Todos os registros de saúde serão removidos.`,
+      t('petDetails.deleteDialog.title'),
+      t('petDetails.deleteDialog.message', { name: pet.name }),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Excluir',
+          text: t('petDetails.deleteDialog.confirm'),
           style: 'destructive',
           onPress: () => void handleDelete(),
         },
@@ -199,14 +199,17 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
     if (!pet) return;
     try {
       await petService.deletePet(pet.id);
-      Alert.alert('Sucesso', 'Pet excluído com sucesso.');
+      Alert.alert(
+        t('petDetails.deleteDialog.successTitle'),
+        t('petDetails.deleteDialog.successMessage'),
+      );
       navigation.goBack();
     } catch (err) {
-      let message = 'Não foi possível excluir o pet.';
+      let message = t('petDetails.deleteDialog.errorMessage');
       if (isAxiosError(err) && err.response?.data?.message) {
         message = String(err.response.data.message);
       }
-      Alert.alert('Erro', message);
+      Alert.alert(t('common.error'), message);
     }
   }
 
@@ -222,7 +225,7 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
     return (
       <View style={styles.centered}>
         <Ionicons color={colors.muted} name="alert-circle-outline" size={48} />
-        <Text style={styles.errorText}>Não foi possível carregar os dados.</Text>
+        <Text style={styles.errorText}>{t('petDetails.errorLoading')}</Text>
       </View>
     );
   }
@@ -261,26 +264,30 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
 
       {/* Info card */}
       <View style={styles.card}>
-        <InfoRow icon={sex.icon} label="Sexo" value={sex.label} />
+        <InfoRow icon={sex.icon} label={t('petDetails.labels.sex')} value={sex.label} />
         <View style={styles.separator} />
-        <InfoRow icon="calendar-outline" label="Idade" value={age} />
+        <InfoRow icon="calendar-outline" label={t('petDetails.labels.age')} value={age} />
         {pet.weight != null ? (
           <>
             <View style={styles.separator} />
-            <InfoRow icon="fitness-outline" label="Peso" value={`${pet.weight} kg`} />
+            <InfoRow
+              icon="fitness-outline"
+              label={t('petDetails.labels.weight')}
+              value={`${pet.weight} kg`}
+            />
           </>
         ) : null}
       </View>
 
       {/* Digital Wallet button */}
       <Pressable
-        accessibilityLabel="Abrir carteira digital"
+        accessibilityLabel={t('petDetails.openWalletAccessibility')}
         accessibilityRole="button"
         onPress={() => navigation.navigate('DigitalWallet', { petId: pet.id, petName: pet.name })}
         style={({ pressed }) => [styles.walletBtn, pressed && styles.pressed]}
       >
         <Ionicons color={colors.white} name="card-outline" size={18} />
-        <Text style={styles.walletBtnText}>Carteira Digital</Text>
+        <Text style={styles.walletBtnText}>{t('petDetails.digitalWallet')}</Text>
       </Pressable>
 
       {/* Action buttons */}
@@ -290,14 +297,14 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
           style={({ pressed }) => [styles.actionBtn, styles.editBtn, pressed && styles.pressed]}
         >
           <Ionicons color={colors.primaryDark} name="create-outline" size={18} />
-          <Text style={styles.editBtnText}>Editar</Text>
+          <Text style={styles.editBtnText}>{t('petDetails.edit')}</Text>
         </Pressable>
         <Pressable
           onPress={confirmDelete}
           style={({ pressed }) => [styles.actionBtn, styles.deleteBtn, pressed && styles.pressed]}
         >
           <Ionicons color={colors.danger} name="trash-outline" size={18} />
-          <Text style={styles.deleteBtnText}>Excluir</Text>
+          <Text style={styles.deleteBtnText}>{t('petDetails.delete')}</Text>
         </Pressable>
       </View>
 
@@ -315,7 +322,7 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
           >
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Editar pet</Text>
+                <Text style={styles.modalTitle}>{t('petDetails.editModal.title')}</Text>
                 <Pressable onPress={() => setEditModalVisible(false)}>
                   <Ionicons color={colors.muted} name="close" size={24} />
                 </Pressable>
@@ -344,11 +351,11 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
                 </Pressable>
 
                 <View style={styles.field}>
-                  <Text style={styles.label}>Nome *</Text>
+                  <Text style={styles.label}>{t('petDetails.editModal.nameLabel')}</Text>
                   <TextInput
                     autoCapitalize="words"
-                    onChangeText={(t) => {
-                      setEditName(t);
+                    onChangeText={(text) => {
+                      setEditName(text);
                       if (editFormErrors.name)
                         setEditFormErrors((e) => ({ ...e, name: undefined }));
                     }}
@@ -362,11 +369,11 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
                 </View>
 
                 <View style={styles.field}>
-                  <Text style={styles.label}>Raça</Text>
+                  <Text style={styles.label}>{t('petDetails.editModal.breedLabel')}</Text>
                   <TextInput
                     autoCapitalize="words"
                     onChangeText={setEditBreed}
-                    placeholder="Raça do pet"
+                    placeholder={t('petDetails.editModal.breedPlaceholder')}
                     placeholderTextColor={colors.muted}
                     style={styles.input}
                     value={editBreed}
@@ -374,16 +381,16 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
                 </View>
 
                 <View style={styles.field}>
-                  <Text style={styles.label}>Data de nascimento</Text>
+                  <Text style={styles.label}>{t('petDetails.editModal.birthDateLabel')}</Text>
                   <TextInput
                     keyboardType="number-pad"
                     maxLength={10}
-                    onChangeText={(t) => {
-                      setEditBirthDate(formatDateInput(t));
+                    onChangeText={(text) => {
+                      setEditBirthDate(formatDateInput(text));
                       if (editFormErrors.birthDate)
                         setEditFormErrors((e) => ({ ...e, birthDate: undefined }));
                     }}
-                    placeholder="DD/MM/AAAA"
+                    placeholder={t('common.datePlaceholder')}
                     placeholderTextColor={colors.muted}
                     style={[styles.input, editFormErrors.birthDate ? styles.inputError : null]}
                     value={editBirthDate}
@@ -394,7 +401,7 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
                 </View>
 
                 <View style={styles.field}>
-                  <Text style={styles.label}>Peso (kg)</Text>
+                  <Text style={styles.label}>{t('petDetails.editModal.weightLabel')}</Text>
                   <TextInput
                     keyboardType="decimal-pad"
                     onChangeText={setEditWeight}
@@ -417,7 +424,7 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
                   {isSubmitting ? (
                     <ActivityIndicator color={colors.white} size="small" />
                   ) : (
-                    <Text style={styles.submitButtonText}>Salvar alterações</Text>
+                    <Text style={styles.submitButtonText}>{t('petDetails.editModal.submit')}</Text>
                   )}
                 </Pressable>
               </ScrollView>

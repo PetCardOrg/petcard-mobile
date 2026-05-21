@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { useTranslation } from 'react-i18next';
 import type { PlacesClinicResponseDto } from '@petcardorg/shared';
 
 import { colors, radii, spacing, typography } from '../../utils/theme';
@@ -20,6 +21,7 @@ type ScreenState = 'loading' | 'permission_denied' | 'error' | 'empty' | 'succes
 export function ClinicSearchScreen() {
   const insets = useSafeAreaInsets();
   const { isReady } = useAuth();
+  const { t } = useTranslation();
   const mapRef = useRef<MapView>(null);
 
   const [state, setState] = useState<ScreenState>('loading');
@@ -44,7 +46,7 @@ export function ClinicSearchScreen() {
         setClinics(data);
         setState(data.length === 0 ? 'empty' : 'success');
       } catch {
-        setErrorMessage('Não foi possível buscar clínicas próximas.');
+        setErrorMessage(t('clinics.errorLoading'));
         setState('error');
       }
     },
@@ -74,7 +76,7 @@ export function ClinicSearchScreen() {
       setUserLocation(coords);
       await loadClinics(coords.lat, coords.lng, selectedRadius, openNowFilter);
     } catch {
-      setErrorMessage('Não foi possível obter sua localização.');
+      setErrorMessage(t('clinics.errorLocation'));
       setState('error');
     }
   }, [loadClinics, selectedRadius, openNowFilter]);
@@ -126,7 +128,7 @@ export function ClinicSearchScreen() {
     return (
       <View style={[styles.centered, { paddingTop: insets.top }]}>
         <ActivityIndicator color={colors.primary} size="large" />
-        <Text style={styles.loadingText}>Buscando clínicas próximas...</Text>
+        <Text style={styles.loadingText}>{t('clinics.loading')}</Text>
       </View>
     );
   }
@@ -137,16 +139,13 @@ export function ClinicSearchScreen() {
         <View style={styles.iconCircle}>
           <Ionicons color={colors.warning} name="location-outline" size={40} />
         </View>
-        <Text style={styles.stateTitle}>Localização necessária</Text>
-        <Text style={styles.stateDescription}>
-          Para mostrar clínicas próximas, precisamos acessar sua localização. Habilite a permissão
-          nas configurações do dispositivo.
-        </Text>
+        <Text style={styles.stateTitle}>{t('clinics.permissionTitle')}</Text>
+        <Text style={styles.stateDescription}>{t('clinics.permissionDescription')}</Text>
         <Pressable
           onPress={requestLocationAndLoad}
           style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}
         >
-          <Text style={styles.retryButtonText}>Tentar novamente</Text>
+          <Text style={styles.retryButtonText}>{t('clinics.retry')}</Text>
         </Pressable>
       </View>
     );
@@ -158,14 +157,14 @@ export function ClinicSearchScreen() {
         <View style={[styles.iconCircle, styles.iconCircleError]}>
           <Ionicons color={colors.danger} name="alert-circle-outline" size={40} />
         </View>
-        <Text style={styles.stateTitle}>Ops, algo deu errado</Text>
+        <Text style={styles.stateTitle}>{t('clinics.errorTitle')}</Text>
         <Text style={styles.stateDescription}>{errorMessage}</Text>
         <Pressable
           onPress={requestLocationAndLoad}
           style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}
         >
           <Ionicons color={colors.white} name="refresh" size={18} style={styles.retryIcon} />
-          <Text style={styles.retryButtonText}>Tentar novamente</Text>
+          <Text style={styles.retryButtonText}>{t('clinics.retry')}</Text>
         </Pressable>
       </View>
     );
@@ -242,7 +241,7 @@ export function ClinicSearchScreen() {
               color={openNowFilter ? colors.white : colors.text}
             />
             <Text style={[styles.chipText, openNowFilter && styles.chipTextActive]}>
-              Aberto agora
+              {t('clinics.openNow')}
             </Text>
           </Pressable>
         </ScrollView>
@@ -251,7 +250,7 @@ export function ClinicSearchScreen() {
       {isSearching && (
         <View style={[styles.searchingOverlay, { top: insets.top + spacing.sm + 52 }]}>
           <ActivityIndicator color={colors.primary} size="small" />
-          <Text style={styles.searchingText}>Atualizando...</Text>
+          <Text style={styles.searchingText}>{t('clinics.updating')}</Text>
         </View>
       )}
 
@@ -259,7 +258,7 @@ export function ClinicSearchScreen() {
         <View style={[styles.emptyOverlay, { top: insets.top + spacing.sm + 52 }]}>
           <View style={styles.emptyCard}>
             <Ionicons name="search-outline" size={20} color={colors.muted} />
-            <Text style={styles.emptyText}>Nenhuma clínica veterinária encontrada nesta área</Text>
+            <Text style={styles.emptyText}>{t('clinics.emptyResult')}</Text>
           </View>
         </View>
       )}
@@ -271,9 +270,7 @@ export function ClinicSearchScreen() {
             onPress={() => applyFilters(selectedRadius, openNowFilter)}
           >
             <Ionicons name="alert-circle-outline" size={20} color={colors.danger} />
-            <Text style={styles.emptyText}>
-              Erro ao buscar clínicas. Toque para tentar novamente
-            </Text>
+            <Text style={styles.emptyText}>{t('clinics.errorRetry')}</Text>
           </Pressable>
         </View>
       )}

@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { MaterialTopTabNavigationProp } from '@react-navigation/material-top-tabs';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { PetCard } from '../../components/domain/PetCard';
 import { PetCardSkeleton } from '../../components/ui/PetCardSkeleton';
@@ -24,6 +25,7 @@ type HomeScreenNavigation = CompositeNavigationProp<
 export function HomeScreen() {
   const navigation = useNavigation<HomeScreenNavigation>();
   const { pets, isLoading, isRefreshing, errorMessage, refresh, retry } = usePets();
+  const { t } = useTranslation();
 
   const handleAddPet = () => {
     navigation.navigate('Pets');
@@ -49,11 +51,11 @@ export function HomeScreen() {
 
     return (
       <EmptyState
-        actionLabel="Adicionar pet"
-        description="Adicione seu primeiro pet para acompanhar vacinas, vermifugações e medicações."
+        actionLabel={t('home.emptyAction')}
+        description={t('home.emptyDescription')}
         icon="paw-outline"
         onActionPress={handleAddPet}
-        title="Nenhum pet cadastrado"
+        title={t('home.emptyTitle')}
       />
     );
   };
@@ -69,6 +71,11 @@ export function HomeScreen() {
     );
   };
 
+  const titleText =
+    !isLoading && pets.length > 0
+      ? t('home.titleWithCount', { count: pets.length })
+      : t('home.title');
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -80,10 +87,8 @@ export function HomeScreen() {
         {/* Title row */}
         <View style={styles.titleRow}>
           <View style={styles.titleCopy}>
-            <Text style={styles.title}>
-              Meus pets{!isLoading && pets.length > 0 ? ` (${pets.length})` : ''}
-            </Text>
-            <Text style={styles.subtitle}>Acompanhe a saúde dos seus pets.</Text>
+            <Text style={styles.title}>{titleText}</Text>
+            <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
           </View>
           <Pressable
             accessibilityRole="button"
@@ -91,7 +96,7 @@ export function HomeScreen() {
             style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}
           >
             <Ionicons color={colors.white} name="add" size={18} style={styles.addButtonIcon} />
-            <Text style={styles.addButtonText}>Adicionar</Text>
+            <Text style={styles.addButtonText}>{t('home.addButton')}</Text>
           </Pressable>
         </View>
 
@@ -122,7 +127,7 @@ export function HomeScreen() {
 
         {/* FAB visível só quando tem pets */}
         {!isLoading && pets.length > 0 ? (
-          <FAB accessibilityLabel="Adicionar pet" onPress={handleAddPet} />
+          <FAB accessibilityLabel={t('home.addPetAccessibility')} onPress={handleAddPet} />
         ) : null}
       </View>
     </SafeAreaView>

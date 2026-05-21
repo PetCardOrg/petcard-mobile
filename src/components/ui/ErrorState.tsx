@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 import { colors, radii, spacing, typography } from '../../utils/theme';
 
@@ -9,13 +10,16 @@ type ErrorStateProps = {
   onRetry?: () => void;
 };
 
-export function ErrorState({ title = 'Ops, algo deu errado', message, onRetry }: ErrorStateProps) {
+export function ErrorState({ title, message, onRetry }: ErrorStateProps) {
+  const { t } = useTranslation();
+  const displayTitle = title ?? t('common.errorDefault');
+
   return (
     <View style={styles.container}>
       <View style={styles.iconCircle}>
         <Ionicons color={colors.danger} name="alert-circle-outline" size={40} />
       </View>
-      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.title}>{displayTitle}</Text>
       <Text style={styles.message}>{message}</Text>
       {onRetry ? (
         <Pressable
@@ -24,7 +28,7 @@ export function ErrorState({ title = 'Ops, algo deu errado', message, onRetry }:
           style={({ pressed }) => [styles.button, pressed && styles.pressed]}
         >
           <Ionicons color={colors.white} name="refresh" size={18} style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>Tentar novamente</Text>
+          <Text style={styles.buttonText}>{t('common.retry')}</Text>
         </Pressable>
       ) : null}
     </View>
