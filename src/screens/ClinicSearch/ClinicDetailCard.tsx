@@ -1,5 +1,7 @@
 import { Alert, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import type { PlacesClinicResponseDto } from '@petcardorg/shared';
 
 import { colors, radii, spacing, typography } from '../../utils/theme';
@@ -21,9 +23,12 @@ function sanitizePhone(phone: string): string {
   return phone.replace(/[^+\d]/g, '');
 }
 
-async function handleCall(phone: string | undefined) {
+async function handleCall(phone: string | undefined, t: TFunction) {
   if (!phone) {
-    Alert.alert('Telefone indisponível', 'Esta clínica não possui telefone cadastrado.');
+    Alert.alert(
+      t('clinics.detail.phoneUnavailableTitle'),
+      t('clinics.detail.phoneUnavailableMessage'),
+    );
     return;
   }
 
@@ -31,21 +36,21 @@ async function handleCall(phone: string | undefined) {
   try {
     const supported = await Linking.canOpenURL(url);
     if (!supported) {
-      Alert.alert('Não foi possível ligar', 'Seu dispositivo não suporta chamadas telefônicas.');
+      Alert.alert(t('clinics.detail.callErrorTitle'), t('clinics.detail.callErrorMessage'));
       return;
     }
     await Linking.openURL(url);
   } catch {
-    Alert.alert('Erro', 'Não foi possível abrir o discador.');
+    Alert.alert(t('common.error'), t('clinics.detail.dialerError'));
   }
 }
 
-async function handleOpenMaps(url: string | undefined) {
+async function handleOpenMaps(url: string | undefined, t: TFunction) {
   if (!url) return;
   try {
     await Linking.openURL(url);
   } catch {
-    Alert.alert('Erro', 'Não foi possível abrir o Google Maps.');
+    Alert.alert(t('common.error'), t('clinics.detail.mapsError'));
   }
 }
 
@@ -69,6 +74,8 @@ function RatingStars({ rating }: { rating: number }) {
 }
 
 export function ClinicDetailCard({ clinic, onDismiss, bottomInset }: ClinicDetailCardProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={[styles.container, { paddingBottom: Math.max(bottomInset, spacing.md) }]}>
       <View style={styles.card}>
@@ -107,7 +114,7 @@ export function ClinicDetailCard({ clinic, onDismiss, bottomInset }: ClinicDetai
                           clinic.openNow ? styles.statusTextOpen : styles.statusTextClosed,
                         ]}
                       >
-                        {clinic.openNow ? 'Aberto' : 'Fechado'}
+                        {clinic.openNow ? t('clinics.detail.open') : t('clinics.detail.closed')}
                       </Text>
                     </View>
                   ) : null}
@@ -146,7 +153,7 @@ export function ClinicDetailCard({ clinic, onDismiss, bottomInset }: ClinicDetai
 
           <View style={styles.actions}>
             <Pressable
-              onPress={() => handleCall(clinic.phone)}
+              onPress={() => handleCall(clinic.phone, t)}
               style={({ pressed }) => [
                 styles.actionButton,
                 styles.callButton,
@@ -158,13 +165,13 @@ export function ClinicDetailCard({ clinic, onDismiss, bottomInset }: ClinicDetai
               <Text
                 style={[styles.actionButtonText, !clinic.phone && styles.actionButtonTextDisabled]}
               >
-                Ligar
+                {t('clinics.detail.call')}
               </Text>
             </Pressable>
 
             {clinic.googleMapsUrl ? (
               <Pressable
-                onPress={() => handleOpenMaps(clinic.googleMapsUrl)}
+                onPress={() => handleOpenMaps(clinic.googleMapsUrl, t)}
                 style={({ pressed }) => [
                   styles.actionButton,
                   styles.mapsButton,
@@ -172,7 +179,9 @@ export function ClinicDetailCard({ clinic, onDismiss, bottomInset }: ClinicDetai
                 ]}
               >
                 <Ionicons name="map-outline" size={18} color={colors.primary} />
-                <Text style={[styles.actionButtonText, styles.mapsButtonText]}>Rotas</Text>
+                <Text style={[styles.actionButtonText, styles.mapsButtonText]}>
+                  {t('clinics.detail.routes')}
+                </Text>
               </Pressable>
             ) : null}
           </View>

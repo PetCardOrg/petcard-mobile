@@ -38,4 +38,5 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     favicon: './assets/favicon.png',
   },
   scheme: 'petcard',
+  plugins: ['expo-localization'],
 });

@@ -22,6 +22,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { MaterialTopTabNavigationProp } from '@react-navigation/material-top-tabs';
 import * as ImagePicker from 'expo-image-picker';
 import { isAxiosError } from 'axios';
+import { useTranslation } from 'react-i18next';
 
 import { petService, uploadService } from '../../services';
 import type { MainTabParamList } from '../../navigation/types';
@@ -29,18 +30,6 @@ import { formatDateInput, parseDate } from '../../utils/dateUtils';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 
 type PetFormData = Omit<CreatePetDto, 'photo_url'>;
-
-const SPECIES_OPTIONS: { label: string; value: Species }[] = [
-  { label: 'Cachorro', value: Species.DOG },
-  { label: 'Gato', value: Species.CAT },
-  { label: 'Ave', value: Species.BIRD },
-  { label: 'Outro', value: Species.OTHER },
-];
-
-const SEX_OPTIONS: { label: string; value: Sex }[] = [
-  { label: 'Macho', value: Sex.MALE },
-  { label: 'Fêmea', value: Sex.FEMALE },
-];
 
 const BREED_SUGGESTIONS: Record<Species, string[]> = {
   [Species.DOG]: [
@@ -85,7 +74,20 @@ const BREED_SUGGESTIONS: Record<Species, string[]> = {
 };
 
 export function PetRegistrationScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation<MaterialTopTabNavigationProp<MainTabParamList>>();
+
+  const SPECIES_OPTIONS: { label: string; value: Species }[] = [
+    { label: t('species.DOG'), value: Species.DOG },
+    { label: t('species.CAT'), value: Species.CAT },
+    { label: t('species.BIRD'), value: Species.BIRD },
+    { label: t('species.OTHER'), value: Species.OTHER },
+  ];
+
+  const SEX_OPTIONS: { label: string; value: Sex }[] = [
+    { label: t('sex.MALE'), value: Sex.MALE },
+    { label: t('sex.FEMALE'), value: Sex.FEMALE },
+  ];
 
   const [name, setName] = useState('');
   const [species, setSpecies] = useState<Species | null>(null);
@@ -111,14 +113,14 @@ export function PetRegistrationScreen() {
 
   function validate(): boolean {
     const newErrors: typeof errors = {};
-    if (!name.trim()) newErrors.name = 'Nome é obrigatório';
-    if (!species) newErrors.species = 'Espécie é obrigatória';
+    if (!name.trim()) newErrors.name = t('validation.nameRequired');
+    if (!species) newErrors.species = t('validation.speciesRequired');
     if (species === Species.OTHER && !customSpecies.trim()) {
-      newErrors.customSpecies = 'Informe qual é o animal';
+      newErrors.customSpecies = t('validation.customSpeciesRequired');
     }
-    if (!sex) newErrors.sex = 'Sexo é obrigatório';
+    if (!sex) newErrors.sex = t('validation.sexRequired');
     if (birthDate.length > 0 && !parseDate(birthDate)) {
-      newErrors.birthDate = 'Data inválida. Use DD/MM/AAAA';
+      newErrors.birthDate = t('validation.dateInvalid');
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -127,10 +129,7 @@ export function PetRegistrationScreen() {
   async function handlePickImage() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert(
-        'Permissão necessária',
-        'Precisamos de acesso à galeria para selecionar uma foto.',
-      );
+      Alert.alert(t('petRegistration.permissionRequired'), t('petRegistration.permissionGallery'));
       return;
     }
 
@@ -183,15 +182,15 @@ export function PetRegistrationScreen() {
         ...(photoUrl ? { photo_url: photoUrl } : {}),
       });
 
-      Alert.alert('Sucesso', 'Pet cadastrado com sucesso!', [
+      Alert.alert(t('petRegistration.successTitle'), t('petRegistration.successMessage'), [
         { text: 'OK', onPress: () => navigation.navigate('Home') },
       ]);
     } catch (err) {
-      let message = 'Não foi possível cadastrar o pet. Tente novamente.';
+      let message = t('petRegistration.errorMessage');
       if (isAxiosError(err) && err.response?.data?.message) {
         message = String(err.response.data.message);
       }
-      Alert.alert('Erro', message);
+      Alert.alert(t('common.error'), message);
     } finally {
       setIsSubmitting(false);
     }
@@ -213,8 +212,8 @@ export function PetRegistrationScreen() {
             <View style={styles.logoMark}>
               <Ionicons color={colors.white} name="paw" size={20} />
             </View>
-            <Text style={styles.title}>Cadastrar Pet</Text>
-            <Text style={styles.subtitle}>Preencha os dados do seu pet.</Text>
+            <Text style={styles.title}>{t('petRegistration.title')}</Text>
+            <Text style={styles.subtitle}>{t('petRegistration.subtitle')}</Text>
           </View>
 
           {/* Photo */}
@@ -224,21 +223,21 @@ export function PetRegistrationScreen() {
             ) : (
               <View style={styles.photoPlaceholder}>
                 <Ionicons color={colors.muted} name="camera-outline" size={32} />
-                <Text style={styles.photoText}>Adicionar foto</Text>
+                <Text style={styles.photoText}>{t('petRegistration.addPhoto')}</Text>
               </View>
             )}
           </Pressable>
 
           {/* Nome */}
           <View style={styles.field}>
-            <Text style={styles.label}>Nome *</Text>
+            <Text style={styles.label}>{t('petRegistration.nameLabel')}</Text>
             <TextInput
               autoCapitalize="words"
-              onChangeText={(t) => {
-                setName(t);
+              onChangeText={(txt) => {
+                setName(txt);
                 if (errors.name) setErrors((e) => ({ ...e, name: undefined }));
               }}
-              placeholder="Ex: Rex, Luna, Pipoca..."
+              placeholder={t('petRegistration.namePlaceholder')}
               placeholderTextColor={colors.muted}
               style={[styles.input, errors.name ? styles.inputError : null]}
               value={name}
@@ -248,7 +247,7 @@ export function PetRegistrationScreen() {
 
           {/* Espécie */}
           <View style={styles.field}>
-            <Text style={styles.label}>Espécie *</Text>
+            <Text style={styles.label}>{t('petRegistration.speciesLabel')}</Text>
             <View style={styles.chipRow}>
               {SPECIES_OPTIONS.map((opt) => (
                 <Pressable
@@ -275,14 +274,14 @@ export function PetRegistrationScreen() {
           {/* Qual animal (quando Outro) */}
           {species === Species.OTHER ? (
             <View style={styles.field}>
-              <Text style={styles.label}>Qual animal? *</Text>
+              <Text style={styles.label}>{t('petRegistration.customSpeciesLabel')}</Text>
               <TextInput
                 autoCapitalize="words"
-                onChangeText={(t) => {
-                  setCustomSpecies(t);
+                onChangeText={(txt) => {
+                  setCustomSpecies(txt);
                   if (errors.customSpecies) setErrors((e) => ({ ...e, customSpecies: undefined }));
                 }}
-                placeholder="Ex: Coelho, Hamster, Tartaruga..."
+                placeholder={t('petRegistration.customSpeciesPlaceholder')}
                 placeholderTextColor={colors.muted}
                 style={[styles.input, errors.customSpecies ? styles.inputError : null]}
                 value={customSpecies}
@@ -295,12 +294,12 @@ export function PetRegistrationScreen() {
 
           {/* Raça */}
           <View style={styles.field}>
-            <Text style={styles.label}>Raça</Text>
+            <Text style={styles.label}>{t('petRegistration.breedLabel')}</Text>
             {breedSuggestions.length > 0 && !customBreed ? (
               <>
                 <Pressable onPress={() => setBreedDropdownOpen(true)} style={styles.dropdown}>
                   <Text style={breed ? styles.dropdownText : styles.dropdownPlaceholder}>
-                    {breed || 'Selecione a raça...'}
+                    {breed || t('petRegistration.breedPlaceholder')}
                   </Text>
                   <Ionicons color={colors.muted} name="chevron-down" size={20} />
                 </Pressable>
@@ -316,14 +315,14 @@ export function PetRegistrationScreen() {
                     onPress={() => setBreedDropdownOpen(false)}
                   >
                     <View style={styles.modalContent}>
-                      <Text style={styles.modalTitle}>Selecione a raça</Text>
+                      <Text style={styles.modalTitle}>{t('petRegistration.breedModalTitle')}</Text>
                       <FlatList
-                        data={[...breedSuggestions, 'Outra (digitar)']}
+                        data={[...breedSuggestions, t('petRegistration.breedOtherOption')]}
                         keyExtractor={(item) => item}
                         renderItem={({ item }) => (
                           <Pressable
                             onPress={() => {
-                              if (item === 'Outra (digitar)') {
+                              if (item === t('petRegistration.breedOtherOption')) {
                                 setBreed('');
                                 setCustomBreed(true);
                               } else {
@@ -355,7 +354,9 @@ export function PetRegistrationScreen() {
                   autoCapitalize="words"
                   onChangeText={setBreed}
                   placeholder={
-                    species === Species.OTHER ? 'Ex: Angorá, Holland Lop...' : 'Digite a raça...'
+                    species === Species.OTHER
+                      ? t('petRegistration.breedOtherPlaceholder')
+                      : t('petRegistration.breedCustomPlaceholder')
                   }
                   placeholderTextColor={colors.muted}
                   style={styles.input}
@@ -368,7 +369,9 @@ export function PetRegistrationScreen() {
                       setBreed('');
                     }}
                   >
-                    <Text style={styles.backToListText}>Voltar para a lista</Text>
+                    <Text style={styles.backToListText}>
+                      {t('petRegistration.breedBackToList')}
+                    </Text>
                   </Pressable>
                 ) : null}
               </>
@@ -377,7 +380,7 @@ export function PetRegistrationScreen() {
 
           {/* Sexo */}
           <View style={styles.field}>
-            <Text style={styles.label}>Sexo *</Text>
+            <Text style={styles.label}>{t('petRegistration.sexLabel')}</Text>
             <View style={styles.chipRow}>
               {SEX_OPTIONS.map((opt) => (
                 <Pressable
@@ -399,15 +402,15 @@ export function PetRegistrationScreen() {
 
           {/* Data de nascimento */}
           <View style={styles.field}>
-            <Text style={styles.label}>Data de nascimento</Text>
+            <Text style={styles.label}>{t('petRegistration.birthDateLabel')}</Text>
             <TextInput
               keyboardType="number-pad"
               maxLength={10}
-              onChangeText={(t) => {
-                setBirthDate(formatDateInput(t));
+              onChangeText={(txt) => {
+                setBirthDate(formatDateInput(txt));
                 if (errors.birthDate) setErrors((e) => ({ ...e, birthDate: undefined }));
               }}
-              placeholder="DD/MM/AAAA"
+              placeholder={t('common.datePlaceholder')}
               placeholderTextColor={colors.muted}
               style={[styles.input, errors.birthDate ? styles.inputError : null]}
               value={birthDate}
@@ -417,7 +420,7 @@ export function PetRegistrationScreen() {
 
           {/* Peso */}
           <View style={styles.field}>
-            <Text style={styles.label}>Peso (kg)</Text>
+            <Text style={styles.label}>{t('petRegistration.weightLabel')}</Text>
             <TextInput
               keyboardType="decimal-pad"
               onChangeText={setWeight}
@@ -441,7 +444,7 @@ export function PetRegistrationScreen() {
             {isSubmitting ? (
               <ActivityIndicator color={colors.white} size="small" />
             ) : (
-              <Text style={styles.submitButtonText}>Cadastrar pet</Text>
+              <Text style={styles.submitButtonText}>{t('petRegistration.submit')}</Text>
             )}
           </Pressable>
         </ScrollView>

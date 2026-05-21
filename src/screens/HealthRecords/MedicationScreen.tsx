@@ -22,6 +22,7 @@ import type {
 } from '@petcardorg/shared';
 import { useFocusEffect } from '@react-navigation/native';
 import { isAxiosError } from 'axios';
+import { useTranslation } from 'react-i18next';
 
 import { PetHeader } from '../../components/domain/PetHeader';
 import { PetSelector } from '../../components/domain/PetSelector';
@@ -55,6 +56,7 @@ type FormErrors = {
 };
 
 export function MedicationScreen() {
+  const { t } = useTranslation();
   const { pets, isLoading: isPetsLoading } = usePets();
 
   const [selectedPet, setSelectedPet] = useState<PetResponseDto | null>(null);
@@ -90,7 +92,7 @@ export function MedicationScreen() {
         const data = await medicationService.getMedicationsByPet(selectedPet.id);
         setMedications(data);
       } catch (err) {
-        let message = 'Não foi possível carregar as medicações.';
+        let message = t('healthRecords.medication.errorLoad');
         if (isAxiosError(err) && err.response?.data?.message) {
           message = String(err.response.data.message);
         }
@@ -100,7 +102,7 @@ export function MedicationScreen() {
         setIsRefreshing(false);
       }
     },
-    [selectedPet],
+    [selectedPet, t],
   );
 
   useFocusEffect(
@@ -146,14 +148,18 @@ export function MedicationScreen() {
   }
 
   function confirmDelete(record: MedicationRecordResponseDto) {
-    Alert.alert('Excluir medicação', `Deseja excluir o registro de "${record.medication_name}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Excluir',
-        style: 'destructive',
-        onPress: () => void handleDelete(record.id),
-      },
-    ]);
+    Alert.alert(
+      t('healthRecords.medication.deleteTitle'),
+      t('healthRecords.medication.deleteMessage', { name: record.medication_name }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('healthRecords.medication.deleteTitle'),
+          style: 'destructive',
+          onPress: () => void handleDelete(record.id),
+        },
+      ],
+    );
   }
 
   async function handleDelete(id: string) {
@@ -161,26 +167,26 @@ export function MedicationScreen() {
       await medicationService.deleteMedication(id);
       void loadMedications();
     } catch (err) {
-      let message = 'Não foi possível excluir a medicação.';
+      let message = t('healthRecords.medication.errorDelete');
       if (isAxiosError(err) && err.response?.data?.message) {
         message = String(err.response.data.message);
       }
-      Alert.alert('Erro', message);
+      Alert.alert(t('common.error'), message);
     }
   }
 
   function validateForm(): boolean {
     const errors: FormErrors = {};
-    if (!medicationName.trim()) errors.medicationName = 'Nome do medicamento é obrigatório';
-    if (!dosage.trim()) errors.dosage = 'Dosagem é obrigatória';
-    if (!frequency.trim()) errors.frequency = 'Frequência é obrigatória';
+    if (!medicationName.trim()) errors.medicationName = t('validation.medicationNameRequired');
+    if (!dosage.trim()) errors.dosage = t('validation.dosageRequired');
+    if (!frequency.trim()) errors.frequency = t('validation.frequencyRequired');
     if (!startDate.trim()) {
-      errors.startDate = 'Data de início é obrigatória';
+      errors.startDate = t('validation.startDateRequired');
     } else if (!parseDate(startDate)) {
-      errors.startDate = 'Data inválida. Use DD/MM/AAAA';
+      errors.startDate = t('validation.dateInvalid');
     }
     if (endDate.trim() && !parseDate(endDate)) {
-      errors.endDate = 'Data inválida. Use DD/MM/AAAA';
+      errors.endDate = t('validation.dateInvalid');
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -201,7 +207,7 @@ export function MedicationScreen() {
           notes: notes.trim() || undefined,
         });
         setModalVisible(false);
-        Alert.alert('Sucesso', 'Medicação atualizada com sucesso!');
+        Alert.alert(t('common.success'), t('healthRecords.medication.successEdit'));
       } else {
         const payload: CreateMedicationRecordDto = {
           pet_id: selectedPet.id,
@@ -217,17 +223,17 @@ export function MedicationScreen() {
 
         await medicationService.createMedication(payload);
         setModalVisible(false);
-        Alert.alert('Sucesso', 'Medicação registrada com sucesso!');
+        Alert.alert(t('common.success'), t('healthRecords.medication.successCreate'));
       }
       void loadMedications();
     } catch (err) {
       let message = editingRecord
-        ? 'Não foi possível atualizar a medicação.'
-        : 'Não foi possível registrar a medicação. Tente novamente.';
+        ? t('healthRecords.medication.errorEdit')
+        : t('healthRecords.medication.errorCreate');
       if (isAxiosError(err) && err.response?.data?.message) {
         message = String(err.response.data.message);
       }
-      Alert.alert('Erro', message);
+      Alert.alert(t('common.error'), message);
     } finally {
       setIsSubmitting(false);
     }
@@ -240,8 +246,8 @@ export function MedicationScreen() {
         pets={pets}
         isLoading={isPetsLoading}
         onSelectPet={handleSelectPet}
-        subtitle="Escolha o pet para visualizar e registrar medicações."
-        emptyDescription="Cadastre um pet primeiro para registrar medicações."
+        subtitle={t('healthRecords.petSelector.medicationSubtitle')}
+        emptyDescription={t('healthRecords.petSelector.medicationEmpty')}
       />
     );
   }
@@ -259,7 +265,7 @@ export function MedicationScreen() {
             <Text
               style={[styles.statusText, active ? styles.statusTextActive : styles.statusTextDone]}
             >
-              {active ? 'Ativa' : 'Concluída'}
+              {active ? t('healthRecords.medication.ongoing') : 'Concluída'}
             </Text>
           </View>
           <Pressable onPress={() => openEditModal(item)} hitSlop={8} style={styles.actionButton}>
@@ -281,8 +287,12 @@ export function MedicationScreen() {
           <View style={styles.cardDetailRow}>
             <Ionicons color={colors.muted} name="calendar-outline" size={16} />
             <Text style={styles.cardDetailText}>
-              Início: {formatDateDisplay(item.start_date)}
-              {item.end_date ? `  •  Fim: ${formatDateDisplay(item.end_date)}` : ''}
+              {t('healthRecords.medication.startDate', {
+                date: formatDateDisplay(item.start_date),
+              })}
+              {item.end_date
+                ? `  •  ${t('healthRecords.medication.endDate', { date: formatDateDisplay(item.end_date) })}`
+                : ''}
             </Text>
           </View>
 
@@ -317,9 +327,9 @@ export function MedicationScreen() {
         <View style={styles.centered}>
           <EmptyState
             icon="medical-outline"
-            title="Nenhuma medicação registrada"
-            description="Registre a primeira medicação do seu pet."
-            actionLabel="Adicionar medicação"
+            title={t('healthRecords.medication.emptyTitle')}
+            description={t('healthRecords.medication.emptyDescription')}
+            actionLabel={t('healthRecords.medication.emptyAction')}
             onActionPress={openCreateModal}
           />
         </View>
@@ -342,7 +352,10 @@ export function MedicationScreen() {
 
       {/* FAB */}
       {!isLoading && !error && medications.length > 0 ? (
-        <FAB accessibilityLabel="Adicionar medicação" onPress={openCreateModal} />
+        <FAB
+          accessibilityLabel={t('healthRecords.medication.addAccessibility')}
+          onPress={openCreateModal}
+        />
       ) : null}
 
       {/* Form Modal */}
@@ -360,7 +373,9 @@ export function MedicationScreen() {
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>
-                  {editingRecord ? 'Editar medicação' : 'Nova medicação'}
+                  {editingRecord
+                    ? t('healthRecords.medication.editTitle')
+                    : t('healthRecords.medication.createTitle')}
                 </Text>
                 <Pressable onPress={() => setModalVisible(false)}>
                   <Ionicons color={colors.muted} name="close" size={24} />
@@ -370,15 +385,15 @@ export function MedicationScreen() {
               <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 {/* Medication name */}
                 <View style={styles.field}>
-                  <Text style={styles.label}>Nome do medicamento *</Text>
+                  <Text style={styles.label}>{t('healthRecords.medication.nameLabel')}</Text>
                   <TextInput
                     autoCapitalize="words"
-                    onChangeText={(t) => {
-                      setMedicationName(t);
+                    onChangeText={(text) => {
+                      setMedicationName(text);
                       if (formErrors.medicationName)
                         setFormErrors((e) => ({ ...e, medicationName: undefined }));
                     }}
-                    placeholder="Ex: Prednisolona, Amoxicilina..."
+                    placeholder={t('healthRecords.medication.namePlaceholder')}
                     placeholderTextColor={colors.muted}
                     style={[styles.input, formErrors.medicationName ? styles.inputError : null]}
                     value={medicationName}
@@ -390,13 +405,13 @@ export function MedicationScreen() {
 
                 {/* Dosage */}
                 <View style={styles.field}>
-                  <Text style={styles.label}>Dosagem *</Text>
+                  <Text style={styles.label}>{t('healthRecords.medication.dosageLabel')}</Text>
                   <TextInput
-                    onChangeText={(t) => {
-                      setDosage(t);
+                    onChangeText={(text) => {
+                      setDosage(text);
                       if (formErrors.dosage) setFormErrors((e) => ({ ...e, dosage: undefined }));
                     }}
-                    placeholder="Ex: 500mg, 5ml, 1 comprimido..."
+                    placeholder={t('healthRecords.medication.dosagePlaceholder')}
                     placeholderTextColor={colors.muted}
                     style={[styles.input, formErrors.dosage ? styles.inputError : null]}
                     value={dosage}
@@ -408,14 +423,14 @@ export function MedicationScreen() {
 
                 {/* Frequency */}
                 <View style={styles.field}>
-                  <Text style={styles.label}>Frequência *</Text>
+                  <Text style={styles.label}>{t('healthRecords.medication.frequencyLabel')}</Text>
                   <TextInput
-                    onChangeText={(t) => {
-                      setFrequency(t);
+                    onChangeText={(text) => {
+                      setFrequency(text);
                       if (formErrors.frequency)
                         setFormErrors((e) => ({ ...e, frequency: undefined }));
                     }}
-                    placeholder="Ex: 2x ao dia, 1x por semana..."
+                    placeholder={t('healthRecords.medication.frequencyPlaceholder')}
                     placeholderTextColor={colors.muted}
                     style={[styles.input, formErrors.frequency ? styles.inputError : null]}
                     value={frequency}
@@ -427,16 +442,16 @@ export function MedicationScreen() {
 
                 {/* Start date */}
                 <View style={styles.field}>
-                  <Text style={styles.label}>Data de início *</Text>
+                  <Text style={styles.label}>{t('healthRecords.medication.startDateLabel')}</Text>
                   <TextInput
                     keyboardType="number-pad"
                     maxLength={10}
-                    onChangeText={(t) => {
-                      setStartDate(formatDateInput(t));
+                    onChangeText={(text) => {
+                      setStartDate(formatDateInput(text));
                       if (formErrors.startDate)
                         setFormErrors((e) => ({ ...e, startDate: undefined }));
                     }}
-                    placeholder="DD/MM/AAAA"
+                    placeholder={t('common.datePlaceholder')}
                     placeholderTextColor={colors.muted}
                     style={[styles.input, formErrors.startDate ? styles.inputError : null]}
                     value={startDate}
@@ -448,15 +463,15 @@ export function MedicationScreen() {
 
                 {/* End date */}
                 <View style={styles.field}>
-                  <Text style={styles.label}>Data de fim</Text>
+                  <Text style={styles.label}>{t('healthRecords.medication.endDateLabel')}</Text>
                   <TextInput
                     keyboardType="number-pad"
                     maxLength={10}
-                    onChangeText={(t) => {
-                      setEndDate(formatDateInput(t));
+                    onChangeText={(text) => {
+                      setEndDate(formatDateInput(text));
                       if (formErrors.endDate) setFormErrors((e) => ({ ...e, endDate: undefined }));
                     }}
-                    placeholder="DD/MM/AAAA"
+                    placeholder={t('common.datePlaceholder')}
                     placeholderTextColor={colors.muted}
                     style={[styles.input, formErrors.endDate ? styles.inputError : null]}
                     value={endDate}
@@ -468,12 +483,12 @@ export function MedicationScreen() {
 
                 {/* Notes */}
                 <View style={styles.field}>
-                  <Text style={styles.label}>Observações</Text>
+                  <Text style={styles.label}>{t('healthRecords.medication.notesLabel')}</Text>
                   <TextInput
                     multiline
                     numberOfLines={3}
                     onChangeText={setNotes}
-                    placeholder="Observações adicionais..."
+                    placeholder={t('healthRecords.medication.notesPlaceholder')}
                     placeholderTextColor={colors.muted}
                     style={[styles.input, styles.textArea]}
                     textAlignVertical="top"
@@ -495,7 +510,9 @@ export function MedicationScreen() {
                     <ActivityIndicator color={colors.white} size="small" />
                   ) : (
                     <Text style={styles.submitButtonText}>
-                      {editingRecord ? 'Salvar alterações' : 'Registrar medicação'}
+                      {editingRecord
+                        ? t('healthRecords.medication.submitEdit')
+                        : t('healthRecords.medication.submitCreate')}
                     </Text>
                   )}
                 </Pressable>
