@@ -16,7 +16,7 @@ type UsePetsReturn = {
 };
 
 export function usePets(): UsePetsReturn {
-  const { isReady } = useAuth();
+  const { isAuthenticated } = useAuth();
   const hasLoaded = useRef(false);
 
   const [pets, setPets] = useState<PetResponseDto[]>([]);
@@ -52,9 +52,9 @@ export function usePets(): UsePetsReturn {
 
   useFocusEffect(
     useCallback(() => {
-      if (!isReady) return;
+      if (!isAuthenticated) return;
       void loadPets();
-    }, [loadPets, isReady]),
+    }, [loadPets, isAuthenticated]),
   );
 
   const refresh = useCallback(() => {

@@ -4,15 +4,38 @@
     "pets": "Pets",
     "health": "Health",
     "clinics": "Clinics",
+    "appointments": "Schedule",
     "profile": "Profile"
   },
   "login": {
     "title": "PetCard",
     "subtitle": "Digital health card to track vaccines, dewormings, and medications for your pets.",
     "button": "Sign in",
+    "emailLabel": "Email",
+    "emailPlaceholder": "your@email.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Your password",
+    "fillFields": "Please fill in email and password.",
     "errorTitle": "Login error",
-    "errorMessage": "Could not sign in. Please try again.",
-    "authErrorTitle": "Authentication error"
+    "errorMessage": "Invalid email or password. Please try again.",
+    "authErrorTitle": "Authentication error",
+    "registerLink": "Create account"
+  },
+  "register": {
+    "title": "Create Account",
+    "subtitle": "Sign up to start tracking your pets' health.",
+    "button": "Sign up",
+    "nameLabel": "Name",
+    "namePlaceholder": "Your full name",
+    "emailLabel": "Email",
+    "emailPlaceholder": "your@email.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "At least 6 characters",
+    "fillFields": "Please fill in all fields.",
+    "passwordTooShort": "Password must be at least 6 characters.",
+    "errorTitle": "Registration error",
+    "errorMessage": "Could not create account. Please try again.",
+    "loginLink": "Already have an account"
   },
   "home": {
     "title": "My pets",
@@ -119,7 +142,11 @@
       "callErrorTitle": "Could not call",
       "callErrorMessage": "Your device does not support phone calls.",
       "dialerError": "Could not open the dialer.",
-      "mapsError": "Could not open Google Maps."
+      "mapsError": "Could not open Google Maps.",
+      "appointmentScheduled": "Appointment scheduled?",
+      "appointmentAt": "Appointment at",
+      "addToSchedule": "Add to schedule",
+      "notNow": "Not now"
     }
   },
   "healthRecords": {
@@ -265,6 +292,69 @@
     "language": "Language",
     "languagePortuguese": "Português",
     "languageEnglish": "English"
+  },
+  "appointments": {
+    "title": "Appointments",
+    "subtitle": "Vet appointments and schedules for your pets.",
+    "emptyTitle": "No appointments",
+    "emptyDescription": "Schedule your pet's first vet appointment.",
+    "emptyAction": "Schedule appointment",
+    "addAccessibility": "Schedule appointment",
+    "errorLoad": "Could not load appointments.",
+    "errorCreate": "Could not create the appointment. Please try again.",
+    "errorEdit": "Could not update the appointment.",
+    "errorDelete": "Could not delete the appointment.",
+    "successCreate": "Appointment created successfully!",
+    "successEdit": "Appointment updated successfully!",
+    "createTitle": "New appointment",
+    "editTitle": "Edit appointment",
+    "submitCreate": "Schedule appointment",
+    "submitEdit": "Save changes",
+    "deleteTitle": "Delete appointment",
+    "deleteMessage": "Delete \"{{name}}\"?",
+    "deleteConfirm": "Delete",
+    "minutes": "min",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "daysAway": "days away",
+    "form": {
+      "titleLabel": "Appointment title *",
+      "titlePlaceholder": "E.g.: Routine checkup, Vaccination...",
+      "dateLabel": "Date *",
+      "timeLabel": "Time *",
+      "durationLabel": "Duration",
+      "locationLabel": "Location",
+      "locationPlaceholder": "Clinic name or address...",
+      "petLabel": "Pet",
+      "noPet": "None",
+      "descriptionLabel": "Notes",
+      "descriptionPlaceholder": "Additional details about the appointment..."
+    },
+    "validation": {
+      "titleRequired": "Title is required",
+      "dateRequired": "Date is required",
+      "timeRequired": "Time is required",
+      "timeInvalid": "Invalid time. Use HH:MM"
+    },
+    "calendar": {
+      "connected": "Google Calendar connected",
+      "notConnected": "Google Calendar not connected",
+      "connect": "Connect",
+      "sync": "Sync",
+      "syncSuccess": "{{count}} appointment(s) synced!",
+      "syncError": "Could not sync with Google Calendar.",
+      "connectError": "Could not connect to Google Calendar.",
+      "notConfigured": "Google Calendar integration is not configured.",
+      "disconnectTitle": "Disconnect Google Calendar",
+      "disconnectMessage": "Appointments will no longer be synced. Continue?",
+      "disconnectConfirm": "Disconnect",
+      "disconnectError": "Could not disconnect Google Calendar."
+    },
+    "syncStatus": {
+      "synced": "Synced",
+      "pending": "Pending",
+      "failed": "Sync failed"
+    }
   },
   "common": {
     "cancel": "Cancel",

@@ -4,15 +4,38 @@
     "pets": "Pets",
     "health": "Saúde",
     "clinics": "Clínicas",
+    "appointments": "Agenda",
     "profile": "Perfil"
   },
   "login": {
     "title": "PetCard",
     "subtitle": "Carteira digital de saúde para acompanhar vacinas, vermifugações e medicações dos seus pets.",
     "button": "Entrar",
+    "emailLabel": "Email",
+    "emailPlaceholder": "seu@email.com",
+    "passwordLabel": "Senha",
+    "passwordPlaceholder": "Sua senha",
+    "fillFields": "Preencha email e senha.",
     "errorTitle": "Erro no login",
-    "errorMessage": "Não foi possível realizar o login. Tente novamente.",
-    "authErrorTitle": "Erro de autenticação"
+    "errorMessage": "Email ou senha incorretos. Tente novamente.",
+    "authErrorTitle": "Erro de autenticação",
+    "registerLink": "Criar conta"
+  },
+  "register": {
+    "title": "Criar Conta",
+    "subtitle": "Cadastre-se para começar a cuidar da saúde dos seus pets.",
+    "button": "Cadastrar",
+    "nameLabel": "Nome",
+    "namePlaceholder": "Seu nome completo",
+    "emailLabel": "Email",
+    "emailPlaceholder": "seu@email.com",
+    "passwordLabel": "Senha",
+    "passwordPlaceholder": "Mínimo 6 caracteres",
+    "fillFields": "Preencha todos os campos.",
+    "passwordTooShort": "A senha deve ter no mínimo 6 caracteres.",
+    "errorTitle": "Erro no cadastro",
+    "errorMessage": "Não foi possível criar a conta. Tente novamente.",
+    "loginLink": "Já tenho conta"
   },
   "home": {
     "title": "Meus pets",
@@ -119,7 +142,11 @@
       "callErrorTitle": "Não foi possível ligar",
       "callErrorMessage": "Seu dispositivo não suporta chamadas telefônicas.",
       "dialerError": "Não foi possível abrir o discador.",
-      "mapsError": "Não foi possível abrir o Google Maps."
+      "mapsError": "Não foi possível abrir o Google Maps.",
+      "appointmentScheduled": "Consulta marcada?",
+      "appointmentAt": "Consulta em",
+      "addToSchedule": "Adicionar na agenda",
+      "notNow": "Agora nao"
     }
   },
   "healthRecords": {
@@ -265,6 +292,69 @@
     "language": "Idioma",
     "languagePortuguese": "Português",
     "languageEnglish": "English"
+  },
+  "appointments": {
+    "title": "Agendamentos",
+    "subtitle": "Consultas e compromissos veterinarios dos seus pets.",
+    "emptyTitle": "Nenhum agendamento",
+    "emptyDescription": "Agende a primeira consulta do seu pet com o veterinario.",
+    "emptyAction": "Agendar consulta",
+    "addAccessibility": "Agendar consulta",
+    "errorLoad": "Nao foi possivel carregar os agendamentos.",
+    "errorCreate": "Nao foi possivel criar o agendamento. Tente novamente.",
+    "errorEdit": "Nao foi possivel atualizar o agendamento.",
+    "errorDelete": "Nao foi possivel excluir o agendamento.",
+    "successCreate": "Agendamento criado com sucesso!",
+    "successEdit": "Agendamento atualizado com sucesso!",
+    "createTitle": "Novo agendamento",
+    "editTitle": "Editar agendamento",
+    "submitCreate": "Agendar consulta",
+    "submitEdit": "Salvar alteracoes",
+    "deleteTitle": "Excluir agendamento",
+    "deleteMessage": "Deseja excluir \"{{name}}\"?",
+    "deleteConfirm": "Excluir",
+    "minutes": "min",
+    "today": "Hoje",
+    "tomorrow": "Amanha",
+    "daysAway": "dias restantes",
+    "form": {
+      "titleLabel": "Titulo da consulta *",
+      "titlePlaceholder": "Ex: Consulta de rotina, Vacinacao...",
+      "dateLabel": "Data *",
+      "timeLabel": "Hora *",
+      "durationLabel": "Duracao",
+      "locationLabel": "Local",
+      "locationPlaceholder": "Nome da clinica ou endereco...",
+      "petLabel": "Pet",
+      "noPet": "Nenhum",
+      "descriptionLabel": "Observacoes",
+      "descriptionPlaceholder": "Detalhes adicionais sobre a consulta..."
+    },
+    "validation": {
+      "titleRequired": "Titulo e obrigatorio",
+      "dateRequired": "Data e obrigatoria",
+      "timeRequired": "Hora e obrigatoria",
+      "timeInvalid": "Hora invalida. Use HH:MM"
+    },
+    "calendar": {
+      "connected": "Google Calendar conectado",
+      "notConnected": "Google Calendar nao conectado",
+      "connect": "Conectar",
+      "sync": "Sincronizar",
+      "syncSuccess": "{{count}} agendamento(s) sincronizado(s)!",
+      "syncError": "Nao foi possivel sincronizar com o Google Calendar.",
+      "connectError": "Nao foi possivel conectar ao Google Calendar.",
+      "notConfigured": "Integracao com Google Calendar nao configurada.",
+      "disconnectTitle": "Desconectar Google Calendar",
+      "disconnectMessage": "Os agendamentos nao serao mais sincronizados. Deseja continuar?",
+      "disconnectConfirm": "Desconectar",
+      "disconnectError": "Nao foi possivel desconectar o Google Calendar."
+    },
+    "syncStatus": {
+      "synced": "Sincronizado",
+      "pending": "Pendente",
+      "failed": "Falha na sincronizacao"
+    }
   },
   "common": {
     "cancel": "Cancelar",

@@ -9,61 +9,78 @@ import { useAuth } from '../../contexts/AuthContext';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 import type { AuthStackParamList } from '../../navigation/types';
 
-type LoginNav = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
+type RegisterNav = NativeStackNavigationProp<AuthStackParamList, 'Register'>;
 
-export function LoginScreen() {
-  const { isLoading, login } = useAuth();
+export function RegisterScreen() {
+  const { isLoading, register } = useAuth();
   const { t } = useTranslation();
-  const navigation = useNavigation<LoginNav>();
+  const navigation = useNavigation<RegisterNav>();
 
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      setError(t('login.fillFields'));
+  const handleRegister = async () => {
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      setError(t('register.fillFields'));
+      return;
+    }
+
+    if (password.length < 6) {
+      setError(t('register.passwordTooShort'));
       return;
     }
 
     try {
       setError(null);
-      await login(email.trim(), password);
+      await register(name.trim(), email.trim(), password);
     } catch {
-      setError(t('login.errorMessage'));
+      setError(t('register.errorMessage'));
     }
   };
 
   return (
     <ScreenContainer
-      actionLabel={isLoading ? undefined : t('login.button')}
-      onActionPress={handleLogin}
-      secondaryActionLabel={t('login.registerLink')}
-      onSecondaryActionPress={() => navigation.navigate('Register')}
-      subtitle={t('login.subtitle')}
-      title={t('login.title')}
+      actionLabel={isLoading ? undefined : t('register.button')}
+      onActionPress={handleRegister}
+      secondaryActionLabel={t('register.loginLink')}
+      onSecondaryActionPress={() => navigation.goBack()}
+      subtitle={t('register.subtitle')}
+      title={t('register.title')}
     >
       {isLoading ? (
         <ActivityIndicator color={colors.primary} size="large" style={styles.loader} />
       ) : (
         <View style={styles.form}>
-          <Text style={styles.label}>{t('login.emailLabel')}</Text>
+          <Text style={styles.label}>{t('register.nameLabel')}</Text>
+          <TextInput
+            autoCapitalize="words"
+            autoComplete="name"
+            onChangeText={setName}
+            placeholder={t('register.namePlaceholder')}
+            placeholderTextColor={colors.muted}
+            style={styles.input}
+            value={name}
+          />
+
+          <Text style={styles.label}>{t('register.emailLabel')}</Text>
           <TextInput
             autoCapitalize="none"
             autoComplete="email"
             inputMode="email"
             onChangeText={setEmail}
-            placeholder={t('login.emailPlaceholder')}
+            placeholder={t('register.emailPlaceholder')}
             placeholderTextColor={colors.muted}
             style={styles.input}
             value={email}
           />
 
-          <Text style={styles.label}>{t('login.passwordLabel')}</Text>
+          <Text style={styles.label}>{t('register.passwordLabel')}</Text>
           <TextInput
             autoCapitalize="none"
             onChangeText={setPassword}
-            placeholder={t('login.passwordPlaceholder')}
+            placeholder={t('register.passwordPlaceholder')}
             placeholderTextColor={colors.muted}
             secureTextEntry
             style={styles.input}
@@ -72,7 +89,7 @@ export function LoginScreen() {
 
           {error ? (
             <View style={styles.callout}>
-              <Text style={styles.calloutTitle}>{t('login.authErrorTitle')}</Text>
+              <Text style={styles.calloutTitle}>{t('register.errorTitle')}</Text>
               <Text style={styles.calloutText}>{error}</Text>
             </View>
           ) : null}

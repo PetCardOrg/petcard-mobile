@@ -1,4 +1,4 @@
-import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -42,13 +42,9 @@ export function ProfileScreen() {
         <Text style={styles.title}>{t('profile.title')}</Text>
 
         <View style={styles.card}>
-          {user?.picture ? (
-            <Image source={{ uri: user.picture }} style={styles.avatar} />
-          ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Ionicons color={colors.white} name="person" size={32} />
-            </View>
-          )}
+          <View style={styles.avatarPlaceholder}>
+            <Ionicons color={colors.white} name="person" size={32} />
+          </View>
 
           <Text style={styles.name}>{user?.name ?? t('profile.defaultName')}</Text>
           {user?.email ? <Text style={styles.email}>{user.email}</Text> : null}
@@ -123,12 +119,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.xl,
-  },
-  avatar: {
-    borderRadius: 40,
-    height: 80,
-    marginBottom: spacing.md,
-    width: 80,
   },
   avatarPlaceholder: {
     alignItems: 'center',

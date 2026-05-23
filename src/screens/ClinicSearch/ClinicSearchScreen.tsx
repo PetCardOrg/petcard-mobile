@@ -1,7 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  AppState,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { MaterialTopTabNavigationProp } from '@react-navigation/material-top-tabs';
 import * as Location from 'expo-location';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +21,7 @@ import { colors, radii, spacing, typography } from '../../utils/theme';
 import * as clinicService from '../../services/clinic.service';
 import { useAuth } from '../../contexts/AuthContext';
 import { ClinicDetailCard } from './ClinicDetailCard';
+import type { MainTabParamList } from '../../navigation/types';
 
 const RADIUS_OPTIONS = [5, 10, 25, 50];
 
@@ -20,8 +31,9 @@ type ScreenState = 'loading' | 'permission_denied' | 'error' | 'empty' | 'succes
 
 export function ClinicSearchScreen() {
   const insets = useSafeAreaInsets();
-  const { isReady } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { t } = useTranslation();
+  const navigation = useNavigation<MaterialTopTabNavigationProp<MainTabParamList>>();
   const mapRef = useRef<MapView>(null);
 
   const [state, setState] = useState<ScreenState>('loading');
@@ -33,6 +45,45 @@ export function ClinicSearchScreen() {
 
   const [selectedRadius, setSelectedRadius] = useState(10);
   const [openNowFilter, setOpenNowFilter] = useState(false);
+
+  // Schedule prompt state
+  const [showSchedulePrompt, setShowSchedulePrompt] = useState(false);
+  const [calledClinic, setCalledClinic] = useState<PlacesClinicResponseDto | null>(null);
+  const waitingForReturn = useRef(false);
+
+  // Detect when user returns from phone dialer
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active' && waitingForReturn.current) {
+        waitingForReturn.current = false;
+        setShowSchedulePrompt(true);
+      }
+    });
+    return () => subscription.remove();
+  }, []);
+
+  const handleCallMade = useCallback(() => {
+    if (selectedClinic) {
+      setCalledClinic(selectedClinic);
+      waitingForReturn.current = true;
+    }
+  }, [selectedClinic]);
+
+  function handleScheduleAppointment() {
+    if (!calledClinic) return;
+    setShowSchedulePrompt(false);
+    navigation.navigate('Appointments', {
+      prefill: {
+        location: calledClinic.address ?? calledClinic.name,
+        _ts: Date.now(),
+      },
+    });
+  }
+
+  function dismissSchedulePrompt() {
+    setShowSchedulePrompt(false);
+    setCalledClinic(null);
+  }
 
   const loadClinics = useCallback(
     async (lat: number, lng: number, radiusKm: number, openNow: boolean) => {
@@ -82,10 +133,10 @@ export function ClinicSearchScreen() {
   }, [loadClinics, selectedRadius, openNowFilter]);
 
   useEffect(() => {
-    if (isReady) {
+    if (isAuthenticated) {
       requestLocationAndLoad();
     }
-  }, [isReady]);
+  }, [isAuthenticated]);
 
   const applyFilters = useCallback(
     async (radiusKm: number, openNow: boolean) => {
@@ -279,8 +330,34 @@ export function ClinicSearchScreen() {
         <ClinicDetailCard
           clinic={selectedClinic}
           onDismiss={handleDismissCard}
+          onCallMade={handleCallMade}
           bottomInset={insets.bottom}
         />
+      )}
+
+      {showSchedulePrompt && (
+        <View style={styles.promptOverlay}>
+          <View style={styles.promptCard}>
+            <View style={styles.promptIconCircle}>
+              <Ionicons name="calendar" size={32} color={colors.primaryDark} />
+            </View>
+            <Text style={styles.promptTitle}>{t('clinics.detail.appointmentScheduled')}</Text>
+            <Text style={styles.promptSubtitle}>{calledClinic?.name}</Text>
+            <Pressable
+              onPress={handleScheduleAppointment}
+              style={({ pressed }) => [styles.promptButton, pressed && styles.pressed]}
+            >
+              <Ionicons name="add-circle-outline" size={20} color={colors.white} />
+              <Text style={styles.promptButtonText}>{t('clinics.detail.addToSchedule')}</Text>
+            </Pressable>
+            <Pressable
+              onPress={dismissSchedulePrompt}
+              style={({ pressed }) => [styles.promptDismiss, pressed && styles.pressed]}
+            >
+              <Text style={styles.promptDismissText}>{t('clinics.detail.notNow')}</Text>
+            </Pressable>
+          </View>
+        </View>
       )}
     </View>
   );
@@ -444,5 +521,65 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     color: colors.muted,
     flex: 1,
+  },
+
+  // Schedule prompt overlay
+  promptOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  promptCard: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    padding: spacing.xl,
+    width: '100%',
+  },
+  promptIconCircle: {
+    alignItems: 'center',
+    backgroundColor: colors.primarySoft,
+    borderRadius: 36,
+    height: 72,
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+    width: 72,
+  },
+  promptTitle: {
+    ...typography.h3,
+    color: colors.text,
+    marginBottom: spacing.xs,
+    textAlign: 'center',
+  },
+  promptSubtitle: {
+    ...typography.body,
+    color: colors.muted,
+    marginBottom: spacing.lg,
+    textAlign: 'center',
+  },
+  promptButton: {
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: radii.md,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 14,
+    width: '100%',
+  },
+  promptButtonText: {
+    ...typography.button,
+    color: colors.white,
+  },
+  promptDismiss: {
+    marginTop: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  promptDismissText: {
+    ...typography.button,
+    color: colors.muted,
   },
 });
