@@ -9,6 +9,7 @@ import { colors, radii, spacing, typography } from '../../utils/theme';
 type ClinicDetailCardProps = {
   clinic: PlacesClinicResponseDto;
   onDismiss: () => void;
+  onCallMade: () => void;
   bottomInset: number;
 };
 
@@ -23,13 +24,13 @@ function sanitizePhone(phone: string): string {
   return phone.replace(/[^+\d]/g, '');
 }
 
-async function handleCall(phone: string | undefined, t: TFunction) {
+async function handleCall(phone: string | undefined, t: TFunction): Promise<boolean> {
   if (!phone) {
     Alert.alert(
       t('clinics.detail.phoneUnavailableTitle'),
       t('clinics.detail.phoneUnavailableMessage'),
     );
-    return;
+    return false;
   }
 
   const url = `tel:${sanitizePhone(phone)}`;
@@ -37,11 +38,13 @@ async function handleCall(phone: string | undefined, t: TFunction) {
     const supported = await Linking.canOpenURL(url);
     if (!supported) {
       Alert.alert(t('clinics.detail.callErrorTitle'), t('clinics.detail.callErrorMessage'));
-      return;
+      return false;
     }
     await Linking.openURL(url);
+    return true;
   } catch {
     Alert.alert(t('common.error'), t('clinics.detail.dialerError'));
+    return false;
   }
 }
 
@@ -73,8 +76,20 @@ function RatingStars({ rating }: { rating: number }) {
   return <View style={styles.starsRow}>{stars}</View>;
 }
 
-export function ClinicDetailCard({ clinic, onDismiss, bottomInset }: ClinicDetailCardProps) {
+export function ClinicDetailCard({
+  clinic,
+  onDismiss,
+  onCallMade,
+  bottomInset,
+}: ClinicDetailCardProps) {
   const { t } = useTranslation();
+
+  async function onCallPress() {
+    const called = await handleCall(clinic.phone, t);
+    if (called) {
+      onCallMade();
+    }
+  }
 
   return (
     <View style={[styles.container, { paddingBottom: Math.max(bottomInset, spacing.md) }]}>
@@ -153,7 +168,7 @@ export function ClinicDetailCard({ clinic, onDismiss, bottomInset }: ClinicDetai
 
           <View style={styles.actions}>
             <Pressable
-              onPress={() => handleCall(clinic.phone, t)}
+              onPress={onCallPress}
               style={({ pressed }) => [
                 styles.actionButton,
                 styles.callButton,

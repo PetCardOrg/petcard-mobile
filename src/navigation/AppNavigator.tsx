@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../contexts/AuthContext';
 import { LoginScreen } from '../screens/Auth/LoginScreen';
+import { RegisterScreen } from '../screens/Auth/RegisterScreen';
 import { DewormingScreen } from '../screens/HealthRecords/DewormingScreen';
 import { MedicationScreen } from '../screens/HealthRecords/MedicationScreen';
 import { VaccineScreen } from '../screens/HealthRecords/VaccineScreen';
@@ -18,6 +19,7 @@ import { PetDetailsScreen } from '../screens/Home/PetDetailsScreen';
 import { PetRegistrationScreen } from '../screens/PetRegistration/PetRegistrationScreen';
 import { ProfileScreen } from '../screens/Profile/ProfileScreen';
 import { ClinicSearchScreen } from '../screens/ClinicSearch/ClinicSearchScreen';
+import { AppointmentsScreen } from '../screens/Appointments/AppointmentsScreen';
 import { colors, radii, spacing, typography } from '../utils/theme';
 import type { AuthStackParamList, HomeStackParamList, MainTabParamList } from './types';
 
@@ -29,6 +31,7 @@ function AuthNavigator() {
   return (
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
       <AuthStack.Screen component={LoginScreen} name="Login" />
+      <AuthStack.Screen component={RegisterScreen} name="Register" />
     </AuthStack.Navigator>
   );
 }
@@ -167,6 +170,14 @@ function MainNavigator() {
         options={{
           title: t('tabs.health'),
           tabBarIcon: ({ color }) => <Ionicons color={color} name="heart-outline" size={22} />,
+        }}
+      />
+      <MainTabs.Screen
+        component={AppointmentsScreen}
+        name="Appointments"
+        options={{
+          title: t('tabs.appointments'),
+          tabBarIcon: ({ color }) => <Ionicons color={color} name="calendar-outline" size={22} />,
         }}
       />
       <MainTabs.Screen
