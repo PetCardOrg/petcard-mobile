@@ -9,3 +9,4 @@ export * as uploadService from './upload.service';
 export * as clinicService from './clinic.service';
 export * as appointmentService from './appointment.service';
 export * as calendarService from './calendar.service';
+export * as deviceService from './device.service';

@@ -389,5 +389,9 @@
   "sex": {
     "MALE": "Male",
     "FEMALE": "Female"
+  },
+  "notifications": {
+    "permissionDeniedTitle": "Notifications disabled",
+    "permissionDenied": "You won't receive vaccine and appointment reminders. Enable notifications in your device settings."
   }
 }

@@ -389,5 +389,9 @@
   "sex": {
     "MALE": "Macho",
     "FEMALE": "Fêmea"
+  },
+  "notifications": {
+    "permissionDeniedTitle": "Notificações desativadas",
+    "permissionDenied": "Você não receberá lembretes de vacinas e consultas. Habilite as notificações nas configurações do dispositivo."
   }
 }
