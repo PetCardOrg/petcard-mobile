@@ -8,6 +8,7 @@ import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../contexts/AuthContext';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 import { LoginScreen } from '../screens/Auth/LoginScreen';
 import { RegisterScreen } from '../screens/Auth/RegisterScreen';
 import { DewormingScreen } from '../screens/HealthRecords/DewormingScreen';
@@ -118,6 +119,7 @@ function HealthRecordsNavigator() {
 
 function MainNavigator() {
   const { t } = useTranslation();
+  usePushNotifications();
 
   return (
     <MainTabs.Navigator
