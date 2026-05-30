@@ -15,6 +15,7 @@ export type HomeStackParamList = {
     petId: string;
     petName: string;
   };
+  PetRegistration: undefined;
 };
 
 export type AppointmentPrefill = {
@@ -24,7 +25,6 @@ export type AppointmentPrefill = {
 
 export type MainTabParamList = {
   Home: NavigatorScreenParams<HomeStackParamList> | undefined;
-  Pets: undefined;
   Health: undefined;
   Appointments: { prefill?: AppointmentPrefill } | undefined;
   Clinics: undefined;

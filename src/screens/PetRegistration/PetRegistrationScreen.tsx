@@ -19,13 +19,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { Species, Sex } from '@petcardorg/shared';
 import type { CreatePetDto } from '@petcardorg/shared';
 import { useNavigation } from '@react-navigation/native';
-import type { MaterialTopTabNavigationProp } from '@react-navigation/material-top-tabs';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as ImagePicker from 'expo-image-picker';
 import { isAxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
 
 import { petService, uploadService } from '../../services';
-import type { MainTabParamList } from '../../navigation/types';
+import type { HomeStackParamList } from '../../navigation/types';
 import { formatDateInput, parseDate } from '../../utils/dateUtils';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 
@@ -75,7 +75,7 @@ const BREED_SUGGESTIONS: Record<Species, string[]> = {
 
 export function PetRegistrationScreen() {
   const { t } = useTranslation();
-  const navigation = useNavigation<MaterialTopTabNavigationProp<MainTabParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
 
   const SPECIES_OPTIONS: { label: string; value: Species }[] = [
     { label: t('species.DOG'), value: Species.DOG },
@@ -194,7 +194,7 @@ export function PetRegistrationScreen() {
       setErrors({});
 
       Alert.alert(t('petRegistration.successTitle'), t('petRegistration.successMessage'), [
-        { text: 'OK', onPress: () => navigation.navigate('Home') },
+        { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (err) {
       let message = t('petRegistration.errorMessage');

@@ -60,6 +60,11 @@ function HomeNavigator() {
         name="DigitalWallet"
         options={{ title: t('digitalWallet.title') }}
       />
+      <HomeStack.Screen
+        component={PetRegistrationScreen}
+        name="PetRegistration"
+        options={{ title: t('petRegistration.title') }}
+      />
     </HomeStack.Navigator>
   );
 }
@@ -129,7 +134,7 @@ function MainNavigator() {
         tabBarActiveTintColor: colors.primaryDark,
         tabBarInactiveTintColor: colors.muted,
         tabBarLabelStyle: {
-          fontSize: 9,
+          fontSize: 11,
           fontWeight: '700',
           textTransform: 'none',
           marginTop: 2,
@@ -160,17 +165,10 @@ function MainNavigator() {
           title: t('tabs.home'),
           swipeEnabled:
             getFocusedRouteNameFromRoute(route) !== 'PetDetails' &&
-            getFocusedRouteNameFromRoute(route) !== 'DigitalWallet',
+            getFocusedRouteNameFromRoute(route) !== 'DigitalWallet' &&
+            getFocusedRouteNameFromRoute(route) !== 'PetRegistration',
           tabBarIcon: ({ color }) => <Ionicons color={color} name="home-outline" size={20} />,
         })}
-      />
-      <MainTabs.Screen
-        component={PetRegistrationScreen}
-        name="Pets"
-        options={{
-          title: t('tabs.pets'),
-          tabBarIcon: ({ color }) => <Ionicons color={color} name="paw-outline" size={20} />,
-        }}
       />
       <MainTabs.Screen
         component={HealthRecordsNavigator}

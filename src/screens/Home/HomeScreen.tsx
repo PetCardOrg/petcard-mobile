@@ -28,7 +28,7 @@ export function HomeScreen() {
   const { t } = useTranslation();
 
   const handleAddPet = () => {
-    navigation.navigate('Pets');
+    navigation.navigate('PetRegistration');
   };
 
   const handlePetPress = (pet: PetResponseDto) => {
