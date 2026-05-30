@@ -3,8 +3,8 @@ import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from '
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../contexts/AuthContext';
@@ -129,15 +129,18 @@ function MainNavigator() {
         tabBarActiveTintColor: colors.primaryDark,
         tabBarInactiveTintColor: colors.muted,
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 9,
           fontWeight: '700',
           textTransform: 'none',
+          marginTop: 2,
         },
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: StyleSheet.hairlineWidth,
-          paddingBottom: Platform.OS === 'ios' ? 20 : 0,
+          paddingBottom: Platform.OS === 'ios' ? 20 : 8,
+          paddingTop: 6,
+          height: Platform.OS === 'ios' ? 80 : 64,
         },
         tabBarIndicatorStyle: {
           backgroundColor: colors.primaryDark,
@@ -145,6 +148,9 @@ function MainNavigator() {
           top: 0,
         },
         tabBarShowIcon: true,
+        tabBarItemStyle: {
+          paddingVertical: 2,
+        },
       }}
     >
       <MainTabs.Screen
@@ -155,7 +161,7 @@ function MainNavigator() {
           swipeEnabled:
             getFocusedRouteNameFromRoute(route) !== 'PetDetails' &&
             getFocusedRouteNameFromRoute(route) !== 'DigitalWallet',
-          tabBarIcon: ({ color }) => <Ionicons color={color} name="home-outline" size={22} />,
+          tabBarIcon: ({ color }) => <Ionicons color={color} name="home-outline" size={20} />,
         })}
       />
       <MainTabs.Screen
@@ -163,7 +169,7 @@ function MainNavigator() {
         name="Pets"
         options={{
           title: t('tabs.pets'),
-          tabBarIcon: ({ color }) => <Ionicons color={color} name="paw-outline" size={22} />,
+          tabBarIcon: ({ color }) => <Ionicons color={color} name="paw-outline" size={20} />,
         }}
       />
       <MainTabs.Screen
@@ -171,7 +177,7 @@ function MainNavigator() {
         name="Health"
         options={{
           title: t('tabs.health'),
-          tabBarIcon: ({ color }) => <Ionicons color={color} name="heart-outline" size={22} />,
+          tabBarIcon: ({ color }) => <Ionicons color={color} name="heart-outline" size={20} />,
         }}
       />
       <MainTabs.Screen
@@ -179,7 +185,7 @@ function MainNavigator() {
         name="Appointments"
         options={{
           title: t('tabs.appointments'),
-          tabBarIcon: ({ color }) => <Ionicons color={color} name="calendar-outline" size={22} />,
+          tabBarIcon: ({ color }) => <Ionicons color={color} name="calendar-outline" size={20} />,
         }}
       />
       <MainTabs.Screen
@@ -188,7 +194,7 @@ function MainNavigator() {
         options={{
           title: t('tabs.clinics'),
           swipeEnabled: false,
-          tabBarIcon: ({ color }) => <Ionicons color={color} name="map-outline" size={22} />,
+          tabBarIcon: ({ color }) => <Ionicons color={color} name="map-outline" size={20} />,
         }}
       />
       <MainTabs.Screen
@@ -196,7 +202,7 @@ function MainNavigator() {
         name="Profile"
         options={{
           title: t('tabs.profile'),
-          tabBarIcon: ({ color }) => <Ionicons color={color} name="person-outline" size={22} />,
+          tabBarIcon: ({ color }) => <Ionicons color={color} name="person-outline" size={20} />,
         }}
       />
     </MainTabs.Navigator>
