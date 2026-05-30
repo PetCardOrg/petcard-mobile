@@ -182,6 +182,17 @@ export function PetRegistrationScreen() {
         ...(photoUrl ? { photo_url: photoUrl } : {}),
       });
 
+      setName('');
+      setSpecies(null);
+      setCustomSpecies('');
+      setSex(null);
+      setBirthDate('');
+      setBreed('');
+      setWeight('');
+      setImageUri(null);
+      setCustomBreed(false);
+      setErrors({});
+
       Alert.alert(t('petRegistration.successTitle'), t('petRegistration.successMessage'), [
         { text: 'OK', onPress: () => navigation.navigate('Home') },
       ]);

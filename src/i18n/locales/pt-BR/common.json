@@ -146,7 +146,7 @@
       "appointmentScheduled": "Consulta marcada?",
       "appointmentAt": "Consulta em",
       "addToSchedule": "Adicionar na agenda",
-      "notNow": "Agora nao"
+      "notNow": "Agora não"
     }
   },
   "healthRecords": {
@@ -295,65 +295,65 @@
   },
   "appointments": {
     "title": "Agendamentos",
-    "subtitle": "Consultas e compromissos veterinarios dos seus pets.",
+    "subtitle": "Consultas e compromissos veterinários dos seus pets.",
     "emptyTitle": "Nenhum agendamento",
-    "emptyDescription": "Agende a primeira consulta do seu pet com o veterinario.",
+    "emptyDescription": "Agende a primeira consulta do seu pet com o veterinário.",
     "emptyAction": "Agendar consulta",
     "addAccessibility": "Agendar consulta",
-    "errorLoad": "Nao foi possivel carregar os agendamentos.",
-    "errorCreate": "Nao foi possivel criar o agendamento. Tente novamente.",
-    "errorEdit": "Nao foi possivel atualizar o agendamento.",
-    "errorDelete": "Nao foi possivel excluir o agendamento.",
+    "errorLoad": "Não foi possível carregar os agendamentos.",
+    "errorCreate": "Não foi possível criar o agendamento. Tente novamente.",
+    "errorEdit": "Não foi possível atualizar o agendamento.",
+    "errorDelete": "Não foi possível excluir o agendamento.",
     "successCreate": "Agendamento criado com sucesso!",
     "successEdit": "Agendamento atualizado com sucesso!",
     "createTitle": "Novo agendamento",
     "editTitle": "Editar agendamento",
     "submitCreate": "Agendar consulta",
-    "submitEdit": "Salvar alteracoes",
+    "submitEdit": "Salvar alterações",
     "deleteTitle": "Excluir agendamento",
     "deleteMessage": "Deseja excluir \"{{name}}\"?",
     "deleteConfirm": "Excluir",
     "minutes": "min",
     "today": "Hoje",
-    "tomorrow": "Amanha",
+    "tomorrow": "Amanhã",
     "daysAway": "dias restantes",
     "form": {
-      "titleLabel": "Titulo da consulta *",
-      "titlePlaceholder": "Ex: Consulta de rotina, Vacinacao...",
+      "titleLabel": "Título da consulta *",
+      "titlePlaceholder": "Ex: Consulta de rotina, Vacinação...",
       "dateLabel": "Data *",
       "timeLabel": "Hora *",
-      "durationLabel": "Duracao",
+      "durationLabel": "Duração",
       "locationLabel": "Local",
-      "locationPlaceholder": "Nome da clinica ou endereco...",
+      "locationPlaceholder": "Nome da clínica ou endereço...",
       "petLabel": "Pet",
       "noPet": "Nenhum",
-      "descriptionLabel": "Observacoes",
+      "descriptionLabel": "Observações",
       "descriptionPlaceholder": "Detalhes adicionais sobre a consulta..."
     },
     "validation": {
-      "titleRequired": "Titulo e obrigatorio",
-      "dateRequired": "Data e obrigatoria",
-      "timeRequired": "Hora e obrigatoria",
-      "timeInvalid": "Hora invalida. Use HH:MM"
+      "titleRequired": "Título é obrigatório",
+      "dateRequired": "Data é obrigatória",
+      "timeRequired": "Hora é obrigatória",
+      "timeInvalid": "Hora inválida. Use HH:MM"
     },
     "calendar": {
       "connected": "Google Calendar conectado",
-      "notConnected": "Google Calendar nao conectado",
+      "notConnected": "Google Calendar não conectado",
       "connect": "Conectar",
       "sync": "Sincronizar",
       "syncSuccess": "{{count}} agendamento(s) sincronizado(s)!",
-      "syncError": "Nao foi possivel sincronizar com o Google Calendar.",
-      "connectError": "Nao foi possivel conectar ao Google Calendar.",
-      "notConfigured": "Integracao com Google Calendar nao configurada.",
+      "syncError": "Não foi possível sincronizar com o Google Calendar.",
+      "connectError": "Não foi possível conectar ao Google Calendar.",
+      "notConfigured": "Integração com Google Calendar não configurada.",
       "disconnectTitle": "Desconectar Google Calendar",
-      "disconnectMessage": "Os agendamentos nao serao mais sincronizados. Deseja continuar?",
+      "disconnectMessage": "Os agendamentos não serão mais sincronizados. Deseja continuar?",
       "disconnectConfirm": "Desconectar",
-      "disconnectError": "Nao foi possivel desconectar o Google Calendar."
+      "disconnectError": "Não foi possível desconectar o Google Calendar."
     },
     "syncStatus": {
       "synced": "Sincronizado",
       "pending": "Pendente",
-      "failed": "Falha na sincronizacao"
+      "failed": "Falha na sincronização"
     }
   },
   "common": {
