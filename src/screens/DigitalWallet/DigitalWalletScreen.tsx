@@ -23,6 +23,7 @@ import { ErrorState } from '../../components/ui/ErrorState';
 import type { HomeStackParamList } from '../../navigation/types';
 import { cardService } from '../../services';
 import { calculateAge } from '../../utils/calculateAge';
+import { exportWalletPdf, SHARING_UNAVAILABLE } from '../../utils/generateWalletPdf';
 import { getPhotoUrl, SEX_CONFIG, SPECIES_CONFIG } from '../../utils/petConfig';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 
@@ -78,6 +79,7 @@ export function DigitalWalletScreen({ route }: Props) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [qrCacheBust, setQrCacheBust] = useState(() => Date.now());
   const isScreenActiveRef = useRef(false);
 
@@ -205,6 +207,26 @@ export function DigitalWalletScreen({ route }: Props) {
         t('digitalWallet.actions.shareErrorTitle'),
         t('digitalWallet.actions.shareErrorMessage'),
       );
+    }
+  }
+
+  async function handleExportPdf() {
+    if (!wallet) return;
+
+    setIsExporting(true);
+    try {
+      await exportWalletPdf(wallet, t);
+    } catch (err) {
+      if (err instanceof Error && err.message === SHARING_UNAVAILABLE) {
+        Alert.alert(
+          t('digitalWallet.actions.exportPdfUnavailableTitle'),
+          t('digitalWallet.actions.exportPdfUnavailableMessage'),
+        );
+      } else {
+        Alert.alert(t('common.error'), t('digitalWallet.actions.exportPdfError'));
+      }
+    } finally {
+      setIsExporting(false);
     }
   }
 
@@ -376,6 +398,28 @@ export function DigitalWalletScreen({ route }: Props) {
           )}
         </Pressable>
       </View>
+
+      <Pressable
+        accessibilityLabel={t('digitalWallet.actions.exportPdfAccessibility')}
+        accessibilityRole="button"
+        disabled={isExporting}
+        onPress={handleExportPdf}
+        style={({ pressed }) => [
+          styles.actionBtn,
+          styles.exportBtn,
+          isExporting && styles.disabledBtn,
+          pressed && !isExporting && styles.pressed,
+        ]}
+      >
+        {isExporting ? (
+          <ActivityIndicator color={colors.primaryDark} size="small" />
+        ) : (
+          <>
+            <Ionicons color={colors.primaryDark} name="document-text-outline" size={18} />
+            <Text style={styles.exportBtnText}>{t('digitalWallet.actions.exportPdf')}</Text>
+          </>
+        )}
+      </Pressable>
     </ScrollView>
   );
 }
@@ -611,6 +655,15 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   regenerateBtnText: {
+    ...typography.button,
+    color: colors.primaryDark,
+  },
+  exportBtn: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    marginTop: spacing.sm,
+  },
+  exportBtnText: {
     ...typography.button,
     color: colors.primaryDark,
   },
