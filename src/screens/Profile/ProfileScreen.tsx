@@ -1,28 +1,35 @@
-import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../../contexts/AuthContext';
+import { supportedLanguages } from '../../i18n';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 
 export function ProfileScreen() {
   const { user, logout } = useAuth();
+  const { t, i18n } = useTranslation();
 
   const handleLogout = () => {
-    Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
-      { text: 'Cancelar', style: 'cancel' },
+    Alert.alert(t('profile.logoutTitle'), t('profile.logoutMessage'), [
+      { text: t('profile.logoutCancel'), style: 'cancel' },
       {
-        text: 'Sair',
+        text: t('profile.logoutConfirm'),
         style: 'destructive',
         onPress: async () => {
           try {
             await logout();
           } catch {
-            Alert.alert('Erro', 'Não foi possível sair. Tente novamente.');
+            Alert.alert(t('common.error'), t('profile.logoutError'));
           }
         },
       },
     ]);
+  };
+
+  const handleLanguageChange = (langCode: string) => {
+    i18n.changeLanguage(langCode);
   };
 
   return (
@@ -32,29 +39,48 @@ export function ProfileScreen() {
           <Ionicons color={colors.white} name="paw" size={20} />
         </View>
 
-        <Text style={styles.title}>Perfil</Text>
+        <Text style={styles.title}>{t('profile.title')}</Text>
 
         <View style={styles.card}>
-          {user?.picture ? (
-            <Image source={{ uri: user.picture }} style={styles.avatar} />
-          ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Ionicons color={colors.white} name="person" size={32} />
-            </View>
-          )}
+          <View style={styles.avatarPlaceholder}>
+            <Ionicons color={colors.white} name="person" size={32} />
+          </View>
 
-          <Text style={styles.name}>{user?.name ?? 'Usuário'}</Text>
+          <Text style={styles.name}>{user?.name ?? t('profile.defaultName')}</Text>
           {user?.email ? <Text style={styles.email}>{user.email}</Text> : null}
         </View>
 
+        {/* Language selector */}
+        <View style={styles.languageSection}>
+          <Text style={styles.languageLabel}>{t('profile.language')}</Text>
+          <View style={styles.languageRow}>
+            {supportedLanguages.map((lang) => {
+              const isActive = i18n.language === lang.code;
+              return (
+                <Pressable
+                  key={lang.code}
+                  onPress={() => handleLanguageChange(lang.code)}
+                  style={[styles.languageChip, isActive && styles.languageChipActive]}
+                >
+                  <Text
+                    style={[styles.languageChipText, isActive && styles.languageChipTextActive]}
+                  >
+                    {lang.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
         <Pressable
-          accessibilityLabel="Sair da conta"
+          accessibilityLabel={t('profile.logoutAccessibility')}
           accessibilityRole="button"
           onPress={handleLogout}
           style={({ pressed }) => [styles.logoutButton, pressed && styles.pressed]}
         >
           <Ionicons color={colors.danger} name="log-out-outline" size={20} />
-          <Text style={styles.logoutText}>Sair da conta</Text>
+          <Text style={styles.logoutText}>{t('profile.logout')}</Text>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -94,12 +120,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.xl,
   },
-  avatar: {
-    borderRadius: 40,
-    height: 80,
-    marginBottom: spacing.md,
-    width: 80,
-  },
   avatarPlaceholder: {
     alignItems: 'center',
     backgroundColor: colors.primary,
@@ -117,6 +137,37 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.muted,
     marginTop: spacing.xs,
+  },
+  languageSection: {
+    marginTop: spacing.lg,
+  },
+  languageLabel: {
+    ...typography.label,
+    color: colors.text,
+    marginBottom: spacing.sm,
+  },
+  languageRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  languageChip: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+  },
+  languageChipActive: {
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.primary,
+  },
+  languageChipText: {
+    ...typography.button,
+    color: colors.muted,
+  },
+  languageChipTextActive: {
+    color: colors.primaryDark,
   },
   logoutButton: {
     alignItems: 'center',

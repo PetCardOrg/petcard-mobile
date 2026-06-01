@@ -22,6 +22,7 @@ import type {
 } from '@petcardorg/shared';
 import { useFocusEffect } from '@react-navigation/native';
 import { isAxiosError } from 'axios';
+import { useTranslation } from 'react-i18next';
 
 import { PetHeader } from '../../components/domain/PetHeader';
 import { PetSelector } from '../../components/domain/PetSelector';
@@ -45,6 +46,7 @@ function isoToDisplay(iso: string): string {
 }
 
 export function VaccineScreen() {
+  const { t } = useTranslation();
   const { pets, isLoading: isPetsLoading } = usePets();
 
   const [selectedPet, setSelectedPet] = useState<PetResponseDto | null>(null);
@@ -79,7 +81,7 @@ export function VaccineScreen() {
         const data = await vaccineService.getVaccinesByPet(selectedPet.id);
         setVaccines(data);
       } catch (err) {
-        let message = 'Não foi possível carregar as vacinas.';
+        let message = t('healthRecords.vaccine.errorLoad');
         if (isAxiosError(err) && err.response?.data?.message) {
           message = String(err.response.data.message);
         }
@@ -89,7 +91,7 @@ export function VaccineScreen() {
         setIsRefreshing(false);
       }
     },
-    [selectedPet],
+    [selectedPet, t],
   );
 
   useFocusEffect(
@@ -133,14 +135,18 @@ export function VaccineScreen() {
   }
 
   function confirmDelete(record: VaccineRecordResponseDto) {
-    Alert.alert('Excluir vacina', `Deseja excluir o registro de "${record.vaccine_name}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Excluir',
-        style: 'destructive',
-        onPress: () => void handleDelete(record.id),
-      },
-    ]);
+    Alert.alert(
+      t('healthRecords.vaccine.deleteTitle'),
+      t('healthRecords.vaccine.deleteMessage', { name: record.vaccine_name }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('petDetails.deleteDialog.confirm'),
+          style: 'destructive',
+          onPress: () => void handleDelete(record.id),
+        },
+      ],
+    );
   }
 
   async function handleDelete(id: string) {
@@ -148,24 +154,24 @@ export function VaccineScreen() {
       await vaccineService.deleteVaccine(id);
       void loadVaccines();
     } catch (err) {
-      let message = 'Não foi possível excluir a vacina.';
+      let message = t('healthRecords.vaccine.errorDelete');
       if (isAxiosError(err) && err.response?.data?.message) {
         message = String(err.response.data.message);
       }
-      Alert.alert('Erro', message);
+      Alert.alert(t('common.error'), message);
     }
   }
 
   function validateForm(): boolean {
     const errors: FormErrors = {};
-    if (!vaccineName.trim()) errors.vaccineName = 'Nome da vacina é obrigatório';
+    if (!vaccineName.trim()) errors.vaccineName = t('validation.vaccineNameRequired');
     if (!appliedAt.trim()) {
-      errors.appliedAt = 'Data de aplicação é obrigatória';
+      errors.appliedAt = t('validation.appliedAtRequired');
     } else if (!parseDate(appliedAt)) {
-      errors.appliedAt = 'Data inválida. Use DD/MM/AAAA';
+      errors.appliedAt = t('validation.dateInvalid');
     }
     if (nextDoseAt.trim() && !parseDate(nextDoseAt)) {
-      errors.nextDoseAt = 'Data inválida. Use DD/MM/AAAA';
+      errors.nextDoseAt = t('validation.dateInvalid');
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -185,7 +191,7 @@ export function VaccineScreen() {
           notes: notes.trim() || undefined,
         });
         setModalVisible(false);
-        Alert.alert('Sucesso', 'Vacina atualizada com sucesso!');
+        Alert.alert(t('common.success'), t('healthRecords.vaccine.successEdit'));
       } else {
         const payload: CreateVaccineRecordDto = {
           pet_id: selectedPet.id,
@@ -200,17 +206,17 @@ export function VaccineScreen() {
 
         await vaccineService.createVaccine(payload);
         setModalVisible(false);
-        Alert.alert('Sucesso', 'Vacina registrada com sucesso!');
+        Alert.alert(t('common.success'), t('healthRecords.vaccine.successCreate'));
       }
       void loadVaccines();
     } catch (err) {
       let message = editingRecord
-        ? 'Não foi possível atualizar a vacina.'
-        : 'Não foi possível registrar a vacina. Tente novamente.';
+        ? t('healthRecords.vaccine.errorEdit')
+        : t('healthRecords.vaccine.errorCreate');
       if (isAxiosError(err) && err.response?.data?.message) {
         message = String(err.response.data.message);
       }
-      Alert.alert('Erro', message);
+      Alert.alert(t('common.error'), message);
     } finally {
       setIsSubmitting(false);
     }
@@ -223,8 +229,8 @@ export function VaccineScreen() {
         pets={pets}
         isLoading={isPetsLoading}
         onSelectPet={handleSelectPet}
-        subtitle="Escolha o pet para visualizar e registrar vacinas."
-        emptyDescription="Cadastre um pet primeiro para registrar vacinas."
+        subtitle={t('healthRecords.petSelector.vaccineSubtitle')}
+        emptyDescription={t('healthRecords.petSelector.vaccineEmpty')}
       />
     );
   }
@@ -248,7 +254,7 @@ export function VaccineScreen() {
           <View style={styles.vaccineDetailRow}>
             <Ionicons color={colors.muted} name="calendar-outline" size={16} />
             <Text style={styles.vaccineDetailText}>
-              Aplicada em {formatDateDisplay(item.applied_at)}
+              {t('healthRecords.vaccine.appliedAt', { date: formatDateDisplay(item.applied_at) })}
             </Text>
           </View>
 
@@ -256,7 +262,9 @@ export function VaccineScreen() {
             <View style={styles.vaccineDetailRow}>
               <Ionicons color={colors.warning} name="time-outline" size={16} />
               <Text style={styles.vaccineDetailText}>
-                Próxima dose: {formatDateDisplay(item.next_dose_at)}
+                {t('healthRecords.vaccine.nextDose', {
+                  date: formatDateDisplay(item.next_dose_at),
+                })}
               </Text>
             </View>
           ) : null}
@@ -290,9 +298,9 @@ export function VaccineScreen() {
         <View style={styles.centered}>
           <EmptyState
             icon="medkit-outline"
-            title="Nenhuma vacina registrada"
-            description="Registre a primeira vacina do seu pet."
-            actionLabel="Adicionar vacina"
+            title={t('healthRecords.vaccine.emptyTitle')}
+            description={t('healthRecords.vaccine.emptyDescription')}
+            actionLabel={t('healthRecords.vaccine.emptyAction')}
             onActionPress={openCreateModal}
           />
         </View>
@@ -315,7 +323,10 @@ export function VaccineScreen() {
 
       {/* FAB */}
       {!isLoading && !error && vaccines.length > 0 ? (
-        <FAB accessibilityLabel="Adicionar vacina" onPress={openCreateModal} />
+        <FAB
+          accessibilityLabel={t('healthRecords.vaccine.addAccessibility')}
+          onPress={openCreateModal}
+        />
       ) : null}
 
       {/* Form Modal */}
@@ -333,7 +344,9 @@ export function VaccineScreen() {
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>
-                  {editingRecord ? 'Editar vacina' : 'Nova vacina'}
+                  {editingRecord
+                    ? t('healthRecords.vaccine.editTitle')
+                    : t('healthRecords.vaccine.createTitle')}
                 </Text>
                 <Pressable onPress={() => setModalVisible(false)}>
                   <Ionicons color={colors.muted} name="close" size={24} />
@@ -343,15 +356,15 @@ export function VaccineScreen() {
               <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 {/* Vaccine name */}
                 <View style={styles.field}>
-                  <Text style={styles.label}>Nome da vacina *</Text>
+                  <Text style={styles.label}>{t('healthRecords.vaccine.nameLabel')}</Text>
                   <TextInput
                     autoCapitalize="words"
-                    onChangeText={(t) => {
-                      setVaccineName(t);
+                    onChangeText={(text) => {
+                      setVaccineName(text);
                       if (formErrors.vaccineName)
                         setFormErrors((e) => ({ ...e, vaccineName: undefined }));
                     }}
-                    placeholder="Ex: V10, Antirrábica, Gripe..."
+                    placeholder={t('healthRecords.vaccine.namePlaceholder')}
                     placeholderTextColor={colors.muted}
                     style={[styles.input, formErrors.vaccineName ? styles.inputError : null]}
                     value={vaccineName}
@@ -363,16 +376,16 @@ export function VaccineScreen() {
 
                 {/* Applied at */}
                 <View style={styles.field}>
-                  <Text style={styles.label}>Data de aplicação *</Text>
+                  <Text style={styles.label}>{t('healthRecords.vaccine.appliedAtLabel')}</Text>
                   <TextInput
                     keyboardType="number-pad"
                     maxLength={10}
-                    onChangeText={(t) => {
-                      setAppliedAt(formatDateInput(t));
+                    onChangeText={(text) => {
+                      setAppliedAt(formatDateInput(text));
                       if (formErrors.appliedAt)
                         setFormErrors((e) => ({ ...e, appliedAt: undefined }));
                     }}
-                    placeholder="DD/MM/AAAA"
+                    placeholder={t('common.datePlaceholder')}
                     placeholderTextColor={colors.muted}
                     style={[styles.input, formErrors.appliedAt ? styles.inputError : null]}
                     value={appliedAt}
@@ -384,16 +397,16 @@ export function VaccineScreen() {
 
                 {/* Next dose */}
                 <View style={styles.field}>
-                  <Text style={styles.label}>Próxima dose</Text>
+                  <Text style={styles.label}>{t('healthRecords.vaccine.nextDoseLabel')}</Text>
                   <TextInput
                     keyboardType="number-pad"
                     maxLength={10}
-                    onChangeText={(t) => {
-                      setNextDoseAt(formatDateInput(t));
+                    onChangeText={(text) => {
+                      setNextDoseAt(formatDateInput(text));
                       if (formErrors.nextDoseAt)
                         setFormErrors((e) => ({ ...e, nextDoseAt: undefined }));
                     }}
-                    placeholder="DD/MM/AAAA"
+                    placeholder={t('common.datePlaceholder')}
                     placeholderTextColor={colors.muted}
                     style={[styles.input, formErrors.nextDoseAt ? styles.inputError : null]}
                     value={nextDoseAt}
@@ -405,11 +418,11 @@ export function VaccineScreen() {
 
                 {/* Veterinarian */}
                 <View style={styles.field}>
-                  <Text style={styles.label}>Veterinário</Text>
+                  <Text style={styles.label}>{t('healthRecords.vaccine.vetLabel')}</Text>
                   <TextInput
                     autoCapitalize="words"
                     onChangeText={setVeterinarianName}
-                    placeholder="Nome do veterinário"
+                    placeholder={t('healthRecords.vaccine.vetPlaceholder')}
                     placeholderTextColor={colors.muted}
                     style={styles.input}
                     value={veterinarianName}
@@ -418,12 +431,12 @@ export function VaccineScreen() {
 
                 {/* Notes */}
                 <View style={styles.field}>
-                  <Text style={styles.label}>Observações</Text>
+                  <Text style={styles.label}>{t('healthRecords.vaccine.notesLabel')}</Text>
                   <TextInput
                     multiline
                     numberOfLines={3}
                     onChangeText={setNotes}
-                    placeholder="Observações adicionais..."
+                    placeholder={t('healthRecords.vaccine.notesPlaceholder')}
                     placeholderTextColor={colors.muted}
                     style={[styles.input, styles.textArea]}
                     textAlignVertical="top"
@@ -445,7 +458,9 @@ export function VaccineScreen() {
                     <ActivityIndicator color={colors.white} size="small" />
                   ) : (
                     <Text style={styles.submitButtonText}>
-                      {editingRecord ? 'Salvar alterações' : 'Registrar vacina'}
+                      {editingRecord
+                        ? t('healthRecords.vaccine.submitEdit')
+                        : t('healthRecords.vaccine.submitCreate')}
                     </Text>
                   )}
                 </Pressable>

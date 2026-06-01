@@ -22,6 +22,7 @@ import type {
 } from '@petcardorg/shared';
 import { useFocusEffect } from '@react-navigation/native';
 import { isAxiosError } from 'axios';
+import { useTranslation } from 'react-i18next';
 
 import { PetHeader } from '../../components/domain/PetHeader';
 import { PetSelector } from '../../components/domain/PetSelector';
@@ -45,6 +46,7 @@ function isoToDisplay(iso: string): string {
 }
 
 export function DewormingScreen() {
+  const { t } = useTranslation();
   const { pets, isLoading: isPetsLoading } = usePets();
 
   const [selectedPet, setSelectedPet] = useState<PetResponseDto | null>(null);
@@ -79,7 +81,7 @@ export function DewormingScreen() {
         const data = await dewormingService.getDewormingsByPet(selectedPet.id);
         setDewormings(data);
       } catch (err) {
-        let message = 'Não foi possível carregar as vermifugações.';
+        let message = t('healthRecords.deworming.errorLoad');
         if (isAxiosError(err) && err.response?.data?.message) {
           message = String(err.response.data.message);
         }
@@ -89,7 +91,7 @@ export function DewormingScreen() {
         setIsRefreshing(false);
       }
     },
-    [selectedPet],
+    [selectedPet, t],
   );
 
   useFocusEffect(
@@ -133,14 +135,18 @@ export function DewormingScreen() {
   }
 
   function confirmDelete(record: DewormingRecordResponseDto) {
-    Alert.alert('Excluir vermifugação', `Deseja excluir o registro de "${record.product_name}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Excluir',
-        style: 'destructive',
-        onPress: () => void handleDelete(record.id),
-      },
-    ]);
+    Alert.alert(
+      t('healthRecords.deworming.deleteTitle'),
+      t('healthRecords.deworming.deleteMessage', { name: record.product_name }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('healthRecords.deworming.deleteTitle'),
+          style: 'destructive',
+          onPress: () => void handleDelete(record.id),
+        },
+      ],
+    );
   }
 
   async function handleDelete(id: string) {
@@ -148,24 +154,24 @@ export function DewormingScreen() {
       await dewormingService.deleteDeworming(id);
       void loadDewormings();
     } catch (err) {
-      let message = 'Não foi possível excluir a vermifugação.';
+      let message = t('healthRecords.deworming.errorDelete');
       if (isAxiosError(err) && err.response?.data?.message) {
         message = String(err.response.data.message);
       }
-      Alert.alert('Erro', message);
+      Alert.alert(t('common.error'), message);
     }
   }
 
   function validateForm(): boolean {
     const errors: FormErrors = {};
-    if (!productName.trim()) errors.productName = 'Nome do medicamento é obrigatório';
+    if (!productName.trim()) errors.productName = t('validation.productNameRequired');
     if (!appliedAt.trim()) {
-      errors.appliedAt = 'Data de aplicação é obrigatória';
+      errors.appliedAt = t('validation.appliedAtRequired');
     } else if (!parseDate(appliedAt)) {
-      errors.appliedAt = 'Data inválida. Use DD/MM/AAAA';
+      errors.appliedAt = t('validation.dateInvalid');
     }
     if (nextDoseAt.trim() && !parseDate(nextDoseAt)) {
-      errors.nextDoseAt = 'Data inválida. Use DD/MM/AAAA';
+      errors.nextDoseAt = t('validation.dateInvalid');
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -185,7 +191,7 @@ export function DewormingScreen() {
           notes: notes.trim() || undefined,
         });
         setModalVisible(false);
-        Alert.alert('Sucesso', 'Vermifugação atualizada com sucesso!');
+        Alert.alert(t('common.success'), t('healthRecords.deworming.successEdit'));
       } else {
         const payload: CreateDewormingRecordDto = {
           pet_id: selectedPet.id,
@@ -200,17 +206,17 @@ export function DewormingScreen() {
 
         await dewormingService.createDeworming(payload);
         setModalVisible(false);
-        Alert.alert('Sucesso', 'Vermifugação registrada com sucesso!');
+        Alert.alert(t('common.success'), t('healthRecords.deworming.successCreate'));
       }
       void loadDewormings();
     } catch (err) {
       let message = editingRecord
-        ? 'Não foi possível atualizar a vermifugação.'
-        : 'Não foi possível registrar a vermifugação. Tente novamente.';
+        ? t('healthRecords.deworming.errorEdit')
+        : t('healthRecords.deworming.errorCreate');
       if (isAxiosError(err) && err.response?.data?.message) {
         message = String(err.response.data.message);
       }
-      Alert.alert('Erro', message);
+      Alert.alert(t('common.error'), message);
     } finally {
       setIsSubmitting(false);
     }
@@ -223,8 +229,8 @@ export function DewormingScreen() {
         pets={pets}
         isLoading={isPetsLoading}
         onSelectPet={handleSelectPet}
-        subtitle="Escolha o pet para visualizar e registrar vermifugações."
-        emptyDescription="Cadastre um pet primeiro para registrar vermifugações."
+        subtitle={t('healthRecords.petSelector.dewormingSubtitle')}
+        emptyDescription={t('healthRecords.petSelector.dewormingEmpty')}
       />
     );
   }
@@ -248,7 +254,7 @@ export function DewormingScreen() {
           <View style={styles.cardDetailRow}>
             <Ionicons color={colors.muted} name="calendar-outline" size={16} />
             <Text style={styles.cardDetailText}>
-              Aplicada em {formatDateDisplay(item.applied_at)}
+              {t('healthRecords.deworming.appliedAt', { date: formatDateDisplay(item.applied_at) })}
             </Text>
           </View>
 
@@ -256,7 +262,9 @@ export function DewormingScreen() {
             <View style={styles.cardDetailRow}>
               <Ionicons color={colors.warning} name="time-outline" size={16} />
               <Text style={styles.cardDetailText}>
-                Próxima dose: {formatDateDisplay(item.next_dose_at)}
+                {t('healthRecords.deworming.nextDose', {
+                  date: formatDateDisplay(item.next_dose_at),
+                })}
               </Text>
             </View>
           ) : null}
@@ -290,9 +298,9 @@ export function DewormingScreen() {
         <View style={styles.centered}>
           <EmptyState
             icon="shield-outline"
-            title="Nenhuma vermifugação registrada"
-            description="Registre a primeira vermifugação do seu pet."
-            actionLabel="Adicionar vermifugação"
+            title={t('healthRecords.deworming.emptyTitle')}
+            description={t('healthRecords.deworming.emptyDescription')}
+            actionLabel={t('healthRecords.deworming.emptyAction')}
             onActionPress={openCreateModal}
           />
         </View>
@@ -315,7 +323,10 @@ export function DewormingScreen() {
 
       {/* FAB */}
       {!isLoading && !error && dewormings.length > 0 ? (
-        <FAB accessibilityLabel="Adicionar vermifugação" onPress={openCreateModal} />
+        <FAB
+          accessibilityLabel={t('healthRecords.deworming.addAccessibility')}
+          onPress={openCreateModal}
+        />
       ) : null}
 
       {/* Form Modal */}
@@ -333,7 +344,9 @@ export function DewormingScreen() {
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>
-                  {editingRecord ? 'Editar vermifugação' : 'Nova vermifugação'}
+                  {editingRecord
+                    ? t('healthRecords.deworming.editTitle')
+                    : t('healthRecords.deworming.createTitle')}
                 </Text>
                 <Pressable onPress={() => setModalVisible(false)}>
                   <Ionicons color={colors.muted} name="close" size={24} />
@@ -343,15 +356,15 @@ export function DewormingScreen() {
               <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 {/* Product name */}
                 <View style={styles.field}>
-                  <Text style={styles.label}>Nome do medicamento *</Text>
+                  <Text style={styles.label}>{t('healthRecords.deworming.nameLabel')}</Text>
                   <TextInput
                     autoCapitalize="words"
-                    onChangeText={(t) => {
-                      setProductName(t);
+                    onChangeText={(text) => {
+                      setProductName(text);
                       if (formErrors.productName)
                         setFormErrors((e) => ({ ...e, productName: undefined }));
                     }}
-                    placeholder="Ex: Drontal, Milbemax, Endogard..."
+                    placeholder={t('healthRecords.deworming.namePlaceholder')}
                     placeholderTextColor={colors.muted}
                     style={[styles.input, formErrors.productName ? styles.inputError : null]}
                     value={productName}
@@ -363,16 +376,16 @@ export function DewormingScreen() {
 
                 {/* Applied at */}
                 <View style={styles.field}>
-                  <Text style={styles.label}>Data de aplicação *</Text>
+                  <Text style={styles.label}>{t('healthRecords.deworming.appliedAtLabel')}</Text>
                   <TextInput
                     keyboardType="number-pad"
                     maxLength={10}
-                    onChangeText={(t) => {
-                      setAppliedAt(formatDateInput(t));
+                    onChangeText={(text) => {
+                      setAppliedAt(formatDateInput(text));
                       if (formErrors.appliedAt)
                         setFormErrors((e) => ({ ...e, appliedAt: undefined }));
                     }}
-                    placeholder="DD/MM/AAAA"
+                    placeholder={t('common.datePlaceholder')}
                     placeholderTextColor={colors.muted}
                     style={[styles.input, formErrors.appliedAt ? styles.inputError : null]}
                     value={appliedAt}
@@ -384,16 +397,16 @@ export function DewormingScreen() {
 
                 {/* Next dose */}
                 <View style={styles.field}>
-                  <Text style={styles.label}>Próxima dose</Text>
+                  <Text style={styles.label}>{t('healthRecords.deworming.nextDoseLabel')}</Text>
                   <TextInput
                     keyboardType="number-pad"
                     maxLength={10}
-                    onChangeText={(t) => {
-                      setNextDoseAt(formatDateInput(t));
+                    onChangeText={(text) => {
+                      setNextDoseAt(formatDateInput(text));
                       if (formErrors.nextDoseAt)
                         setFormErrors((e) => ({ ...e, nextDoseAt: undefined }));
                     }}
-                    placeholder="DD/MM/AAAA"
+                    placeholder={t('common.datePlaceholder')}
                     placeholderTextColor={colors.muted}
                     style={[styles.input, formErrors.nextDoseAt ? styles.inputError : null]}
                     value={nextDoseAt}
@@ -405,11 +418,11 @@ export function DewormingScreen() {
 
                 {/* Veterinarian */}
                 <View style={styles.field}>
-                  <Text style={styles.label}>Veterinário</Text>
+                  <Text style={styles.label}>{t('healthRecords.deworming.vetLabel')}</Text>
                   <TextInput
                     autoCapitalize="words"
                     onChangeText={setVeterinarianName}
-                    placeholder="Nome do veterinário"
+                    placeholder={t('healthRecords.deworming.vetPlaceholder')}
                     placeholderTextColor={colors.muted}
                     style={styles.input}
                     value={veterinarianName}
@@ -418,12 +431,12 @@ export function DewormingScreen() {
 
                 {/* Notes */}
                 <View style={styles.field}>
-                  <Text style={styles.label}>Observações</Text>
+                  <Text style={styles.label}>{t('healthRecords.deworming.notesLabel')}</Text>
                   <TextInput
                     multiline
                     numberOfLines={3}
                     onChangeText={setNotes}
-                    placeholder="Observações adicionais..."
+                    placeholder={t('healthRecords.deworming.notesPlaceholder')}
                     placeholderTextColor={colors.muted}
                     style={[styles.input, styles.textArea]}
                     textAlignVertical="top"
@@ -445,7 +458,9 @@ export function DewormingScreen() {
                     <ActivityIndicator color={colors.white} size="small" />
                   ) : (
                     <Text style={styles.submitButtonText}>
-                      {editingRecord ? 'Salvar alterações' : 'Registrar vermifugação'}
+                      {editingRecord
+                        ? t('healthRecords.deworming.submitEdit')
+                        : t('healthRecords.deworming.submitCreate')}
                     </Text>
                   )}
                 </Pressable>

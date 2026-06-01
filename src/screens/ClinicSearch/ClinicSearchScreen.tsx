@@ -1,15 +1,27 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  AppState,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { MaterialTopTabNavigationProp } from '@react-navigation/material-top-tabs';
 import * as Location from 'expo-location';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { useTranslation } from 'react-i18next';
 import type { PlacesClinicResponseDto } from '@petcardorg/shared';
 
 import { colors, radii, spacing, typography } from '../../utils/theme';
 import * as clinicService from '../../services/clinic.service';
 import { useAuth } from '../../contexts/AuthContext';
 import { ClinicDetailCard } from './ClinicDetailCard';
+import type { MainTabParamList } from '../../navigation/types';
 
 const RADIUS_OPTIONS = [5, 10, 25, 50];
 
@@ -19,7 +31,9 @@ type ScreenState = 'loading' | 'permission_denied' | 'error' | 'empty' | 'succes
 
 export function ClinicSearchScreen() {
   const insets = useSafeAreaInsets();
-  const { isReady } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const { t } = useTranslation();
+  const navigation = useNavigation<MaterialTopTabNavigationProp<MainTabParamList>>();
   const mapRef = useRef<MapView>(null);
 
   const [state, setState] = useState<ScreenState>('loading');
@@ -31,6 +45,45 @@ export function ClinicSearchScreen() {
 
   const [selectedRadius, setSelectedRadius] = useState(10);
   const [openNowFilter, setOpenNowFilter] = useState(false);
+
+  // Schedule prompt state
+  const [showSchedulePrompt, setShowSchedulePrompt] = useState(false);
+  const [calledClinic, setCalledClinic] = useState<PlacesClinicResponseDto | null>(null);
+  const waitingForReturn = useRef(false);
+
+  // Detect when user returns from phone dialer
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active' && waitingForReturn.current) {
+        waitingForReturn.current = false;
+        setShowSchedulePrompt(true);
+      }
+    });
+    return () => subscription.remove();
+  }, []);
+
+  const handleCallMade = useCallback(() => {
+    if (selectedClinic) {
+      setCalledClinic(selectedClinic);
+      waitingForReturn.current = true;
+    }
+  }, [selectedClinic]);
+
+  function handleScheduleAppointment() {
+    if (!calledClinic) return;
+    setShowSchedulePrompt(false);
+    navigation.navigate('Appointments', {
+      prefill: {
+        location: calledClinic.address ?? calledClinic.name,
+        _ts: Date.now(),
+      },
+    });
+  }
+
+  function dismissSchedulePrompt() {
+    setShowSchedulePrompt(false);
+    setCalledClinic(null);
+  }
 
   const loadClinics = useCallback(
     async (lat: number, lng: number, radiusKm: number, openNow: boolean) => {
@@ -44,7 +97,7 @@ export function ClinicSearchScreen() {
         setClinics(data);
         setState(data.length === 0 ? 'empty' : 'success');
       } catch {
-        setErrorMessage('Não foi possível buscar clínicas próximas.');
+        setErrorMessage(t('clinics.errorLoading'));
         setState('error');
       }
     },
@@ -74,16 +127,16 @@ export function ClinicSearchScreen() {
       setUserLocation(coords);
       await loadClinics(coords.lat, coords.lng, selectedRadius, openNowFilter);
     } catch {
-      setErrorMessage('Não foi possível obter sua localização.');
+      setErrorMessage(t('clinics.errorLocation'));
       setState('error');
     }
   }, [loadClinics, selectedRadius, openNowFilter]);
 
   useEffect(() => {
-    if (isReady) {
+    if (isAuthenticated) {
       requestLocationAndLoad();
     }
-  }, [isReady]);
+  }, [isAuthenticated]);
 
   const applyFilters = useCallback(
     async (radiusKm: number, openNow: boolean) => {
@@ -126,7 +179,7 @@ export function ClinicSearchScreen() {
     return (
       <View style={[styles.centered, { paddingTop: insets.top }]}>
         <ActivityIndicator color={colors.primary} size="large" />
-        <Text style={styles.loadingText}>Buscando clínicas próximas...</Text>
+        <Text style={styles.loadingText}>{t('clinics.loading')}</Text>
       </View>
     );
   }
@@ -137,16 +190,13 @@ export function ClinicSearchScreen() {
         <View style={styles.iconCircle}>
           <Ionicons color={colors.warning} name="location-outline" size={40} />
         </View>
-        <Text style={styles.stateTitle}>Localização necessária</Text>
-        <Text style={styles.stateDescription}>
-          Para mostrar clínicas próximas, precisamos acessar sua localização. Habilite a permissão
-          nas configurações do dispositivo.
-        </Text>
+        <Text style={styles.stateTitle}>{t('clinics.permissionTitle')}</Text>
+        <Text style={styles.stateDescription}>{t('clinics.permissionDescription')}</Text>
         <Pressable
           onPress={requestLocationAndLoad}
           style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}
         >
-          <Text style={styles.retryButtonText}>Tentar novamente</Text>
+          <Text style={styles.retryButtonText}>{t('clinics.retry')}</Text>
         </Pressable>
       </View>
     );
@@ -158,14 +208,14 @@ export function ClinicSearchScreen() {
         <View style={[styles.iconCircle, styles.iconCircleError]}>
           <Ionicons color={colors.danger} name="alert-circle-outline" size={40} />
         </View>
-        <Text style={styles.stateTitle}>Ops, algo deu errado</Text>
+        <Text style={styles.stateTitle}>{t('clinics.errorTitle')}</Text>
         <Text style={styles.stateDescription}>{errorMessage}</Text>
         <Pressable
           onPress={requestLocationAndLoad}
           style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}
         >
           <Ionicons color={colors.white} name="refresh" size={18} style={styles.retryIcon} />
-          <Text style={styles.retryButtonText}>Tentar novamente</Text>
+          <Text style={styles.retryButtonText}>{t('clinics.retry')}</Text>
         </Pressable>
       </View>
     );
@@ -242,7 +292,7 @@ export function ClinicSearchScreen() {
               color={openNowFilter ? colors.white : colors.text}
             />
             <Text style={[styles.chipText, openNowFilter && styles.chipTextActive]}>
-              Aberto agora
+              {t('clinics.openNow')}
             </Text>
           </Pressable>
         </ScrollView>
@@ -251,7 +301,7 @@ export function ClinicSearchScreen() {
       {isSearching && (
         <View style={[styles.searchingOverlay, { top: insets.top + spacing.sm + 52 }]}>
           <ActivityIndicator color={colors.primary} size="small" />
-          <Text style={styles.searchingText}>Atualizando...</Text>
+          <Text style={styles.searchingText}>{t('clinics.updating')}</Text>
         </View>
       )}
 
@@ -259,7 +309,7 @@ export function ClinicSearchScreen() {
         <View style={[styles.emptyOverlay, { top: insets.top + spacing.sm + 52 }]}>
           <View style={styles.emptyCard}>
             <Ionicons name="search-outline" size={20} color={colors.muted} />
-            <Text style={styles.emptyText}>Nenhuma clínica veterinária encontrada nesta área</Text>
+            <Text style={styles.emptyText}>{t('clinics.emptyResult')}</Text>
           </View>
         </View>
       )}
@@ -271,9 +321,7 @@ export function ClinicSearchScreen() {
             onPress={() => applyFilters(selectedRadius, openNowFilter)}
           >
             <Ionicons name="alert-circle-outline" size={20} color={colors.danger} />
-            <Text style={styles.emptyText}>
-              Erro ao buscar clínicas. Toque para tentar novamente
-            </Text>
+            <Text style={styles.emptyText}>{t('clinics.errorRetry')}</Text>
           </Pressable>
         </View>
       )}
@@ -282,8 +330,34 @@ export function ClinicSearchScreen() {
         <ClinicDetailCard
           clinic={selectedClinic}
           onDismiss={handleDismissCard}
+          onCallMade={handleCallMade}
           bottomInset={insets.bottom}
         />
+      )}
+
+      {showSchedulePrompt && (
+        <View style={styles.promptOverlay}>
+          <View style={styles.promptCard}>
+            <View style={styles.promptIconCircle}>
+              <Ionicons name="calendar" size={32} color={colors.primaryDark} />
+            </View>
+            <Text style={styles.promptTitle}>{t('clinics.detail.appointmentScheduled')}</Text>
+            <Text style={styles.promptSubtitle}>{calledClinic?.name}</Text>
+            <Pressable
+              onPress={handleScheduleAppointment}
+              style={({ pressed }) => [styles.promptButton, pressed && styles.pressed]}
+            >
+              <Ionicons name="add-circle-outline" size={20} color={colors.white} />
+              <Text style={styles.promptButtonText}>{t('clinics.detail.addToSchedule')}</Text>
+            </Pressable>
+            <Pressable
+              onPress={dismissSchedulePrompt}
+              style={({ pressed }) => [styles.promptDismiss, pressed && styles.pressed]}
+            >
+              <Text style={styles.promptDismissText}>{t('clinics.detail.notNow')}</Text>
+            </Pressable>
+          </View>
+        </View>
       )}
     </View>
   );
@@ -447,5 +521,65 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     color: colors.muted,
     flex: 1,
+  },
+
+  // Schedule prompt overlay
+  promptOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  promptCard: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    padding: spacing.xl,
+    width: '100%',
+  },
+  promptIconCircle: {
+    alignItems: 'center',
+    backgroundColor: colors.primarySoft,
+    borderRadius: 36,
+    height: 72,
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+    width: 72,
+  },
+  promptTitle: {
+    ...typography.h3,
+    color: colors.text,
+    marginBottom: spacing.xs,
+    textAlign: 'center',
+  },
+  promptSubtitle: {
+    ...typography.body,
+    color: colors.muted,
+    marginBottom: spacing.lg,
+    textAlign: 'center',
+  },
+  promptButton: {
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: radii.md,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 14,
+    width: '100%',
+  },
+  promptButtonText: {
+    ...typography.button,
+    color: colors.white,
+  },
+  promptDismiss: {
+    marginTop: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  promptDismissText: {
+    ...typography.button,
+    color: colors.muted,
   },
 });

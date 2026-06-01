@@ -28,6 +28,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     edgeToEdgeEnabled: true,
     package: 'com.petcardorg.mobile',
+    googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
     config: {
       googleMaps: {
         apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
@@ -38,4 +39,5 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     favicon: './assets/favicon.png',
   },
   scheme: 'petcard',
+  plugins: ['expo-localization', 'expo-notifications'],
 });

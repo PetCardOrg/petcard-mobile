@@ -3,11 +3,14 @@ import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from '
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../contexts/AuthContext';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 import { LoginScreen } from '../screens/Auth/LoginScreen';
+import { RegisterScreen } from '../screens/Auth/RegisterScreen';
 import { DewormingScreen } from '../screens/HealthRecords/DewormingScreen';
 import { MedicationScreen } from '../screens/HealthRecords/MedicationScreen';
 import { VaccineScreen } from '../screens/HealthRecords/VaccineScreen';
@@ -17,6 +20,7 @@ import { PetDetailsScreen } from '../screens/Home/PetDetailsScreen';
 import { PetRegistrationScreen } from '../screens/PetRegistration/PetRegistrationScreen';
 import { ProfileScreen } from '../screens/Profile/ProfileScreen';
 import { ClinicSearchScreen } from '../screens/ClinicSearch/ClinicSearchScreen';
+import { AppointmentsScreen } from '../screens/Appointments/AppointmentsScreen';
 import { colors, radii, spacing, typography } from '../utils/theme';
 import type { AuthStackParamList, HomeStackParamList, MainTabParamList } from './types';
 
@@ -24,26 +28,18 @@ const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const HomeStack = createNativeStackNavigator<HomeStackParamList>();
 const MainTabs = createMaterialTopTabNavigator<MainTabParamList>();
 
-const healthTabs = [
-  { key: 'vaccines', label: 'Vacinas', icon: 'medkit-outline' as const, Screen: VaccineScreen },
-  { key: 'dewormings', label: 'Vermífugos', icon: 'bug-outline' as const, Screen: DewormingScreen },
-  {
-    key: 'medications',
-    label: 'Medicações',
-    icon: 'bandage-outline' as const,
-    Screen: MedicationScreen,
-  },
-];
-
 function AuthNavigator() {
   return (
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
       <AuthStack.Screen component={LoginScreen} name="Login" />
+      <AuthStack.Screen component={RegisterScreen} name="Register" />
     </AuthStack.Navigator>
   );
 }
 
 function HomeNavigator() {
+  const { t } = useTranslation();
+
   return (
     <HomeStack.Navigator
       screenOptions={{
@@ -62,15 +58,42 @@ function HomeNavigator() {
       <HomeStack.Screen
         component={DigitalWalletScreen}
         name="DigitalWallet"
-        options={{ title: 'Carteira Digital' }}
+        options={{ title: t('digitalWallet.title') }}
+      />
+      <HomeStack.Screen
+        component={PetRegistrationScreen}
+        name="PetRegistration"
+        options={{ title: t('petRegistration.title') }}
       />
     </HomeStack.Navigator>
   );
 }
 
 function HealthRecordsNavigator() {
+  const { t } = useTranslation();
+  const healthTabs = [
+    {
+      key: 'vaccines',
+      label: t('healthRecords.tabs.vaccines'),
+      icon: 'medkit-outline' as const,
+      Screen: VaccineScreen,
+    },
+    {
+      key: 'dewormings',
+      label: t('healthRecords.tabs.dewormings'),
+      icon: 'bug-outline' as const,
+      Screen: DewormingScreen,
+    },
+    {
+      key: 'medications',
+      label: t('healthRecords.tabs.medications'),
+      icon: 'bandage-outline' as const,
+      Screen: MedicationScreen,
+    },
+  ];
+
   const [activeTab, setActiveTab] = useState(healthTabs[0].key);
-  const ActiveScreen = healthTabs.find((t) => t.key === activeTab)!.Screen;
+  const ActiveScreen = healthTabs.find((tab) => tab.key === activeTab)!.Screen;
   const insets = useSafeAreaInsets();
 
   return (
@@ -100,6 +123,9 @@ function HealthRecordsNavigator() {
 }
 
 function MainNavigator() {
+  const { t } = useTranslation();
+  usePushNotifications();
+
   return (
     <MainTabs.Navigator
       tabBarPosition="bottom"
@@ -108,15 +134,18 @@ function MainNavigator() {
         tabBarActiveTintColor: colors.primaryDark,
         tabBarInactiveTintColor: colors.muted,
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '700',
           textTransform: 'none',
+          marginTop: 2,
         },
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: StyleSheet.hairlineWidth,
-          paddingBottom: Platform.OS === 'ios' ? 20 : 0,
+          paddingBottom: Platform.OS === 'ios' ? 20 : 8,
+          paddingTop: 6,
+          height: Platform.OS === 'ios' ? 80 : 64,
         },
         tabBarIndicatorStyle: {
           backgroundColor: colors.primaryDark,
@@ -124,50 +153,54 @@ function MainNavigator() {
           top: 0,
         },
         tabBarShowIcon: true,
+        tabBarItemStyle: {
+          paddingVertical: 2,
+        },
       }}
     >
       <MainTabs.Screen
         component={HomeNavigator}
         name="Home"
         options={({ route }) => ({
-          title: 'Home',
+          title: t('tabs.home'),
           swipeEnabled:
             getFocusedRouteNameFromRoute(route) !== 'PetDetails' &&
-            getFocusedRouteNameFromRoute(route) !== 'DigitalWallet',
-          tabBarIcon: ({ color }) => <Ionicons color={color} name="home-outline" size={22} />,
+            getFocusedRouteNameFromRoute(route) !== 'DigitalWallet' &&
+            getFocusedRouteNameFromRoute(route) !== 'PetRegistration',
+          tabBarIcon: ({ color }) => <Ionicons color={color} name="home-outline" size={20} />,
         })}
-      />
-      <MainTabs.Screen
-        component={PetRegistrationScreen}
-        name="Pets"
-        options={{
-          title: 'Pets',
-          tabBarIcon: ({ color }) => <Ionicons color={color} name="paw-outline" size={22} />,
-        }}
       />
       <MainTabs.Screen
         component={HealthRecordsNavigator}
         name="Health"
         options={{
-          title: 'Saúde',
-          tabBarIcon: ({ color }) => <Ionicons color={color} name="heart-outline" size={22} />,
+          title: t('tabs.health'),
+          tabBarIcon: ({ color }) => <Ionicons color={color} name="heart-outline" size={20} />,
+        }}
+      />
+      <MainTabs.Screen
+        component={AppointmentsScreen}
+        name="Appointments"
+        options={{
+          title: t('tabs.appointments'),
+          tabBarIcon: ({ color }) => <Ionicons color={color} name="calendar-outline" size={20} />,
         }}
       />
       <MainTabs.Screen
         component={ClinicSearchScreen}
         name="Clinics"
         options={{
-          title: 'Clínicas',
+          title: t('tabs.clinics'),
           swipeEnabled: false,
-          tabBarIcon: ({ color }) => <Ionicons color={color} name="map-outline" size={22} />,
+          tabBarIcon: ({ color }) => <Ionicons color={color} name="map-outline" size={20} />,
         }}
       />
       <MainTabs.Screen
         component={ProfileScreen}
         name="Profile"
         options={{
-          title: 'Perfil',
-          tabBarIcon: ({ color }) => <Ionicons color={color} name="person-outline" size={22} />,
+          title: t('tabs.profile'),
+          tabBarIcon: ({ color }) => <Ionicons color={color} name="person-outline" size={20} />,
         }}
       />
     </MainTabs.Navigator>

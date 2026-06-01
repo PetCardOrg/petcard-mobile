@@ -2,6 +2,7 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
 
 export type AuthStackParamList = {
   Login: undefined;
+  Register: undefined;
 };
 
 export type HomeStackParamList = {
@@ -14,12 +15,18 @@ export type HomeStackParamList = {
     petId: string;
     petName: string;
   };
+  PetRegistration: undefined;
+};
+
+export type AppointmentPrefill = {
+  location?: string;
+  _ts: number;
 };
 
 export type MainTabParamList = {
   Home: NavigatorScreenParams<HomeStackParamList> | undefined;
-  Pets: undefined;
   Health: undefined;
+  Appointments: { prefill?: AppointmentPrefill } | undefined;
   Clinics: undefined;
   Profile: undefined;
 };
