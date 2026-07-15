@@ -1,0 +1,94 @@
+// O app carrega isto no boot (index.ts); os DTOs do @petcardorg/shared usam
+// decorators de class-validator que dependem de Reflect.getMetadata.
+import 'reflect-metadata';
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+
+import enUS from './src/i18n/locales/en-US/common.json';
+import ptBR from './src/i18n/locales/pt-BR/common.json';
+
+// i18n determinístico (pt-BR) para as asserções por rótulo — espelha o setup
+// do petcard-web. Inicializa o mesmo singleton do i18next que o app consome.
+beforeAll(async () => {
+  if (!i18n.isInitialized) {
+    await i18n.use(initReactI18next).init({
+      resources: {
+        'pt-BR': { translation: ptBR },
+        'en-US': { translation: enUS },
+      },
+      lng: 'pt-BR',
+      fallbackLng: 'pt-BR',
+      interpolation: { escapeValue: false },
+    });
+  }
+});
+
+// SecureStore em memória: o AuthContext e o i18n do app persistem sessão/idioma
+// por aqui. Cada teste começa com o store limpo.
+jest.mock('expo-secure-store', () => {
+  const store = new Map<string, string>();
+  return {
+    __esModule: true,
+    getItemAsync: jest.fn((k: string) => Promise.resolve(store.get(k) ?? null)),
+    setItemAsync: jest.fn((k: string, v: string) => {
+      store.set(k, v);
+      return Promise.resolve();
+    }),
+    deleteItemAsync: jest.fn((k: string) => {
+      store.delete(k);
+      return Promise.resolve();
+    }),
+    __store: store,
+  };
+});
+
+jest.mock('expo-localization', () => ({
+  __esModule: true,
+  getLocales: () => [{ languageTag: 'pt-BR', languageCode: 'pt' }],
+}));
+
+// @expo/vector-icons carrega fontes de forma assíncrona (setState pós-render →
+// warning de act). Stub simples por família mantém o render síncrono.
+jest.mock('@expo/vector-icons', () => {
+  // require dentro do factory: jest hoista jest.mock acima dos imports ESM.
+  /* eslint-disable @typescript-eslint/no-require-imports */
+  const React = require('react');
+  const { Text } = require('react-native');
+  /* eslint-enable @typescript-eslint/no-require-imports */
+  const makeIcon = (family: string) => {
+    const Icon = ({ name }: { name: string }) =>
+      React.createElement(Text, null, `${family}:${name}`);
+    Icon.displayName = family;
+    return Icon;
+  };
+  return {
+    __esModule: true,
+    Ionicons: makeIcon('Ionicons'),
+    MaterialCommunityIcons: makeIcon('MaterialCommunityIcons'),
+    MaterialIcons: makeIcon('MaterialIcons'),
+    FontAwesome: makeIcon('FontAwesome'),
+    Feather: makeIcon('Feather'),
+  };
+});
+
+// @react-navigation/native: hooks isolados dos containers nativos. Os testes
+// que precisam asserir navegação sobrescrevem `useNavigation` via spy.
+jest.mock('@react-navigation/native', () => {
+  const actual = jest.requireActual('@react-navigation/native');
+  return {
+    ...actual,
+    useNavigation: () => ({ navigate: jest.fn(), goBack: jest.fn() }),
+    useFocusEffect: (cb: () => void) => cb(),
+    useIsFocused: () => true,
+  };
+});
+
+afterEach(() => {
+  jest.clearAllMocks();
+  // Zera o SecureStore em memória (o Map vive no closure do mock, fora do
+  // alcance de clearAllMocks) para isolar sessão/idioma entre testes.
+  const secureStore = jest.requireMock('expo-secure-store') as {
+    __store: Map<string, string>;
+  };
+  secureStore.__store.clear();
+});

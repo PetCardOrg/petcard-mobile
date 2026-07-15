@@ -21,6 +21,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm run test:cov
       - name: Expo doctor (advisory)
         run: npx expo-doctor
         continue-on-error: true
