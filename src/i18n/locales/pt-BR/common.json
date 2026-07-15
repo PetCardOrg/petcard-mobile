@@ -117,7 +117,26 @@
       "shareUnavailableMessage": "A carteira digital ainda não possui um link público. Tente regenerar o QR Code.",
       "shareMessage": "Veja a carteira digital de {{petName}}: {{url}}",
       "shareErrorTitle": "Erro ao compartilhar",
-      "shareErrorMessage": "Não foi possível abrir o compartilhamento da carteira digital."
+      "shareErrorMessage": "Não foi possível abrir o compartilhamento da carteira digital.",
+      "exportPdf": "Exportar PDF",
+      "exportPdfAccessibility": "Exportar carteira digital em PDF",
+      "exportPdfDialog": "Carteira Digital de {{petName}}",
+      "exportPdfError": "Não foi possível gerar o PDF da carteira.",
+      "exportPdfUnavailableTitle": "Compartilhamento indisponível",
+      "exportPdfUnavailableMessage": "Este dispositivo não permite compartilhar arquivos. Tente em um dispositivo físico."
+    },
+    "pdf": {
+      "docTitle": "Carteira Digital de Saúde",
+      "identityTitle": "Identidade do Pet",
+      "fields": {
+        "name": "Nome",
+        "breed": "Raça",
+        "species": "Espécie",
+        "sex": "Sexo"
+      },
+      "linkLabel": "Link público",
+      "footerNote": "Documento gerado pelo aplicativo PetCard. Reflete o histórico de saúde na data de emissão.",
+      "generatedAtLabel": "Emitido em"
     }
   },
   "clinics": {

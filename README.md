@@ -27,7 +27,7 @@ Este repositório faz parte de um conjunto de 5 repos:
 | Linguagem    | TypeScript 5.x           |
 | Navegação    | React Navigation         |
 | HTTP Client  | Axios                    |
-| Autenticação | Auth0 (OAuth 2.0)        |
+| Autenticação | JWT próprio (HS256)      |
 | Notificações | Firebase Cloud Messaging |
 | i18n         | i18next (pt-BR / en-US)  |
 
@@ -37,6 +37,7 @@ Este repositório faz parte de um conjunto de 5 repos:
 - npm >= 10
 - Expo Go (no celular) ou emulador Android/iOS
 - Backend (petcard-api) rodando em http://localhost:3000
+- GitHub Personal Access Token com escopo `read:packages` (para baixar `@petcardorg/shared` do GitHub Packages)
 
 ## Instalação
 
@@ -45,14 +46,18 @@ Este repositório faz parte de um conjunto de 5 repos:
 git clone https://github.com/PetCardOrg/petcard-mobile.git
 cd petcard-mobile
 
-# 2. Instale as dependências
+# 2. Autentique no GitHub Packages (necessário para @petcardorg/shared)
+# Crie um token em https://github.com/settings/tokens com escopo read:packages
+export NODE_AUTH_TOKEN=<seu_personal_access_token>
+
+# 3. Instale as dependências
 npm install
 
-# 3. Configure as variáveis de ambiente
+# 4. Configure as variáveis de ambiente
 cp .env.example .env
-# Edite o .env com a URL da API e credenciais Auth0
+# Ajuste EXPO_PUBLIC_API_URL se a API não estiver em http://localhost:3000
 
-# 4. Inicie o Expo
+# 5. Inicie o Expo
 npm start
 # Escaneie o QR Code com o Expo Go ou pressione 'a' para Android / 'i' para iOS
 ```
@@ -68,7 +73,7 @@ npm start
 
 ## Funcionalidades
 
-- Cadastro e login do tutor via Auth0
+- Cadastro e login do tutor via JWT próprio
 - Gerenciamento de pets (CRUD)
 - Registro de vacinas, vermifugações e medicações
 - Carteira digital de saúde com QR Code
