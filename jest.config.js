@@ -27,6 +27,7 @@ module.exports = {
     '!src/i18n/**',
     '!src/**/index.ts',
   ],
+  coverageReporters: ['text', 'text-summary', 'json-summary', 'lcov'],
   coverageThreshold: {
     global: {
       statements: 14,
