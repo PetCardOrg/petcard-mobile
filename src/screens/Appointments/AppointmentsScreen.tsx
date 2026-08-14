@@ -31,7 +31,7 @@ import { FAB } from '../../components/ui/FAB';
 import { usePets } from '../../hooks/usePets';
 import { appointmentService, calendarService } from '../../services';
 import type { AppointmentResponse } from '../../services/appointment.service';
-import { formatDateDisplay, formatDateInput, parseDate } from '../../utils/dateUtils';
+import { formatDateInput, parseDate } from '../../utils/dateUtils';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 import { getRelativeDays } from './relativeDate';
 
@@ -378,7 +378,9 @@ export function AppointmentsScreen() {
                 if (days === 0) return t('appointments.today');
                 if (days === 1) return t('appointments.tomorrow');
                 if (days > 1 && days <= 7) return `${days} ${t('appointments.daysAway')}`;
-                return formatDateDisplay(item.scheduled_at.split('T')[0]);
+                // `date` já vem em horário local; fatiar o ISO daria a data UTC,
+                // um dia à frente para agendamentos à noite.
+                return date;
               })()}
             </Text>
           </View>
