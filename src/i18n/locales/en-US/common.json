@@ -357,22 +357,16 @@
     },
     "calendar": {
       "connected": "Google Calendar connected",
+      "connectedHint": "New appointments go straight to your calendar.",
       "notConnected": "Google Calendar not connected",
+      "notConnectedHint": "Connect so your appointments show up in your calendar.",
       "connect": "Connect",
-      "sync": "Sync",
-      "syncSuccess": "{{count}} appointment(s) synced!",
-      "syncError": "Could not sync with Google Calendar.",
       "connectError": "Could not connect to Google Calendar.",
       "notConfigured": "Google Calendar integration is not configured.",
       "disconnectTitle": "Disconnect Google Calendar",
       "disconnectMessage": "Appointments will no longer be synced. Continue?",
       "disconnectConfirm": "Disconnect",
       "disconnectError": "Could not disconnect Google Calendar."
-    },
-    "syncStatus": {
-      "synced": "Synced",
-      "pending": "Pending",
-      "failed": "Sync failed"
     }
   },
   "common": {
