@@ -359,9 +359,6 @@
       "connected": "Google Calendar connected",
       "notConnected": "Google Calendar not connected",
       "connect": "Connect",
-      "sync": "Sync",
-      "syncSuccess": "{{count}} appointment(s) synced!",
-      "syncError": "Could not sync with Google Calendar.",
       "connectError": "Could not connect to Google Calendar.",
       "notConfigured": "Google Calendar integration is not configured.",
       "disconnectTitle": "Disconnect Google Calendar",
@@ -370,8 +367,6 @@
       "disconnectError": "Could not disconnect Google Calendar."
     },
     "syncStatus": {
-      "synced": "Synced",
-      "pending": "Pending",
       "failed": "Sync failed"
     }
   },

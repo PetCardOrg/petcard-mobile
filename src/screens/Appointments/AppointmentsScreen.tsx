@@ -33,6 +33,7 @@ import { appointmentService, calendarService } from '../../services';
 import type { AppointmentResponse } from '../../services/appointment.service';
 import { formatDateDisplay, formatDateInput, parseDate } from '../../utils/dateUtils';
 import { colors, radii, spacing, typography } from '../../utils/theme';
+import { getRelativeDays } from './relativeDate';
 
 type FormErrors = {
   title?: string;
@@ -69,13 +70,6 @@ function isUpcoming(iso: string): boolean {
   return new Date(iso) >= new Date();
 }
 
-function getRelativeDays(iso: string): number {
-  const date = new Date(iso);
-  const now = new Date();
-  const diffMs = date.getTime() - now.getTime();
-  return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-}
-
 const DURATION_OPTIONS = [30, 45, 60, 90, 120];
 
 export function AppointmentsScreen() {
@@ -92,7 +86,6 @@ export function AppointmentsScreen() {
 
   // Calendar sync state
   const [calendarConnected, setCalendarConnected] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
 
   // Form state
   const [modalVisible, setModalVisible] = useState(false);
@@ -290,18 +283,6 @@ export function AppointmentsScreen() {
     }
   }
 
-  async function handleCalendarSync() {
-    setIsSyncing(true);
-    try {
-      const count = await calendarService.syncAll();
-      Alert.alert(t('common.success'), t('appointments.calendar.syncSuccess', { count }));
-    } catch {
-      Alert.alert(t('common.error'), t('appointments.calendar.syncError'));
-    } finally {
-      setIsSyncing(false);
-    }
-  }
-
   async function handleCalendarDisconnect() {
     Alert.alert(
       t('appointments.calendar.disconnectTitle'),
@@ -322,31 +303,6 @@ export function AppointmentsScreen() {
         },
       ],
     );
-  }
-
-  function getSyncStatusColor(status: string) {
-    switch (status) {
-      case 'SYNCED':
-        return colors.success;
-      case 'FAILED':
-        return colors.danger;
-      default:
-        return colors.warning;
-    }
-  }
-
-  function getSyncStatusLabel(status: string): string {
-    switch (status) {
-      case 'SYNCED':
-        return t('appointments.syncStatus.synced');
-      case 'FAILED':
-        return t('appointments.syncStatus.failed');
-      case 'PENDING_CREATE':
-      case 'PENDING_UPDATE':
-        return t('appointments.syncStatus.pending');
-      default:
-        return status;
-    }
   }
 
   function renderAppointmentItem({ item }: { item: AppointmentResponse }) {
@@ -403,13 +359,12 @@ export function AppointmentsScreen() {
             </View>
           ) : null}
 
-          {calendarConnected ? (
+          {/* A sincronização é automática — só vale avisar quando ela falha. */}
+          {calendarConnected && item.sync_status === 'FAILED' ? (
             <View style={styles.metaRow}>
-              <View
-                style={[styles.syncDot, { backgroundColor: getSyncStatusColor(item.sync_status) }]}
-              />
-              <Text style={[styles.metaText, { color: getSyncStatusColor(item.sync_status) }]}>
-                {getSyncStatusLabel(item.sync_status)}
+              <View style={[styles.syncDot, { backgroundColor: colors.danger }]} />
+              <Text style={[styles.metaText, { color: colors.danger }]}>
+                {t('appointments.syncStatus.failed')}
               </Text>
             </View>
           ) : null}
@@ -458,25 +413,9 @@ export function AppointmentsScreen() {
         </View>
         <View style={styles.calendarBannerActions}>
           {calendarConnected ? (
-            <>
-              <Pressable
-                onPress={handleCalendarSync}
-                disabled={isSyncing}
-                style={({ pressed }) => [styles.syncButton, pressed && styles.pressed]}
-              >
-                {isSyncing ? (
-                  <ActivityIndicator color={colors.white} size="small" />
-                ) : (
-                  <>
-                    <Ionicons name="sync" size={14} color={colors.white} />
-                    <Text style={styles.syncButtonText}>{t('appointments.calendar.sync')}</Text>
-                  </>
-                )}
-              </Pressable>
-              <Pressable onPress={handleCalendarDisconnect} hitSlop={8}>
-                <Ionicons name="close-circle-outline" size={22} color={colors.danger} />
-              </Pressable>
-            </>
+            <Pressable onPress={handleCalendarDisconnect} hitSlop={8}>
+              <Ionicons name="close-circle-outline" size={22} color={colors.danger} />
+            </Pressable>
           ) : (
             <Pressable
               onPress={handleCalendarConnect}
