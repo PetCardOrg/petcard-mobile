@@ -356,8 +356,10 @@
       "timeInvalid": "Hora inválida. Use HH:MM"
     },
     "calendar": {
-      "connected": "Google Calendar conectado",
-      "notConnected": "Google Calendar não conectado",
+      "connected": "Google Agenda conectado",
+      "connectedHint": "Novos agendamentos vão direto para a sua agenda.",
+      "notConnected": "Google Agenda não conectado",
+      "notConnectedHint": "Conecte para que seus agendamentos apareçam na sua agenda.",
       "connect": "Conectar",
       "connectError": "Não foi possível conectar ao Google Calendar.",
       "notConfigured": "Integração com Google Calendar não configurada.",
@@ -365,9 +367,6 @@
       "disconnectMessage": "Os agendamentos não serão mais sincronizados. Deseja continuar?",
       "disconnectConfirm": "Desconectar",
       "disconnectError": "Não foi possível desconectar o Google Calendar."
-    },
-    "syncStatus": {
-      "failed": "Falha na sincronização"
     }
   },
   "common": {

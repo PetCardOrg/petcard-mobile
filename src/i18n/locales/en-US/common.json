@@ -357,7 +357,9 @@
     },
     "calendar": {
       "connected": "Google Calendar connected",
+      "connectedHint": "New appointments go straight to your calendar.",
       "notConnected": "Google Calendar not connected",
+      "notConnectedHint": "Connect so your appointments show up in your calendar.",
       "connect": "Connect",
       "connectError": "Could not connect to Google Calendar.",
       "notConfigured": "Google Calendar integration is not configured.",
@@ -365,9 +367,6 @@
       "disconnectMessage": "Appointments will no longer be synced. Continue?",
       "disconnectConfirm": "Disconnect",
       "disconnectError": "Could not disconnect Google Calendar."
-    },
-    "syncStatus": {
-      "failed": "Sync failed"
     }
   },
   "common": {

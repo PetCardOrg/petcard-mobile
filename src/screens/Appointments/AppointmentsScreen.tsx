@@ -358,16 +358,6 @@ export function AppointmentsScreen() {
               <Text style={styles.metaText}>{item.pet_name}</Text>
             </View>
           ) : null}
-
-          {/* A sincronização é automática — só vale avisar quando ela falha. */}
-          {calendarConnected && item.sync_status === 'FAILED' ? (
-            <View style={styles.metaRow}>
-              <View style={[styles.syncDot, { backgroundColor: colors.danger }]} />
-              <Text style={[styles.metaText, { color: colors.danger }]}>
-                {t('appointments.syncStatus.failed')}
-              </Text>
-            </View>
-          ) : null}
         </View>
 
         {upcoming ? (
@@ -407,11 +397,20 @@ export function AppointmentsScreen() {
             size={20}
             color={calendarConnected ? colors.success : colors.primaryDark}
           />
-          <Text style={styles.calendarBannerText}>
-            {calendarConnected
-              ? t('appointments.calendar.connected')
-              : t('appointments.calendar.notConnected')}
-          </Text>
+          {/* Único lugar que fala de sincronização: a regra é dita uma vez
+              aqui, em vez de repetida em cada card. */}
+          <View style={styles.calendarBannerTexts}>
+            <Text style={styles.calendarBannerText}>
+              {calendarConnected
+                ? t('appointments.calendar.connected')
+                : t('appointments.calendar.notConnected')}
+            </Text>
+            <Text style={styles.calendarBannerHint}>
+              {calendarConnected
+                ? t('appointments.calendar.connectedHint')
+                : t('appointments.calendar.notConnectedHint')}
+            </Text>
+          </View>
         </View>
         <View style={styles.calendarBannerActions}>
           {calendarConnected ? (
@@ -726,10 +725,17 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: spacing.sm,
   },
+  calendarBannerTexts: {
+    flex: 1,
+    gap: 2,
+  },
   calendarBannerText: {
     ...typography.bodySmall,
     color: colors.text,
-    flex: 1,
+  },
+  calendarBannerHint: {
+    color: colors.muted,
+    fontSize: 12,
   },
   calendarBannerActions: {
     alignItems: 'center',
@@ -823,11 +829,6 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     color: colors.muted,
     flex: 1,
-  },
-  syncDot: {
-    borderRadius: 4,
-    height: 8,
-    width: 8,
   },
   relativeContainer: {
     alignSelf: 'flex-start',
