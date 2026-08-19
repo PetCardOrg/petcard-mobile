@@ -75,10 +75,15 @@ jest.mock('@expo/vector-icons', () => {
 // que precisam asserir navegação sobrescrevem `useNavigation` via spy.
 jest.mock('@react-navigation/native', () => {
   const actual = jest.requireActual('@react-navigation/native');
+  const { useEffect } = jest.requireActual('react') as typeof import('react');
   return {
     ...actual,
     useNavigation: () => ({ navigate: jest.fn(), goBack: jest.fn() }),
-    useFocusEffect: (cb: () => void) => cb(),
+    // Executar o callback direto no corpo do render fazia tela que carrega
+    // dados no foco entrar em laço: buscar → setState → renderizar → buscar.
+    // Como efeito, roda quando o callback muda de identidade, igual ao hook
+    // real, e telas com `useCallback` estável buscam uma vez só.
+    useFocusEffect: (cb: () => void | (() => void)) => useEffect(cb, [cb]),
     useIsFocused: () => true,
   };
 });

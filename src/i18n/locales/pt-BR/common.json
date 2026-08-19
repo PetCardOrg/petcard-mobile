@@ -79,7 +79,9 @@
       "errorMessage": "Não foi possível excluir o pet."
     },
     "permissionRequired": "Permissão necessária",
-    "permissionGallery": "Precisamos de acesso �� galeria para selecionar uma foto."
+    "permissionGallery": "Precisamos de acesso �� galeria para selecionar uma foto.",
+    "clinicalHistory": "Histórico clínico",
+    "openHistoryAccessibility": "Abrir histórico clínico"
   },
   "digitalWallet": {
     "title": "Carteira Digital",
@@ -270,6 +272,14 @@
       "startDate": "Início: {{date}}",
       "endDate": "Término: {{date}}",
       "ongoing": "Em andamento"
+    },
+    "vetRecord": {
+      "editTitle": "Registro do veterinário",
+      "editMessage": "\"{{registro}}\" foi registrado por {{vet}}. A alteração fica marcada no histórico do pet, com o seu nome. Deseja continuar?",
+      "deleteTitle": "Apagar registro do veterinário?",
+      "deleteMessage": "\"{{registro}}\" foi registrado por {{vet}}. Apagar tira da sua lista, mas o registro continua no histórico do pet, junto de quem apagou.",
+      "continue": "Continuar",
+      "autorDesconhecido": "o veterinário responsável"
     }
   },
   "petRegistration": {
@@ -406,5 +416,24 @@
   "notifications": {
     "permissionDeniedTitle": "Notificações desativadas",
     "permissionDenied": "Você não receberá lembretes de vacinas e consultas. Habilite as notificações nas configurações do dispositivo."
+  },
+  "clinicalHistory": {
+    "title": "Histórico clínico",
+    "intro": "Tudo que foi registrado neste pet, inclusive o que você apagou da sua lista.",
+    "emptyTitle": "Nenhum registro ainda",
+    "emptyDescription": "Vacinas, vermifugações, medicações e notas do veterinário aparecem aqui.",
+    "error": "Não foi possível carregar o histórico.",
+    "excluido": "Excluído",
+    "entidade": {
+      "VACINA": "Vacina",
+      "VERMIFUGO": "Vermifugação",
+      "MEDICACAO": "Medicação",
+      "NOTA_CLINICA": "Nota clínica"
+    },
+    "acao": {
+      "CRIACAO": "Registrado por",
+      "EDICAO": "Alterado por",
+      "EXCLUSAO": "Apagado por"
+    }
   }
 }

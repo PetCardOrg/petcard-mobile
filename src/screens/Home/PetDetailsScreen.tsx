@@ -290,6 +290,17 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
         <Text style={styles.walletBtnText}>{t('petDetails.digitalWallet')}</Text>
       </Pressable>
 
+      {/* Histórico clínico: até aqui só o veterinário via a linha do tempo. */}
+      <Pressable
+        accessibilityLabel={t('petDetails.openHistoryAccessibility')}
+        accessibilityRole="button"
+        onPress={() => navigation.navigate('ClinicalHistory', { petId: pet.id, petName: pet.name })}
+        style={({ pressed }) => [styles.historyBtn, pressed && styles.pressed]}
+      >
+        <Ionicons color={colors.primaryDark} name="time-outline" size={18} />
+        <Text style={styles.historyBtnText}>{t('petDetails.clinicalHistory')}</Text>
+      </Pressable>
+
       {/* Action buttons */}
       <View style={styles.actionsRow}>
         <Pressable
@@ -530,6 +541,21 @@ const styles = StyleSheet.create({
   },
 
   // Wallet button
+  historyBtn: {
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    backgroundColor: colors.primarySoft,
+    borderRadius: radii.md,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'center',
+    marginTop: spacing.sm,
+    paddingVertical: 14,
+  },
+  historyBtnText: {
+    ...typography.button,
+    color: colors.primaryDark,
+  },
   walletBtn: {
     alignItems: 'center',
     alignSelf: 'stretch',

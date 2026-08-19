@@ -32,6 +32,7 @@ import { FAB } from '../../components/ui/FAB';
 import { usePets } from '../../hooks/usePets';
 import { medicationService } from '../../services';
 import { formatDateDisplay, formatDateInput, parseDate } from '../../utils/dateUtils';
+import { confirmarAcaoEmRegistroDeVet, ehRegistroDeVeterinario } from '../../utils/vetRecordGuard';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 
 function isMedicationActive(item: MedicationRecordResponseDto): boolean {
@@ -136,6 +137,17 @@ export function MedicationScreen() {
   }
 
   function openEditModal(record: MedicationRecordResponseDto) {
+    // Registro de veterinário avisa antes de abrir o formulário (mobile#58).
+    confirmarAcaoEmRegistroDeVet({
+      registro: record,
+      nomeDoRegistro: record.medication_name,
+      acao: 'editar',
+      t,
+      onConfirm: () => abrirFormularioDeEdicao(record),
+    });
+  }
+
+  function abrirFormularioDeEdicao(record: MedicationRecordResponseDto) {
     setEditingRecord(record);
     setMedicationName(record.medication_name);
     setDosage(record.dosage);
@@ -148,6 +160,19 @@ export function MedicationScreen() {
   }
 
   function confirmDelete(record: MedicationRecordResponseDto) {
+    // Registro de veterinário troca o texto da confirmação, em vez de somar
+    // um segundo diálogo em cima do que já existia (mobile#58).
+    if (ehRegistroDeVeterinario(record)) {
+      confirmarAcaoEmRegistroDeVet({
+        registro: record,
+        nomeDoRegistro: record.medication_name,
+        acao: 'apagar',
+        t,
+        onConfirm: () => void handleDelete(record.id),
+      });
+      return;
+    }
+
     Alert.alert(
       t('healthRecords.medication.deleteTitle'),
       t('healthRecords.medication.deleteMessage', { name: record.medication_name }),

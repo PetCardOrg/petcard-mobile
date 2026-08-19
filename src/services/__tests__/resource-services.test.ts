@@ -3,6 +3,7 @@ import * as appointmentService from '../appointment.service';
 import * as clinicService from '../clinic.service';
 import * as deviceService from '../device.service';
 import * as dewormingService from '../deworming.service';
+import * as historicoService from '../historico.service';
 import * as medicationService from '../medication.service';
 import * as petService from '../pet.service';
 import * as tutorService from '../tutor.service';
@@ -105,5 +106,16 @@ describe('appointment.service', () => {
 
     await appointmentService.remove('a1');
     expect(del).toHaveBeenCalledWith('/appointments/a1');
+  });
+});
+
+describe('historico.service', () => {
+  it('busca o histórico clínico do pet pelo endpoint da linha do tempo', async () => {
+    get.mockResolvedValue({ data: { pet_id: 'p1', pet_nome: 'Rex', itens: [] } });
+
+    const historico = await historicoService.getHistoricoClinico('p1');
+
+    expect(get).toHaveBeenCalledWith('/pets/p1/historico-clinico');
+    expect(historico.pet_nome).toBe('Rex');
   });
 });

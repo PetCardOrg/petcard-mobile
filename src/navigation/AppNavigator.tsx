@@ -11,6 +11,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { LoginScreen } from '../screens/Auth/LoginScreen';
 import { RegisterScreen } from '../screens/Auth/RegisterScreen';
+import { ClinicalHistoryScreen } from '../screens/Home/ClinicalHistoryScreen';
 import { DewormingScreen } from '../screens/HealthRecords/DewormingScreen';
 import { MedicationScreen } from '../screens/HealthRecords/MedicationScreen';
 import { VaccineScreen } from '../screens/HealthRecords/VaccineScreen';
@@ -59,6 +60,11 @@ function HomeNavigator() {
         component={DigitalWalletScreen}
         name="DigitalWallet"
         options={{ title: t('digitalWallet.title') }}
+      />
+      <HomeStack.Screen
+        component={ClinicalHistoryScreen}
+        name="ClinicalHistory"
+        options={{ title: t('clinicalHistory.title') }}
       />
       <HomeStack.Screen
         component={PetRegistrationScreen}
@@ -166,6 +172,7 @@ function MainNavigator() {
           swipeEnabled:
             getFocusedRouteNameFromRoute(route) !== 'PetDetails' &&
             getFocusedRouteNameFromRoute(route) !== 'DigitalWallet' &&
+            getFocusedRouteNameFromRoute(route) !== 'ClinicalHistory' &&
             getFocusedRouteNameFromRoute(route) !== 'PetRegistration',
           tabBarIcon: ({ color }) => <Ionicons color={color} name="home-outline" size={20} />,
         })}
