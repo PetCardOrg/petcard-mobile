@@ -15,6 +15,10 @@ export type HomeStackParamList = {
     petId: string;
     petName: string;
   };
+  ClinicalHistory: {
+    petId: string;
+    petName: string;
+  };
   PetRegistration: undefined;
 };
 

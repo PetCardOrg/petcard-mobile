@@ -79,7 +79,9 @@
       "errorMessage": "Could not delete the pet."
     },
     "permissionRequired": "Permission required",
-    "permissionGallery": "We need access to your gallery to select a photo."
+    "permissionGallery": "We need access to your gallery to select a photo.",
+    "clinicalHistory": "Clinical history",
+    "openHistoryAccessibility": "Open clinical history"
   },
   "digitalWallet": {
     "title": "Digital Card",
@@ -270,6 +272,14 @@
       "startDate": "Start: {{date}}",
       "endDate": "End: {{date}}",
       "ongoing": "Ongoing"
+    },
+    "vetRecord": {
+      "editTitle": "Veterinarian record",
+      "editMessage": "\"{{registro}}\" was recorded by {{vet}}. The change is marked in the pet history under your name. Continue?",
+      "deleteTitle": "Delete the veterinarian record?",
+      "deleteMessage": "\"{{registro}}\" was recorded by {{vet}}. Deleting removes it from your list, but the record stays in the pet history along with who deleted it.",
+      "continue": "Continue",
+      "autorDesconhecido": "the attending veterinarian"
     }
   },
   "petRegistration": {
@@ -406,5 +416,24 @@
   "notifications": {
     "permissionDeniedTitle": "Notifications disabled",
     "permissionDenied": "You won't receive vaccine and appointment reminders. Enable notifications in your device settings."
+  },
+  "clinicalHistory": {
+    "title": "Clinical history",
+    "intro": "Everything recorded for this pet, including what you removed from your list.",
+    "emptyTitle": "No records yet",
+    "emptyDescription": "Vaccines, dewormings, medications and vet notes show up here.",
+    "error": "Could not load the history.",
+    "excluido": "Deleted",
+    "entidade": {
+      "VACINA": "Vaccine",
+      "VERMIFUGO": "Deworming",
+      "MEDICACAO": "Medication",
+      "NOTA_CLINICA": "Clinical note"
+    },
+    "acao": {
+      "CRIACAO": "Recorded by",
+      "EDICAO": "Changed by",
+      "EXCLUSAO": "Deleted by"
+    }
   }
 }
