@@ -1,3 +1,4 @@
+import { Image } from 'react-native';
 import { Sex, Species, type PetResponseDto } from '@petcardorg/shared';
 
 import { renderWithProviders, screen, fireEvent } from '../../test/renderWithProviders';
@@ -85,5 +86,39 @@ describe('PetSelector', () => {
 
     fireEvent.press(screen.getByText('Rex'));
     expect(onSelect).toHaveBeenCalledWith(pets[0]);
+  });
+
+  it('mostra a foto do pet no card de seleção', () => {
+    const comFoto = [
+      { ...pets[0], photo_url: 'https://cdn.petcard.app/rex.jpg' },
+    ] as unknown as PetResponseDto[];
+
+    renderWithProviders(
+      <PetSelector
+        pets={comFoto}
+        isLoading={false}
+        onSelectPet={jest.fn()}
+        subtitle="Escolha um pet"
+        emptyDescription="..."
+      />,
+    );
+
+    const foto = screen.UNSAFE_getByType(Image);
+    expect(foto.props.source).toEqual({ uri: 'https://cdn.petcard.app/rex.jpg' });
+  });
+
+  it('cai no avatar da espécie quando o pet não tem foto', () => {
+    renderWithProviders(
+      <PetSelector
+        pets={pets}
+        isLoading={false}
+        onSelectPet={jest.fn()}
+        subtitle="Escolha um pet"
+        emptyDescription="..."
+      />,
+    );
+
+    // Sem foto não sobra <Image>: o avatar é ícone, como no card da Home.
+    expect(screen.UNSAFE_queryAllByType(Image)).toHaveLength(0);
   });
 });
