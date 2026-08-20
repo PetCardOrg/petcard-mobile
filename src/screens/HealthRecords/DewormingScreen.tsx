@@ -51,10 +51,10 @@ export function DewormingScreen() {
   const { t } = useTranslation();
   const { pets, isLoading: isPetsLoading } = usePets();
 
-  // A escolha vive no contexto para atravessar a troca de aba, que desmonta
-  // esta tela. Resolvida na lista já carregada: pet renomeado aparece com o
-  // nome novo e pet excluído devolve o tutor para a seleção.
-  const { selectedPetId, selectPet, clearSelection } = useSelectedPet();
+  // Cada aba lembra o próprio pet. Resolvido na lista já carregada: pet
+  // renomeado aparece com o nome novo e pet excluído devolve o tutor para
+  // a seleção.
+  const { selectedPetId, selectPet, clearSelection } = useSelectedPet('vermifugos');
   const selectedPet = pets.find((pet) => pet.id === selectedPetId) ?? null;
   const [dewormings, setDewormings] = useState<DewormingRecordResponseDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);

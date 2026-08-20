@@ -1,6 +1,4 @@
-import { useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
@@ -9,13 +7,11 @@ import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../contexts/AuthContext';
 import { SelectedPetProvider } from '../contexts/SelectedPetContext';
+import { HealthRecordsNavigator } from './HealthRecordsNavigator';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { LoginScreen } from '../screens/Auth/LoginScreen';
 import { RegisterScreen } from '../screens/Auth/RegisterScreen';
 import { ClinicalHistoryScreen } from '../screens/Home/ClinicalHistoryScreen';
-import { DewormingScreen } from '../screens/HealthRecords/DewormingScreen';
-import { MedicationScreen } from '../screens/HealthRecords/MedicationScreen';
-import { VaccineScreen } from '../screens/HealthRecords/VaccineScreen';
 import { DigitalWalletScreen } from '../screens/DigitalWallet/DigitalWalletScreen';
 import { HomeScreen } from '../screens/Home/HomeScreen';
 import { PetDetailsScreen } from '../screens/Home/PetDetailsScreen';
@@ -23,7 +19,7 @@ import { PetRegistrationScreen } from '../screens/PetRegistration/PetRegistratio
 import { ProfileScreen } from '../screens/Profile/ProfileScreen';
 import { ClinicSearchScreen } from '../screens/ClinicSearch/ClinicSearchScreen';
 import { AppointmentsScreen } from '../screens/Appointments/AppointmentsScreen';
-import { colors, radii, spacing, typography } from '../utils/theme';
+import { colors } from '../utils/theme';
 import type { AuthStackParamList, HomeStackParamList, MainTabParamList } from './types';
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -73,59 +69,6 @@ function HomeNavigator() {
         options={{ title: t('petRegistration.title') }}
       />
     </HomeStack.Navigator>
-  );
-}
-
-function HealthRecordsNavigator() {
-  const { t } = useTranslation();
-  const healthTabs = [
-    {
-      key: 'vaccines',
-      label: t('healthRecords.tabs.vaccines'),
-      icon: 'medkit-outline' as const,
-      Screen: VaccineScreen,
-    },
-    {
-      key: 'dewormings',
-      label: t('healthRecords.tabs.dewormings'),
-      icon: 'bug-outline' as const,
-      Screen: DewormingScreen,
-    },
-    {
-      key: 'medications',
-      label: t('healthRecords.tabs.medications'),
-      icon: 'bandage-outline' as const,
-      Screen: MedicationScreen,
-    },
-  ];
-
-  const [activeTab, setActiveTab] = useState(healthTabs[0].key);
-  const ActiveScreen = healthTabs.find((tab) => tab.key === activeTab)!.Screen;
-  const insets = useSafeAreaInsets();
-
-  return (
-    <View style={healthStyles.container}>
-      <View style={[healthStyles.segmentedControl, { marginTop: insets.top + spacing.sm }]}>
-        {healthTabs.map((tab) => {
-          const isActive = tab.key === activeTab;
-          return (
-            <Pressable
-              key={tab.key}
-              onPress={() => setActiveTab(tab.key)}
-              style={[healthStyles.segment, isActive && healthStyles.segmentActive]}
-            >
-              <Ionicons name={tab.icon} size={16} color={isActive ? colors.white : colors.muted} />
-              <Text style={[healthStyles.segmentText, isActive && healthStyles.segmentTextActive]}>
-                {tab.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-      <View style={healthStyles.content}>
-        <ActiveScreen />
-      </View>
-    </View>
   );
 }
 
@@ -245,42 +188,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     flex: 1,
     justifyContent: 'center',
-  },
-});
-
-const healthStyles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.background,
-    flex: 1,
-  },
-  segmentedControl: {
-    flexDirection: 'row',
-    backgroundColor: colors.border,
-    borderRadius: radii.md,
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.sm,
-    padding: 3,
-  },
-  segment: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-    paddingVertical: 10,
-    borderRadius: radii.md - 2,
-  },
-  segmentActive: {
-    backgroundColor: colors.primaryDark,
-  },
-  segmentText: {
-    ...typography.caption,
-    color: colors.muted,
-  },
-  segmentTextActive: {
-    color: colors.white,
-  },
-  content: {
-    flex: 1,
   },
 });
