@@ -20,7 +20,8 @@ App do **tutor** do PetCard. React Native + Expo + TypeScript. Consome a `petcar
 - **jest-expo** (`jest.config.js`, preset `jest-expo`) + `@testing-library/react-native` 13 + `react-test-renderer` 19. Setup em `jest.setup.ts` (i18n pt-BR determinístico, `reflect-metadata`, mocks de expo-secure-store/localization/vector-icons e hooks de navegação). Helper `src/test/renderWithProviders.tsx`.
 - ⚠️ **Não subir para `@testing-library/react-native` 14** — puxa jest 30 e conflita com o jest 29 do jest-expo.
 - Comandos: `npm test`, `npm run test:cov`, `npm run typecheck` (`tsc --noEmit`).
-- **Catraca (`jest.config.js`): statements 14 · branches 7 · functions 17 · lines 14 — não abaixar.** É honestamente baixa (12 telas pesadas com mapa/notificações fora); elevar é a próxima elevação, **não é M7** — não subir a catraca agora, mas cobrir código novo.
+- **Cobertura de confiança, não percentual (ADR-006).** Antes de escrever um `it()`: _se quebrar, uma regra de negócio quebrou ou o usuário foi impactado?_ Se não, não escrever — sem teste para service que só chama `axios` nem para componente visual estático.
+- **Catraca (`jest.config.js`): statements 19 · branches 14 · functions 19 · lines 19 — freio de regressão, não meta.** Não abaixar sem ADR; também não inventar teste para subir. Segue baixa porque as 12 telas pesadas (mapa, notificações) estão fora de propósito.
 
 ## Convenções
 

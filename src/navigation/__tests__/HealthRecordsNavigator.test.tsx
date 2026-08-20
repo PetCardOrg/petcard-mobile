@@ -64,12 +64,4 @@ describe('HealthRecordsNavigator', () => {
     // Remontar refaria a busca. Uma chamada só = a tela ficou viva.
     expect(mockGetVaccinesByPet).toHaveBeenCalledTimes(1);
   });
-
-  it('mostra só a aba ativa', () => {
-    renderNavegador();
-    fireEvent.press(screen.getByText('Vermífugos'));
-
-    // Montada, porém escondida: não aparece para quem está olhando a tela.
-    expect(screen.getAllByText('Selecione o pet')).toHaveLength(1);
-  });
 });

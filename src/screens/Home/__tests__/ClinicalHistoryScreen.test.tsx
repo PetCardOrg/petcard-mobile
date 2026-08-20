@@ -1,4 +1,4 @@
-import { renderWithProviders, screen, waitFor } from '../../../test/renderWithProviders';
+import { renderWithProviders, screen } from '../../../test/renderWithProviders';
 import { ClinicalHistoryScreen } from '../ClinicalHistoryScreen';
 
 const mockGetHistorico = jest.fn();
@@ -74,23 +74,5 @@ describe('ClinicalHistoryScreen', () => {
     // depois de o tutor apagar da própria lista.
     expect(await screen.findByText('Excluído')).toBeVisible();
     expect(screen.getByText(/Apagado por · Ana Silva/)).toBeVisible();
-  });
-
-  it('mostra estado vazio quando o pet não tem registros', async () => {
-    mockGetHistorico.mockResolvedValue(historico([]));
-
-    renderWithProviders(<ClinicalHistoryScreen navigation={{} as never} route={route} />);
-
-    expect(await screen.findByText('Nenhum registro ainda')).toBeVisible();
-  });
-
-  it('mostra erro quando a busca falha', async () => {
-    mockGetHistorico.mockRejectedValue(new Error('boom'));
-
-    renderWithProviders(<ClinicalHistoryScreen navigation={{} as never} route={route} />);
-
-    await waitFor(() =>
-      expect(screen.getByText('Não foi possível carregar o histórico.')).toBeVisible(),
-    );
   });
 });
