@@ -43,10 +43,8 @@ describe('seleção de pet nas telas de saúde', () => {
     fireEvent.press(screen.getByText('Rex'));
     await waitFor(() => expect(screen.queryByText('Selecione o pet')).toBeNull());
 
-    // Toque errado em vermífugo: o navegador desmonta a tela de vacina.
+    // Toque errado em vermífugo e volta.
     rerender(<AbaDeSaude aba="vermifugo" />);
-    await waitFor(() => expect(screen.queryByText('Selecione o pet')).toBeNull());
-
     rerender(<AbaDeSaude aba="vacina" />);
 
     // De volta no pet, não na lista de seleção — era o defeito relatado.
@@ -54,7 +52,7 @@ describe('seleção de pet nas telas de saúde', () => {
     expect(screen.getByText('Rex')).toBeVisible();
   });
 
-  it('a escolha vale para as outras abas de saúde', async () => {
+  it('cada aba lembra o próprio pet', async () => {
     const { rerender } = renderWithProviders(<AbaDeSaude aba="vacina" />);
 
     fireEvent.press(screen.getByText('Rex'));
@@ -62,8 +60,15 @@ describe('seleção de pet nas telas de saúde', () => {
 
     rerender(<AbaDeSaude aba="vermifugo" />);
 
-    // Quem escolheu o pet está olhando a saúde dele, não só as vacinas.
-    expect(screen.queryByText('Selecione o pet')).toBeNull();
+    // Escolher em vacinas não escolhe em vermífugos: as abas são independentes.
+    expect(await screen.findByText('Selecione o pet')).toBeVisible();
+
+    fireEvent.press(screen.getByText('Mia'));
+    await waitFor(() => expect(screen.queryByText('Selecione o pet')).toBeNull());
+
+    rerender(<AbaDeSaude aba="vacina" />);
+
+    // E cada uma volta no seu: vacinas no Rex, vermífugos na Mia.
     expect(screen.getByText('Rex')).toBeVisible();
   });
 
