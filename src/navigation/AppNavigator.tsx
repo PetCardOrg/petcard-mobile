@@ -8,6 +8,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../contexts/AuthContext';
+import { SelectedPetProvider } from '../contexts/SelectedPetContext';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { LoginScreen } from '../screens/Auth/LoginScreen';
 import { RegisterScreen } from '../screens/Auth/RegisterScreen';
@@ -229,7 +230,13 @@ export function AppNavigator() {
     return <AuthNavigator />;
   }
 
-  return <MainNavigator />;
+  // Envolve o app autenticado, não só a aba de saúde: a escolha do pet
+  // precisa sobreviver a ir para a Home e voltar, não só à troca de aba.
+  return (
+    <SelectedPetProvider>
+      <MainNavigator />
+    </SelectedPetProvider>
+  );
 }
 
 const styles = StyleSheet.create({
