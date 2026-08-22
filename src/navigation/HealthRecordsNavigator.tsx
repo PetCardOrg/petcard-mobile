@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useRoute, type RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
 import { DewormingScreen } from '../screens/HealthRecords/DewormingScreen';
 import { MedicationScreen } from '../screens/HealthRecords/MedicationScreen';
 import { VaccineScreen } from '../screens/HealthRecords/VaccineScreen';
+import type { AbaDeSaude, MainTabParamList } from './types';
 import { colors, radii, spacing, typography } from '../utils/theme';
 
 const ABAS = [
@@ -45,18 +47,34 @@ const ABAS = [
  * A montagem é preguiçosa — aba nunca aberta não monta. As três telas buscam a
  * lista de pets ao montar, e montar todas de uma vez faria três chamadas na
  * abertura da aba de saúde para telas que o tutor talvez nem abra.
+ *
+ * O resumo de saúde da carteira digital pede uma aba específica pelos params
+ * da rota; quem pede também deixa o pet escolhido no `SelectedPetContext`.
  */
 export function HealthRecordsNavigator() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
-  const [activeTab, setActiveTab] = useState<string>(ABAS[0].key);
-  const [montadas, setMontadas] = useState<string[]>([ABAS[0].key]);
+  const route = useRoute<RouteProp<MainTabParamList, 'Health'>>();
+  const [activeTab, setActiveTab] = useState<AbaDeSaude>(ABAS[0].key);
+  const [montadas, setMontadas] = useState<AbaDeSaude[]>([ABAS[0].key]);
 
-  function abrirAba(key: string) {
+  const abrirAba = useCallback((key: AbaDeSaude) => {
     setActiveTab(key);
     setMontadas((atual) => (atual.includes(key) ? atual : [...atual, key]));
-  }
+  }, []);
+
+  // Só o `_ts` distingue dois pedidos para a mesma aba: sem ele, tocar duas
+  // vezes no mesmo card da carteira não reabriria a aba na segunda.
+  const ultimoPedido = useRef<number | null>(null);
+  const pedido = route.params?.abrir;
+  console.log('DEBUG route =', JSON.stringify(route));
+  useEffect(() => {
+    if (pedido && pedido._ts !== ultimoPedido.current) {
+      ultimoPedido.current = pedido._ts;
+      abrirAba(pedido.aba);
+    }
+  }, [pedido, abrirAba]);
 
   return (
     <View style={styles.container}>

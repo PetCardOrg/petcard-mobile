@@ -14,13 +14,15 @@ import {
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import type { CarteiraDigitalResponseDto } from '@petcardorg/shared';
 import { Species } from '@petcardorg/shared';
+import type { MaterialTopTabNavigationProp } from '@react-navigation/material-top-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { isAxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
 
 import { ErrorState } from '../../components/ui/ErrorState';
-import type { HomeStackParamList } from '../../navigation/types';
+import { useSelecionarPetDaAba, type EscopoDeSelecao } from '../../contexts/SelectedPetContext';
+import type { AbaDeSaude, HomeStackParamList, MainTabParamList } from '../../navigation/types';
 import { cardService } from '../../services';
 import { calculateAge } from '../../utils/calculateAge';
 import { exportWalletPdf, SHARING_UNAVAILABLE } from '../../utils/generateWalletPdf';
@@ -29,24 +31,38 @@ import { colors, radii, spacing, typography } from '../../utils/theme';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'DigitalWallet'>;
 
+/** Cada card do resumo abre a aba de saúde correspondente, no mesmo pet. */
+const DESTINO_DO_RESUMO = {
+  vaccines: 'vacinas',
+  dewormings: 'vermifugos',
+  medications: 'medicacoes',
+} as const satisfies Record<AbaDeSaude, EscopoDeSelecao>;
+
 function SummaryCard({
   icon,
   label,
   secondaryLabel,
   primaryValue,
   secondaryValue,
+  onPress,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   secondaryLabel: string;
   primaryValue: number | null;
   secondaryValue: number | null;
+  onPress: () => void;
 }) {
   const { t } = useTranslation();
   const isUnavailable = primaryValue == null || secondaryValue == null;
 
   return (
-    <View style={styles.summaryCard}>
+    <Pressable
+      accessibilityLabel={t('digitalWallet.summary.openAccessibility', { label })}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.summaryCard, pressed && styles.pressed]}
+    >
       <View style={styles.summaryIcon}>
         <Ionicons color={colors.primary} name={icon} size={18} />
       </View>
@@ -68,12 +84,22 @@ function SummaryCard({
           </Text>
         </>
       )}
-    </View>
+      <Ionicons
+        color={colors.muted}
+        name="chevron-forward"
+        size={14}
+        style={styles.summaryChevron}
+      />
+    </Pressable>
   );
 }
 
 export function DigitalWalletScreen({ route }: Props) {
   const { t } = useTranslation();
+  // A aba de saúde é irmã desta tela no navegador de abas; `navigate` sobe do
+  // stack da home até lá.
+  const navigation = useNavigation<MaterialTopTabNavigationProp<MainTabParamList>>();
+  const selecionarPetDaAba = useSelecionarPetDaAba();
   const [wallet, setWallet] = useState<CarteiraDigitalResponseDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -247,6 +273,17 @@ export function DigitalWalletScreen({ route }: Props) {
   }
 
   const species = SPECIES_CONFIG[wallet.species] ?? SPECIES_CONFIG[Species.OTHER];
+  /**
+   * Abre a aba de saúde correspondente já no pet desta carteira.
+   *
+   * A escolha vai junto porque cada aba lembra o próprio pet: sem isso o tutor
+   * sairia do resumo de um pet e cairia na tela de escolher pet.
+   */
+  function abrirSecaoDeSaude(aba: AbaDeSaude) {
+    selecionarPetDaAba(DESTINO_DO_RESUMO[aba], route.params.petId);
+    navigation.navigate('Health', { abrir: { aba, _ts: Date.now() } });
+  }
+
   const sex = SEX_CONFIG[wallet.sex];
   const age = calculateAge(wallet.birth_date);
   const photoUrl = getPhotoUrl(wallet);
@@ -341,6 +378,7 @@ export function DigitalWalletScreen({ route }: Props) {
             primaryValue={wallet.vaccines_count}
             secondaryLabel={t('digitalWallet.summary.withNextDose')}
             secondaryValue={wallet.upcoming_vaccines_count}
+            onPress={() => abrirSecaoDeSaude('vaccines')}
           />
           <SummaryCard
             icon="bug-outline"
@@ -348,6 +386,7 @@ export function DigitalWalletScreen({ route }: Props) {
             primaryValue={wallet.dewormings_count}
             secondaryLabel={t('digitalWallet.summary.withNextDose')}
             secondaryValue={wallet.upcoming_dewormings_count}
+            onPress={() => abrirSecaoDeSaude('dewormings')}
           />
           <SummaryCard
             icon="bandage-outline"
@@ -355,6 +394,7 @@ export function DigitalWalletScreen({ route }: Props) {
             primaryValue={wallet.medications_count}
             secondaryLabel={t('digitalWallet.summary.active')}
             secondaryValue={wallet.active_medications_count}
+            onPress={() => abrirSecaoDeSaude('medications')}
           />
         </View>
       </View>
@@ -593,6 +633,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primarySoft,
     borderRadius: radii.md,
     padding: spacing.md,
+  },
+  // Cartão em coluna: a seta fica no canto, sem competir com os números.
+  summaryChevron: {
+    position: 'absolute',
+    right: spacing.md,
+    top: spacing.md,
   },
   summaryIcon: {
     alignItems: 'center',

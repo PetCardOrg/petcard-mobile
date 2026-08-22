@@ -27,9 +27,18 @@ export type AppointmentPrefill = {
   _ts: number;
 };
 
+/** Aba da seção de saúde, na ordem em que aparecem no controle segmentado. */
+export type AbaDeSaude = 'vaccines' | 'dewormings' | 'medications';
+
+export type PedidoDeAbaDeSaude = {
+  aba: AbaDeSaude;
+  /** Repetir o mesmo pedido precisa reabrir a aba; sem isto os params seriam iguais. */
+  _ts: number;
+};
+
 export type MainTabParamList = {
   Home: NavigatorScreenParams<HomeStackParamList> | undefined;
-  Health: undefined;
+  Health: { abrir?: PedidoDeAbaDeSaude } | undefined;
   Appointments: { prefill?: AppointmentPrefill } | undefined;
   Clinics: undefined;
   Profile: undefined;

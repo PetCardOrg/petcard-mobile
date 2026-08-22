@@ -1,8 +1,10 @@
 import { Sex, Species, type PetResponseDto } from '@petcardorg/shared';
 
 import { renderWithProviders, screen, fireEvent, waitFor } from '../../test/renderWithProviders';
+import { mockRotaDeTeste } from '../../test/mockRotaDeTeste';
 import { SelectedPetProvider } from '../../contexts/SelectedPetContext';
 import { HealthRecordsNavigator } from '../HealthRecordsNavigator';
+import type { PedidoDeAbaDeSaude } from '../types';
 
 const mockPets = [
   { id: 'p1', name: 'Rex', species: Species.DOG, sex: Sex.MALE, breed: 'Labrador' },
@@ -28,7 +30,9 @@ jest.mock('../../services', () => ({
   medicationService: { getMedicationsByPet: jest.fn().mockResolvedValue([]) },
 }));
 
-function renderNavegador() {
+function renderNavegador(abrir?: PedidoDeAbaDeSaude) {
+  mockRotaDeTeste.params = { abrir };
+
   return renderWithProviders(
     <SelectedPetProvider>
       <HealthRecordsNavigator />
@@ -63,5 +67,17 @@ describe('HealthRecordsNavigator', () => {
 
     // Remontar refaria a busca. Uma chamada só = a tela ficou viva.
     expect(mockGetVaccinesByPet).toHaveBeenCalledTimes(1);
+  });
+
+  it('abre a aba que o resumo da carteira pediu', async () => {
+    // Sem isto, tocar em "Medicações" no resumo de saúde levaria o tutor para
+    // a aba de vacinas — a primeira, que é o padrão.
+    renderNavegador({ aba: 'medications', _ts: 1 });
+
+    await waitFor(() =>
+      expect(
+        screen.getByText('Escolha o pet para visualizar e registrar medicações.'),
+      ).toBeTruthy(),
+    );
   });
 });
