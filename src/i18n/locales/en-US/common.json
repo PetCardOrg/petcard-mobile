@@ -102,7 +102,8 @@
       "withNextDose": "with next dose",
       "active": "active",
       "unavailable": "Unavailable",
-      "unavailableHint": "Refresh to try again"
+      "unavailableHint": "Refresh to try again",
+      "openAccessibility": "See this pet's {{label}} records"
     },
     "actions": {
       "share": "Share",

@@ -6,6 +6,7 @@ import { initReactI18next } from 'react-i18next';
 
 import enUS from './src/i18n/locales/en-US/common.json';
 import ptBR from './src/i18n/locales/pt-BR/common.json';
+import { mockRotaDeTeste } from './src/test/mockRotaDeTeste';
 
 // i18n determinístico (pt-BR) para as asserções por rótulo — espelha o setup
 // do petcard-web. Inicializa o mesmo singleton do i18next que o app consome.
@@ -85,6 +86,8 @@ jest.mock('@react-navigation/native', () => {
     // real, e telas com `useCallback` estável buscam uma vez só.
     useFocusEffect: (cb: () => void | (() => void)) => useEffect(cb, [cb]),
     useIsFocused: () => true,
+    // Params vêm do `rotaDeTeste`, que o teste preenche antes de renderizar.
+    useRoute: () => ({ key: 'test', name: 'test', params: mockRotaDeTeste.params }),
   };
 });
 
@@ -96,4 +99,9 @@ afterEach(() => {
     __store: Map<string, string>;
   };
   secureStore.__store.clear();
+});
+
+// Rota de teste não vaza de um caso para o outro.
+afterEach(() => {
+  delete mockRotaDeTeste.params;
 });
