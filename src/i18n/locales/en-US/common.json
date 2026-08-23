@@ -41,7 +41,6 @@
     "title": "My pets",
     "titleWithCount": "My pets ({{count}})",
     "subtitle": "Track your pets' health.",
-    "addButton": "Add",
     "emptyTitle": "No pets registered",
     "emptyDescription": "Add your first pet to track vaccines, dewormings, and medications.",
     "emptyAction": "Add pet",

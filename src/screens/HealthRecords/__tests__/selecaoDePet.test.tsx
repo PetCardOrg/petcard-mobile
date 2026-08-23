@@ -72,13 +72,15 @@ describe('seleção de pet nas telas de saúde', () => {
     expect(screen.getByText('Rex')).toBeVisible();
   });
 
-  it('"Trocar" devolve o tutor para a seleção', async () => {
+  it('o cabeçalho do pet devolve o tutor para a seleção', async () => {
     renderWithProviders(<AbaDeSaude aba="vacina" />);
 
     fireEvent.press(screen.getByText('Rex'));
     await waitFor(() => expect(screen.queryByText('Selecione o pet')).toBeNull());
 
-    fireEvent.press(screen.getByText('Trocar'));
+    // O rótulo "Trocar" saiu do cabeçalho por duplicar a seta de voltar; a
+    // ação continua a mesma, agora alcançada pelo rótulo de acessibilidade.
+    fireEvent.press(screen.getByLabelText('Trocar de pet (atual: Rex)'));
 
     expect(await screen.findByText('Selecione o pet')).toBeVisible();
     expect(screen.getByText('Mia')).toBeVisible();

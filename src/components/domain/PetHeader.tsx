@@ -10,10 +10,17 @@ type PetHeaderProps = {
 
 export function PetHeader({ petName, onBack }: PetHeaderProps) {
   return (
-    <Pressable onPress={onBack} style={styles.petHeader}>
+    // O "Trocar" era um rótulo a mais dentro do mesmo Pressable da seta: os
+    // dois disparavam a mesma ação. A seta já diz o que faz, e sem o texto o
+    // nome do pet ganha a linha inteira.
+    <Pressable
+      accessibilityLabel={`Trocar de pet (atual: ${petName})`}
+      accessibilityRole="button"
+      onPress={onBack}
+      style={styles.petHeader}
+    >
       <Ionicons color={colors.primaryDark} name="arrow-back" size={20} />
       <Text style={styles.petHeaderName}>{petName}</Text>
-      <Text style={styles.petHeaderChange}>Trocar</Text>
     </Pressable>
   );
 }
@@ -30,9 +37,5 @@ const styles = StyleSheet.create({
     ...typography.h3,
     color: colors.text,
     flex: 1,
-  },
-  petHeaderChange: {
-    ...typography.label,
-    color: colors.primary,
   },
 });

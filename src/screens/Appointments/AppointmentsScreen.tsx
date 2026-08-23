@@ -25,6 +25,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { MainTabParamList } from '../../navigation/types';
 
+import { DurationSlider } from '../../components/ui/DurationSlider';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { FAB } from '../../components/ui/FAB';
@@ -69,8 +70,6 @@ function formatScheduledAt(iso: string): { date: string; time: string } {
 function isUpcoming(iso: string): boolean {
   return new Date(iso) >= new Date();
 }
-
-const DURATION_OPTIONS = [30, 45, 60, 90, 120];
 
 export function AppointmentsScreen() {
   const { t } = useTranslation();
@@ -554,30 +553,15 @@ export function AppointmentsScreen() {
                   </View>
                 </View>
 
-                {/* Duration */}
+                {/* Duração por arrasto. Os chips davam cinco valores e nada
+                    entre eles; o passo de 15min cobre os mesmos e o que faltava. */}
                 <View style={styles.field}>
                   <Text style={styles.label}>{t('appointments.form.durationLabel')}</Text>
-                  <View style={styles.durationRow}>
-                    {DURATION_OPTIONS.map((d) => (
-                      <Pressable
-                        key={d}
-                        onPress={() => setDurationMinutes(d)}
-                        style={[
-                          styles.durationChip,
-                          durationMinutes === d && styles.durationChipActive,
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.durationChipText,
-                            durationMinutes === d && styles.durationChipTextActive,
-                          ]}
-                        >
-                          {d}min
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
+                  <DurationSlider
+                    accessibilityLabel={t('appointments.form.durationLabel')}
+                    onChange={setDurationMinutes}
+                    value={durationMinutes}
+                  />
                 </View>
 
                 {/* Location */}
@@ -908,28 +892,6 @@ const styles = StyleSheet.create({
   },
   flex1: {
     flex: 1,
-  },
-  durationRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  durationChip: {
-    borderColor: colors.border,
-    borderRadius: radii.sm,
-    borderWidth: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  durationChipActive: {
-    backgroundColor: colors.primaryDark,
-    borderColor: colors.primaryDark,
-  },
-  durationChipText: {
-    ...typography.caption,
-    color: colors.muted,
-  },
-  durationChipTextActive: {
-    color: colors.white,
   },
   petChipRow: {
     flexDirection: 'row',
