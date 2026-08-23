@@ -41,7 +41,6 @@
     "title": "Meus pets",
     "titleWithCount": "Meus pets ({{count}})",
     "subtitle": "Acompanhe a saúde dos seus pets.",
-    "addButton": "Adicionar",
     "emptyTitle": "Nenhum pet cadastrado",
     "emptyDescription": "Adicione seu primeiro pet para acompanhar vacinas, vermifugações e medicações.",
     "emptyAction": "Adicionar pet",

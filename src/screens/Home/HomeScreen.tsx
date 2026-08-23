@@ -1,4 +1,4 @@
-import { FlatList, Pressable, StyleSheet, Text, View, type ListRenderItemInfo } from 'react-native';
+import { FlatList, StyleSheet, Text, View, type ListRenderItemInfo } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { PetResponseDto } from '@petcardorg/shared';
@@ -84,20 +84,13 @@ export function HomeScreen() {
           <Ionicons color={colors.white} name="paw" size={20} />
         </View>
 
-        {/* Title row */}
+        {/* Título. O botão de adicionar saiu daqui: com pets na lista ele
+            duplicava o FAB, e sem pets duplicava o CTA do estado vazio. */}
         <View style={styles.titleRow}>
           <View style={styles.titleCopy}>
             <Text style={styles.title}>{titleText}</Text>
             <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
           </View>
-          <Pressable
-            accessibilityRole="button"
-            onPress={handleAddPet}
-            style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}
-          >
-            <Ionicons color={colors.white} name="add" size={18} style={styles.addButtonIcon} />
-            <Text style={styles.addButtonText}>{t('home.addButton')}</Text>
-          </Pressable>
         </View>
 
         {/* Content */}
@@ -171,21 +164,6 @@ const styles = StyleSheet.create({
     color: colors.muted,
     marginTop: spacing.xs,
   },
-  addButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radii.md,
-    flexDirection: 'row',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-  },
-  addButtonIcon: {
-    marginRight: spacing.xs,
-  },
-  addButtonText: {
-    ...typography.button,
-    color: colors.white,
-  },
   skeletonList: {
     gap: spacing.md,
   },
@@ -215,8 +193,5 @@ const styles = StyleSheet.create({
     color: colors.warning,
     flex: 1,
     lineHeight: 20,
-  },
-  pressed: {
-    opacity: 0.82,
   },
 });
