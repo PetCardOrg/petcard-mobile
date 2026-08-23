@@ -68,7 +68,6 @@ export function HealthRecordsNavigator() {
   // vezes no mesmo card da carteira não reabriria a aba na segunda.
   const ultimoPedido = useRef<number | null>(null);
   const pedido = route.params?.abrir;
-  console.log('DEBUG route =', JSON.stringify(route));
   useEffect(() => {
     if (pedido && pedido._ts !== ultimoPedido.current) {
       ultimoPedido.current = pedido._ts;
