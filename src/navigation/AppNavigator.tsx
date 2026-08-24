@@ -6,6 +6,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../contexts/AuthContext';
+import { PetsProvider } from '../contexts/PetsContext';
 import { SelectedPetProvider } from '../contexts/SelectedPetContext';
 import { HealthRecordsNavigator } from './HealthRecordsNavigator';
 import { usePushNotifications } from '../hooks/usePushNotifications';
@@ -173,12 +174,15 @@ export function AppNavigator() {
     return <AuthNavigator />;
   }
 
-  // Envolve o app autenticado, não só a aba de saúde: a escolha do pet
-  // precisa sobreviver a ir para a Home e voltar, não só à troca de aba.
+  // Ambos envolvem o app autenticado, não só a aba de saúde: a lista de pets
+  // é compartilhada por Home, agendamentos e telas de saúde, e a escolha do
+  // pet precisa sobreviver a ir para a Home e voltar.
   return (
-    <SelectedPetProvider>
-      <MainNavigator />
-    </SelectedPetProvider>
+    <PetsProvider>
+      <SelectedPetProvider>
+        <MainNavigator />
+      </SelectedPetProvider>
+    </PetsProvider>
   );
 }
 
