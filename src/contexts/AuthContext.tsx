@@ -11,16 +11,20 @@ type User = {
   name: string;
   email: string;
   role: string;
+  phone?: string;
+  profile_image_url?: string;
 };
 
 type AuthContextValue = {
   user: User | null;
   isAuthenticated: boolean;
+  isBootstrapping: boolean;
   isLoading: boolean;
   error: Error | null;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (patch: Partial<User>) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -37,7 +41,8 @@ async function clearSession() {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   const isAuthenticated = user !== null;
@@ -55,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {
         await clearSession();
       } finally {
-        setIsLoading(false);
+        setIsBootstrapping(false);
       }
     })();
   }, []);
@@ -124,9 +129,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
   }, []);
 
+  const updateUser = useCallback(
+    async (patch: Partial<User>) => {
+      if (!user) return;
+      const updated = { ...user, ...patch };
+      await SecureStore.setItemAsync(STORE_USER, JSON.stringify(updated));
+      setUser(updated);
+    },
+    [user],
+  );
+
   const value = useMemo<AuthContextValue>(
-    () => ({ user, isAuthenticated, isLoading, error, login, register, logout }),
-    [user, isAuthenticated, isLoading, error, login, register, logout],
+    () => ({
+      user,
+      isAuthenticated,
+      isBootstrapping,
+      isLoading,
+      error,
+      login,
+      register,
+      logout,
+      updateUser,
+    }),
+    [user, isAuthenticated, isBootstrapping, isLoading, error, login, register, logout, updateUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
