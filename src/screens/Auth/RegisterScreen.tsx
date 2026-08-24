@@ -1,8 +1,19 @@
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
+import { isAxiosError } from 'axios';
 
 import { ScreenContainer } from '../../components/ui/ScreenContainer';
 import { useAuth } from '../../contexts/AuthContext';
@@ -11,6 +22,8 @@ import type { AuthStackParamList } from '../../navigation/types';
 
 type RegisterNav = NativeStackNavigationProp<AuthStackParamList, 'Register'>;
 
+const PASSWORD_MIN_LENGTH = 8;
+
 export function RegisterScreen() {
   const { isLoading, register } = useAuth();
   const { t } = useTranslation();
@@ -18,8 +31,29 @@ export function RegisterScreen() {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [imageUri, setImageUri] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  async function handlePickImage() {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(t('register.permissionRequired'), t('register.permissionGallery'));
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setImageUri(result.assets[0].uri);
+    }
+  }
 
   const handleRegister = async () => {
     if (!name.trim() || !email.trim() || !password.trim()) {
@@ -27,16 +61,23 @@ export function RegisterScreen() {
       return;
     }
 
-    if (password.length < 6) {
+    if (password.length < PASSWORD_MIN_LENGTH) {
       setError(t('register.passwordTooShort'));
       return;
     }
 
     try {
       setError(null);
-      await register(name.trim(), email.trim(), password);
-    } catch {
-      setError(t('register.errorMessage'));
+      await register(name.trim(), email.trim(), password, {
+        phone: phone.trim() || undefined,
+        photoUri: imageUri ?? undefined,
+      });
+    } catch (err) {
+      let message = t('register.errorMessage');
+      if (isAxiosError(err) && err.response?.data?.message) {
+        message = String(err.response.data.message);
+      }
+      setError(message);
     }
   };
 
@@ -53,6 +94,21 @@ export function RegisterScreen() {
         <ActivityIndicator color={colors.primary} size="large" style={styles.loader} />
       ) : (
         <View style={styles.form}>
+          <Pressable
+            accessibilityLabel={t('register.addPhoto')}
+            accessibilityRole="button"
+            onPress={handlePickImage}
+            style={styles.photoContainer}
+          >
+            {imageUri ? (
+              <Image source={{ uri: imageUri }} style={styles.photoImage} />
+            ) : (
+              <View style={styles.photoPlaceholder}>
+                <Text style={styles.photoText}>{t('register.addPhoto')}</Text>
+              </View>
+            )}
+          </Pressable>
+
           <Text style={styles.label}>{t('register.nameLabel')}</Text>
           <TextInput
             autoCapitalize="words"
@@ -74,6 +130,17 @@ export function RegisterScreen() {
             placeholderTextColor={colors.muted}
             style={styles.input}
             value={email}
+          />
+
+          <Text style={styles.label}>{t('register.phoneLabel')}</Text>
+          <TextInput
+            autoComplete="tel"
+            keyboardType="phone-pad"
+            onChangeText={setPhone}
+            placeholder={t('register.phonePlaceholder')}
+            placeholderTextColor={colors.muted}
+            style={styles.input}
+            value={phone}
           />
 
           <Text style={styles.label}>{t('register.passwordLabel')}</Text>
@@ -105,6 +172,33 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: spacing.sm,
+  },
+  photoContainer: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    borderColor: colors.border,
+    borderRadius: 50,
+    borderStyle: 'dashed',
+    borderWidth: 2,
+    height: 100,
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+    overflow: 'hidden',
+    width: 100,
+  },
+  photoPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xs,
+  },
+  photoText: {
+    ...typography.caption,
+    color: colors.muted,
+    textAlign: 'center',
+  },
+  photoImage: {
+    height: 100,
+    width: 100,
   },
   label: {
     ...typography.label,
