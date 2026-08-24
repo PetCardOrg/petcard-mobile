@@ -19,11 +19,19 @@ export async function createTutor(payload: CreateTutorDto): Promise<TutorRespons
   return data;
 }
 
-export async function updateTutor(id: string, payload: UpdateTutorDto): Promise<TutorResponseDto> {
-  const { data } = await api.patch<TutorResponseDto>(`${TUTORS_ENDPOINT}/${id}`, payload);
+/**
+ * Atualiza o próprio cadastro.
+ *
+ * A rota é `/tutors/me`, não `/tutors/:id` — a api nunca teve atualização por
+ * id, e passar um continuaria caindo em `GET /tutors/:id`, que é do
+ * veterinário. O dono é quem está no token.
+ */
+export async function updateCurrentTutor(payload: UpdateTutorDto): Promise<TutorResponseDto> {
+  const { data } = await api.patch<TutorResponseDto>(`${TUTORS_ENDPOINT}/me`, payload);
   return data;
 }
 
-export async function deleteTutor(id: string): Promise<void> {
-  await api.delete(`${TUTORS_ENDPOINT}/${id}`);
+/** Exclusão definitiva da conta. Leva pets e prontuário junto. */
+export async function deleteCurrentTutor(): Promise<void> {
+  await api.delete(`${TUTORS_ENDPOINT}/me`);
 }
