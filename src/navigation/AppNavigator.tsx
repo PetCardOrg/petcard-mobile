@@ -160,9 +160,9 @@ function MainNavigator() {
 }
 
 export function AppNavigator() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isBootstrapping } = useAuth();
 
-  if (isLoading) {
+  if (isBootstrapping) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator color={colors.primary} size="large" />
