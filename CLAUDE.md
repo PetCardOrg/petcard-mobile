@@ -31,6 +31,8 @@ App do **tutor** do PetCard. React Native + Expo + TypeScript. Consome a `petcar
 
 ## M7 nesta repo (Fase 1, ordem em `../CLAUDE.md`)
 
-- **mobile#54** — fluxo de cadastro/login (recuperação de senha, confirmação, verificação de e-mail, login Google). **O maior — exige endpoints novos de auth na api.**
-- **mobile#57** perfil (foto, nome, deletar conta) · **#59** tutor vê histórico do pet (consome api#117) · **#58** aviso ao editar/apagar observação de vet · **#55** remover botões redundantes · **#56** arrastar duração no agendamento.
+- **Ainda falta só a mobile#54** — fluxo de cadastro/login (recuperação de senha, confirmação, verificação de e-mail, login Google). **O maior do grupo — exige endpoints novos de auth na api.** Não foi tocada ainda.
+- **#59, #58 e #57 fechadas** (18–24/08): tutor vê o histórico do pet (consome api#117); aviso ao editar/apagar observação de vet; perfil do tutor (trocar foto, editar nome/telefone, deletar conta — mobile#73).
+- **#55 e #56 têm o código mergeado (PR #70, 2026-08-23)** mas as issues seguem abertas no GitHub — board dessincronizado, só falta fechar manualmente.
+- ⚠️ **Incidente registrado:** um `npm audit fix` desalinhou a toolchain do Expo (SDK 54) e quebrou o bundle de dev (corrigido no PR #69). **Usar `expo install --fix`, nunca `npm audit fix` puro**, neste repo.
 - Screenshots/README é PC-096; evidências dos UCs é PC-094.
