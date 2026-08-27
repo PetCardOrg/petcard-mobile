@@ -53,7 +53,7 @@ describe('ProfileScreen', () => {
 
     expect(screen.getByText('Ana Silva')).toBeVisible();
     expect(screen.getByText('ana@petcard.com')).toBeVisible();
-    expect(screen.getByText('11999990000')).toBeVisible();
+    expect(screen.getByText('(11) 99999-0000')).toBeVisible();
   });
 
   it('entra em modo de edição com os campos preenchidos', () => {
@@ -62,7 +62,7 @@ describe('ProfileScreen', () => {
     fireEvent.press(screen.getByLabelText('Editar perfil'));
 
     expect(screen.getByDisplayValue('Ana Silva')).toBeVisible();
-    expect(screen.getByDisplayValue('11999990000')).toBeVisible();
+    expect(screen.getByDisplayValue('(11) 99999-0000')).toBeVisible();
   });
 
   it('salva o nome editado e atualiza a sessão', async () => {
