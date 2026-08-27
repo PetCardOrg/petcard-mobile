@@ -26,10 +26,11 @@ jest.mock('expo-image-picker', () => ({
   }),
 }));
 
-function preencherCamposObrigatorios(senha = 'senha1234') {
+function preencherCamposObrigatorios(senha = 'senha1234', confirmacao = senha) {
   fireEvent.changeText(screen.getByPlaceholderText('Seu nome completo'), 'Ana Silva');
   fireEvent.changeText(screen.getByPlaceholderText('seu@email.com'), 'ana@petcard.com');
   fireEvent.changeText(screen.getByPlaceholderText('Mínimo 8 caracteres'), senha);
+  fireEvent.changeText(screen.getByPlaceholderText('Digite a senha novamente'), confirmacao);
 }
 
 describe('RegisterScreen', () => {
@@ -44,6 +45,29 @@ describe('RegisterScreen', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Cadastrar' }));
 
     expect(screen.getByText('A senha deve ter no mínimo 8 caracteres.')).toBeVisible();
+    expect(mockRegister).not.toHaveBeenCalled();
+  });
+
+  it('barra nome muito curto sem chamar a api', () => {
+    renderWithProviders(<RegisterScreen />);
+    fireEvent.changeText(screen.getByPlaceholderText('Seu nome completo'), 'A');
+    fireEvent.changeText(screen.getByPlaceholderText('seu@email.com'), 'ana@petcard.com');
+    fireEvent.changeText(screen.getByPlaceholderText('Mínimo 8 caracteres'), 'senha1234');
+    fireEvent.changeText(screen.getByPlaceholderText('Digite a senha novamente'), 'senha1234');
+
+    fireEvent.press(screen.getByRole('button', { name: 'Cadastrar' }));
+
+    expect(screen.getByText('O nome deve ter pelo menos 2 caracteres.')).toBeVisible();
+    expect(mockRegister).not.toHaveBeenCalled();
+  });
+
+  it('barra senhas divergentes sem chamar a api', () => {
+    renderWithProviders(<RegisterScreen />);
+    preencherCamposObrigatorios('senha1234', 'outra-senha');
+
+    fireEvent.press(screen.getByRole('button', { name: 'Cadastrar' }));
+
+    expect(screen.getByText('As senhas não coincidem.')).toBeVisible();
     expect(mockRegister).not.toHaveBeenCalled();
   });
 

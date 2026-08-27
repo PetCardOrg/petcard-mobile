@@ -22,6 +22,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { tutorService, uploadService } from '../../services';
 import { supportedLanguages } from '../../i18n';
 import { colors, radii, spacing, typography } from '../../utils/theme';
+import { formatPhoneBR, unformatPhone } from '../../utils/phoneMask';
 
 export function ProfileScreen() {
   const { user, logout, updateUser } = useAuth();
@@ -37,7 +38,7 @@ export function ProfileScreen() {
 
   function handleStartEditing() {
     setName(user?.name ?? '');
-    setPhone(user?.phone ?? '');
+    setPhone(formatPhoneBR(user?.phone ?? ''));
     setImageUri(null);
     setIsEditing(true);
   }
@@ -76,7 +77,7 @@ export function ProfileScreen() {
 
       const updated = await tutorService.updateCurrentTutor({
         name: name.trim(),
-        phone: phone.trim(),
+        phone: unformatPhone(phone),
         ...(profileImageUrl ? { profile_image_url: profileImageUrl } : {}),
       });
 
@@ -214,7 +215,8 @@ export function ProfileScreen() {
                   <TextInput
                     accessibilityLabel={t('profile.phoneLabel')}
                     keyboardType="phone-pad"
-                    onChangeText={setPhone}
+                    maxLength={15}
+                    onChangeText={(text) => setPhone(formatPhoneBR(text))}
                     placeholder={t('profile.phonePlaceholder')}
                     placeholderTextColor={colors.muted}
                     style={styles.input}
@@ -247,7 +249,7 @@ export function ProfileScreen() {
               <>
                 <Text style={styles.name}>{user?.name ?? t('profile.defaultName')}</Text>
                 {user?.email ? <Text style={styles.email}>{user.email}</Text> : null}
-                {user?.phone ? <Text style={styles.email}>{user.phone}</Text> : null}
+                {user?.phone ? <Text style={styles.email}>{formatPhoneBR(user.phone)}</Text> : null}
               </>
             )}
           </View>

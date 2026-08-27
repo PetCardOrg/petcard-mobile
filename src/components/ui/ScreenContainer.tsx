@@ -1,5 +1,13 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -26,39 +34,48 @@ export function ScreenContainer({
 }: ScreenContainerProps) {
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.logoMark}>
-            <Ionicons color={colors.white} name="paw" size={20} />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.flex}
+      >
+        <ScrollView
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.header}>
+            <View style={styles.logoMark}>
+              <Ionicons color={colors.white} name="paw" size={20} />
+            </View>
           </View>
-        </View>
 
-        <View style={styles.content}>
-          <Text style={styles.title}>{title}</Text>
-          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
-          {children}
-        </View>
+          <View style={styles.content}>
+            <Text style={styles.title}>{title}</Text>
+            {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+            {children}
+          </View>
 
-        {actionLabel ? (
-          <Pressable
-            accessibilityRole="button"
-            onPress={onActionPress}
-            style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
-          >
-            <Text style={styles.primaryButtonText}>{actionLabel}</Text>
-          </Pressable>
-        ) : null}
+          {actionLabel ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={onActionPress}
+              style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
+            >
+              <Text style={styles.primaryButtonText}>{actionLabel}</Text>
+            </Pressable>
+          ) : null}
 
-        {secondaryActionLabel ? (
-          <Pressable
-            accessibilityRole="button"
-            onPress={onSecondaryActionPress}
-            style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}
-          >
-            <Text style={styles.secondaryButtonText}>{secondaryActionLabel}</Text>
-          </Pressable>
-        ) : null}
-      </View>
+          {secondaryActionLabel ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={onSecondaryActionPress}
+              style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}
+            >
+              <Text style={styles.secondaryButtonText}>{secondaryActionLabel}</Text>
+            </Pressable>
+          ) : null}
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -68,8 +85,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  container: {
+  flex: {
     flex: 1,
+  },
+  container: {
+    flexGrow: 1,
     padding: spacing.lg,
   },
   header: {
@@ -87,7 +107,6 @@ const styles = StyleSheet.create({
     width: 40,
   },
   content: {
-    flex: 1,
     justifyContent: 'center',
   },
   title: {
@@ -106,6 +125,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.primary,
     borderRadius: radii.md,
+    marginTop: spacing.lg,
     paddingHorizontal: spacing.md,
     paddingVertical: 14,
   },

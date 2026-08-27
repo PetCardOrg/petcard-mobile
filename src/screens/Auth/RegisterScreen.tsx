@@ -18,11 +18,16 @@ import { isAxiosError } from 'axios';
 import { ScreenContainer } from '../../components/ui/ScreenContainer';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, radii, spacing, typography } from '../../utils/theme';
+import { formatPhoneBR, unformatPhone } from '../../utils/phoneMask';
 import type { AuthStackParamList } from '../../navigation/types';
 
 type RegisterNav = NativeStackNavigationProp<AuthStackParamList, 'Register'>;
 
+const NAME_MIN_LENGTH = 2;
+const NAME_MAX_LENGTH = 120;
+const EMAIL_MAX_LENGTH = 254;
 const PASSWORD_MIN_LENGTH = 8;
+const PASSWORD_MAX_LENGTH = 72;
 
 export function RegisterScreen() {
   const { isLoading, register } = useAuth();
@@ -33,6 +38,7 @@ export function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,8 +62,13 @@ export function RegisterScreen() {
   }
 
   const handleRegister = async () => {
-    if (!name.trim() || !email.trim() || !password.trim()) {
+    if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
       setError(t('register.fillFields'));
+      return;
+    }
+
+    if (name.trim().length < NAME_MIN_LENGTH) {
+      setError(t('register.nameTooShort'));
       return;
     }
 
@@ -66,10 +77,16 @@ export function RegisterScreen() {
       return;
     }
 
+    if (password !== confirmPassword) {
+      setError(t('register.passwordMismatch'));
+      return;
+    }
+
     try {
       setError(null);
+      const rawPhone = unformatPhone(phone);
       await register(name.trim(), email.trim(), password, {
-        phone: phone.trim() || undefined,
+        phone: rawPhone || undefined,
         photoUri: imageUri ?? undefined,
       });
     } catch (err) {
@@ -113,6 +130,7 @@ export function RegisterScreen() {
           <TextInput
             autoCapitalize="words"
             autoComplete="name"
+            maxLength={NAME_MAX_LENGTH}
             onChangeText={setName}
             placeholder={t('register.namePlaceholder')}
             placeholderTextColor={colors.muted}
@@ -125,6 +143,7 @@ export function RegisterScreen() {
             autoCapitalize="none"
             autoComplete="email"
             inputMode="email"
+            maxLength={EMAIL_MAX_LENGTH}
             onChangeText={setEmail}
             placeholder={t('register.emailPlaceholder')}
             placeholderTextColor={colors.muted}
@@ -136,7 +155,8 @@ export function RegisterScreen() {
           <TextInput
             autoComplete="tel"
             keyboardType="phone-pad"
-            onChangeText={setPhone}
+            maxLength={15}
+            onChangeText={(text) => setPhone(formatPhoneBR(text))}
             placeholder={t('register.phonePlaceholder')}
             placeholderTextColor={colors.muted}
             style={styles.input}
@@ -146,12 +166,25 @@ export function RegisterScreen() {
           <Text style={styles.label}>{t('register.passwordLabel')}</Text>
           <TextInput
             autoCapitalize="none"
+            maxLength={PASSWORD_MAX_LENGTH}
             onChangeText={setPassword}
             placeholder={t('register.passwordPlaceholder')}
             placeholderTextColor={colors.muted}
             secureTextEntry
             style={styles.input}
             value={password}
+          />
+
+          <Text style={styles.label}>{t('register.confirmPasswordLabel')}</Text>
+          <TextInput
+            autoCapitalize="none"
+            maxLength={PASSWORD_MAX_LENGTH}
+            onChangeText={setConfirmPassword}
+            placeholder={t('register.confirmPasswordPlaceholder')}
+            placeholderTextColor={colors.muted}
+            secureTextEntry
+            style={styles.input}
+            value={confirmPassword}
           />
 
           {error ? (
