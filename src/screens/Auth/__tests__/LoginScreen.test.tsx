@@ -53,4 +53,12 @@ describe('LoginScreen', () => {
 
     expect(mockNavigate).toHaveBeenCalledWith('Register');
   });
+
+  it('leva para a recuperação de senha', () => {
+    renderWithProviders(<LoginScreen />);
+
+    fireEvent.press(screen.getByRole('button', { name: 'Esqueci minha senha' }));
+
+    expect(mockNavigate).toHaveBeenCalledWith('ForgotPassword');
+  });
 });

@@ -15,10 +15,14 @@ import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { isAxiosError } from 'axios';
 
+import { GoogleSignInButton } from '../../components/GoogleSignInButton';
+import { PasswordInput } from '../../components/PasswordInput';
+import { PasswordRulesChecklist } from '../../components/PasswordRulesChecklist';
 import { ScreenContainer } from '../../components/ui/ScreenContainer';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 import { formatPhoneBR, unformatPhone } from '../../utils/phoneMask';
+import { PASSWORD_MAX_LENGTH, validatePasswordStrength } from '../../utils/passwordStrength';
 import type { AuthStackParamList } from '../../navigation/types';
 
 type RegisterNav = NativeStackNavigationProp<AuthStackParamList, 'Register'>;
@@ -26,8 +30,6 @@ type RegisterNav = NativeStackNavigationProp<AuthStackParamList, 'Register'>;
 const NAME_MIN_LENGTH = 2;
 const NAME_MAX_LENGTH = 120;
 const EMAIL_MAX_LENGTH = 254;
-const PASSWORD_MIN_LENGTH = 8;
-const PASSWORD_MAX_LENGTH = 72;
 
 export function RegisterScreen() {
   const { isLoading, register } = useAuth();
@@ -72,8 +74,9 @@ export function RegisterScreen() {
       return;
     }
 
-    if (password.length < PASSWORD_MIN_LENGTH) {
-      setError(t('register.passwordTooShort'));
+    const rule = validatePasswordStrength(password);
+    if (rule) {
+      setError(t(`passwordRules.${rule}`));
       return;
     }
 
@@ -164,28 +167,24 @@ export function RegisterScreen() {
           />
 
           <Text style={styles.label}>{t('register.passwordLabel')}</Text>
-          <TextInput
-            autoCapitalize="none"
+          <PasswordInput
             maxLength={PASSWORD_MAX_LENGTH}
             onChangeText={setPassword}
             placeholder={t('register.passwordPlaceholder')}
-            placeholderTextColor={colors.muted}
-            secureTextEntry
-            style={styles.input}
             value={password}
           />
 
+          <PasswordRulesChecklist password={password} />
+
           <Text style={styles.label}>{t('register.confirmPasswordLabel')}</Text>
-          <TextInput
-            autoCapitalize="none"
+          <PasswordInput
             maxLength={PASSWORD_MAX_LENGTH}
             onChangeText={setConfirmPassword}
             placeholder={t('register.confirmPasswordPlaceholder')}
-            placeholderTextColor={colors.muted}
-            secureTextEntry
-            style={styles.input}
             value={confirmPassword}
           />
+
+          <GoogleSignInButton label={t('register.googleButton')} onError={setError} />
 
           {error ? (
             <View style={styles.callout}>

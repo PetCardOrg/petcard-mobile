@@ -6,11 +6,17 @@ import { api } from '../../services/api';
 import { AuthProvider, useAuth } from '../AuthContext';
 
 jest.mock('../../services', () => ({
-  tutorService: { updateCurrentTutor: jest.fn() },
+  tutorService: { updateCurrentTutor: jest.fn(), getCurrentTutor: jest.fn() },
   uploadService: { uploadImage: jest.fn() },
+  authService: {
+    googleLogin: jest.fn(),
+    forgotPassword: jest.fn().mockResolvedValue(undefined),
+    resetPassword: jest.fn().mockResolvedValue(undefined),
+    resendVerification: jest.fn().mockResolvedValue(undefined),
+  },
 }));
 
-const { tutorService, uploadService } = jest.requireMock('../../services');
+const { tutorService, uploadService, authService } = jest.requireMock('../../services');
 
 const wrapper = ({ children }: { children: ReactNode }) => <AuthProvider>{children}</AuthProvider>;
 
@@ -210,6 +216,82 @@ describe('AuthContext', () => {
     // depois no perfil.
     expect(result.current.isAuthenticated).toBe(true);
     expect(result.current.user?.email).toBe('ana@petcard.com');
+  });
+
+  it('login propaga email_verified vindo da api', async () => {
+    jest.spyOn(api, 'post').mockResolvedValue({
+      data: {
+        access_token: 'tok-abc',
+        user: { ...SESSION.user, email_verified: false },
+      },
+    });
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(result.current.isBootstrapping).toBe(false));
+
+    await act(async () => {
+      await result.current.login('ana@petcard.com', 'senha123');
+    });
+
+    expect(result.current.user?.email_verified).toBe(false);
+  });
+
+  it('loginWithGoogle troca o ID token por sessão e persiste', async () => {
+    authService.googleLogin.mockResolvedValueOnce({
+      access_token: 'tok-google',
+      user: { ...SESSION.user, email_verified: true },
+    });
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(result.current.isBootstrapping).toBe(false));
+
+    await act(async () => {
+      await result.current.loginWithGoogle('id-token-123');
+    });
+
+    expect(authService.googleLogin).toHaveBeenCalledWith('id-token-123');
+    expect(result.current.isAuthenticated).toBe(true);
+    expect(result.current.user?.email_verified).toBe(true);
+    expect(await SecureStore.getItemAsync('auth_access_token')).toBe('tok-google');
+  });
+
+  it('refreshUser relê /tutors/me e atualiza email_verified na sessão', async () => {
+    jest.spyOn(api, 'post').mockResolvedValue({
+      data: {
+        access_token: 'tok-abc',
+        user: { ...SESSION.user, email_verified: false },
+      },
+    });
+    tutorService.getCurrentTutor.mockResolvedValueOnce({
+      name: 'Ana',
+      email: 'ana@petcard.com',
+      email_verified: true,
+    });
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(result.current.isBootstrapping).toBe(false));
+    await act(async () => {
+      await result.current.login('ana@petcard.com', 'senha123');
+    });
+    expect(result.current.user?.email_verified).toBe(false);
+
+    await act(async () => {
+      await result.current.refreshUser();
+    });
+
+    expect(tutorService.getCurrentTutor).toHaveBeenCalled();
+    expect(result.current.user?.email_verified).toBe(true);
+  });
+
+  it('forgotPassword e resetPassword delegam ao authService', async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(result.current.isBootstrapping).toBe(false));
+
+    await act(async () => {
+      await result.current.forgotPassword('ana@petcard.com');
+      await result.current.resetPassword('tok-reset', 'NovaSenha1!');
+    });
+
+    expect(authService.forgotPassword).toHaveBeenCalledWith('ana@petcard.com');
+    expect(authService.resetPassword).toHaveBeenCalledWith('tok-reset', 'NovaSenha1!');
   });
 
   it('updateUser não faz nada sem sessão ativa', async () => {

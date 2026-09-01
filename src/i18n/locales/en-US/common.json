@@ -19,7 +19,9 @@
     "errorTitle": "Login error",
     "errorMessage": "Invalid email or password. Please try again.",
     "authErrorTitle": "Authentication error",
-    "registerLink": "Create account"
+    "registerLink": "Create account",
+    "forgotPasswordLink": "Forgot my password",
+    "googleButton": "Sign in with Google"
   },
   "register": {
     "title": "Create Account",
@@ -44,7 +46,65 @@
     "errorMessage": "Could not create account. Please try again.",
     "permissionRequired": "Permission required",
     "permissionGallery": "We need access to your gallery to select a photo.",
-    "loginLink": "Already have an account"
+    "loginLink": "Already have an account",
+    "googleButton": "Sign up with Google"
+  },
+  "passwordRules": {
+    "hint": "Use at least 8 characters, with one uppercase letter, one number and one special character.",
+    "tooShort": "Password must be at least 8 characters.",
+    "tooLong": "Password must be at most 72 characters.",
+    "noUppercase": "Password must contain at least one uppercase letter.",
+    "noNumber": "Password must contain at least one number.",
+    "noSpecial": "Password must contain at least one special character.",
+    "checklist": {
+      "minLength": "At least 8 characters",
+      "uppercase": "One uppercase letter",
+      "number": "One number",
+      "special": "One special character"
+    }
+  },
+  "forgotPassword": {
+    "title": "Reset password",
+    "subtitle": "Enter your account email and we'll send you a link to reset your password.",
+    "button": "Send link",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@email.com",
+    "fillEmail": "Enter your email.",
+    "sentMessage": "If an account exists for that email, we've sent a password reset link. Check your inbox.",
+    "errorMessage": "We couldn't send the link right now. Please try again.",
+    "backToLogin": "Back to login"
+  },
+  "resetPassword": {
+    "title": "New password",
+    "subtitle": "Set a new password for your account.",
+    "button": "Reset password",
+    "tokenLabel": "Code from email",
+    "tokenPlaceholder": "Paste the code you received by email",
+    "fillToken": "Enter the code you received by email.",
+    "passwordLabel": "New password",
+    "passwordPlaceholder": "At least 8 characters",
+    "confirmLabel": "Confirm new password",
+    "confirmPlaceholder": "Type the password again",
+    "passwordMismatch": "Passwords don't match.",
+    "successTitle": "Password reset",
+    "successMessage": "Your password has been changed. Sign in with your new password.",
+    "errorMessage": "We couldn't reset your password. The link may have expired.",
+    "backToLogin": "Back to login"
+  },
+  "emailVerification": {
+    "title": "Email verification",
+    "continue": "Continue",
+    "loadingSubtitle": "Confirming your email...",
+    "successSubtitle": "All set!",
+    "errorSubtitle": "Couldn't confirm",
+    "successMessage": "Your email has been confirmed.",
+    "errorMessage": "The verification link is invalid or expired. Request a new one in the app.",
+    "bannerTitle": "Confirm your email",
+    "bannerText": "We sent a confirmation link to your email.",
+    "bannerResend": "Resend email",
+    "bannerSending": "Sending...",
+    "bannerSent": "Email resent. Check your inbox.",
+    "bannerError": "Couldn't resend right now. Try again later."
   },
   "home": {
     "title": "My pets",
@@ -419,7 +479,11 @@
     "datePlaceholder": "DD/MM/YYYY",
     "dateInvalid": "Invalid date. Use DD/MM/YYYY",
     "required": "required",
-    "errorDefault": "Oops, something went wrong"
+    "errorDefault": "Oops, something went wrong",
+    "ok": "OK",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "or": "or"
   },
   "validation": {
     "nameRequired": "Name is required",

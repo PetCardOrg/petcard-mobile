@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
+import { GoogleSignInButton } from '../../components/GoogleSignInButton';
+import { PasswordInput } from '../../components/PasswordInput';
 import { ScreenContainer } from '../../components/ui/ScreenContainer';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, radii, spacing, typography } from '../../utils/theme';
@@ -60,15 +62,22 @@ export function LoginScreen() {
           />
 
           <Text style={styles.label}>{t('login.passwordLabel')}</Text>
-          <TextInput
-            autoCapitalize="none"
+          <PasswordInput
             onChangeText={setPassword}
             placeholder={t('login.passwordPlaceholder')}
-            placeholderTextColor={colors.muted}
-            secureTextEntry
-            style={styles.input}
             value={password}
           />
+
+          <Pressable
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => navigation.navigate('ForgotPassword')}
+            style={styles.forgotLink}
+          >
+            <Text style={styles.forgotLinkText}>{t('login.forgotPasswordLink')}</Text>
+          </Pressable>
+
+          <GoogleSignInButton label={t('login.googleButton')} onError={setError} />
 
           {error ? (
             <View style={styles.callout}>
@@ -103,6 +112,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     paddingHorizontal: spacing.md,
     paddingVertical: 12,
+  },
+  forgotLink: {
+    alignSelf: 'flex-end',
+    marginTop: spacing.xs,
+  },
+  forgotLinkText: {
+    ...typography.label,
+    color: colors.primaryDark,
   },
   callout: {
     backgroundColor: colors.dangerSoft,

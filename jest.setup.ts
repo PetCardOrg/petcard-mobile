@@ -48,6 +48,28 @@ jest.mock('expo-localization', () => ({
   getLocales: () => [{ languageTag: 'pt-BR', languageCode: 'pt' }],
 }));
 
+// Auth social do Google (mobile#54): sem credenciais nos testes, o hook devolve
+// um request nulo e `promptAsync` no-op. Casos que exercitam o sucesso do
+// fluxo sobrescrevem este mock.
+jest.mock('expo-auth-session/providers/google', () => ({
+  __esModule: true,
+  useAuthRequest: () => [null, null, jest.fn()],
+}));
+
+jest.mock('expo-web-browser', () => ({
+  __esModule: true,
+  maybeCompleteAuthSession: jest.fn(),
+  openAuthSessionAsync: jest.fn(),
+}));
+
+jest.mock('expo-linking', () => ({
+  __esModule: true,
+  createURL: (path: string) => `petcard://${path}`,
+  useURL: () => null,
+  parse: (url: string) => ({ path: url, queryParams: {} }),
+  addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+}));
+
 // @expo/vector-icons carrega fontes de forma assíncrona (setState pós-render →
 // warning de act). Stub simples por família mantém o render síncrono.
 jest.mock('@expo/vector-icons', () => {
