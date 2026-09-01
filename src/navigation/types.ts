@@ -3,6 +3,9 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
 export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
+  ForgotPassword: undefined;
+  ResetPassword: { token?: string } | undefined;
+  VerifyEmail: { token?: string } | undefined;
 };
 
 export type HomeStackParamList = {

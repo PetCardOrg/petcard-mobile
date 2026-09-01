@@ -8,6 +8,7 @@ import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
+import { EmailVerificationBanner } from '../../components/EmailVerificationBanner';
 import { PetCard } from '../../components/domain/PetCard';
 import { PetCardSkeleton } from '../../components/ui/PetCardSkeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -92,6 +93,8 @@ export function HomeScreen() {
             <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
           </View>
         </View>
+
+        <EmailVerificationBanner />
 
         {/* Content */}
         {isLoading && pets.length === 0 ? (

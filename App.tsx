@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
-import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, type LinkingOptions } from '@react-navigation/native';
+import * as Linking from 'expo-linking';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+import type { AuthStackParamList } from './src/navigation/types';
 
 import { initI18n } from './src/i18n';
 import { AuthProvider } from './src/contexts/AuthContext';
@@ -20,6 +23,23 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
+
+// Deep links dos e-mails de auth (mobile#54): .../reset-password?token=... e
+// .../verify-email?token=... (o scheme vem do APP_DEEP_LINK_BASE na API —
+// exp://<ip>:8081/--/ no Expo Go, petcard:// no dev build). A verificação com
+// o tutor já logado é tratada à parte (useEmailVerificationLink), porque aí a
+// AuthStack não está montada.
+const linking: LinkingOptions<AuthStackParamList> = {
+  prefixes: [Linking.createURL('/'), 'petcard://'],
+  config: {
+    screens: {
+      ResetPassword: 'reset-password',
+      VerifyEmail: 'verify-email',
+      ForgotPassword: 'forgot-password',
+      Login: 'login',
+    },
+  },
+};
 
 const navigationTheme = {
   ...DefaultTheme,
@@ -58,7 +78,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <NavigationContainer theme={navigationTheme}>
+        <NavigationContainer linking={linking} theme={navigationTheme}>
           <StatusBar style="dark" />
           <AppNavigator />
         </NavigationContainer>
