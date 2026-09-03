@@ -25,7 +25,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { MainTabParamList } from '../../navigation/types';
 
-import { DurationSlider } from '../../components/ui/DurationSlider';
+import { DurationOptions } from '../../components/ui/DurationOptions';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { FAB } from '../../components/ui/FAB';
@@ -553,11 +553,9 @@ export function AppointmentsScreen() {
                   </View>
                 </View>
 
-                {/* Duração por arrasto. Os chips davam cinco valores e nada
-                    entre eles; o passo de 15min cobre os mesmos e o que faltava. */}
                 <View style={styles.field}>
                   <Text style={styles.label}>{t('appointments.form.durationLabel')}</Text>
-                  <DurationSlider
+                  <DurationOptions
                     accessibilityLabel={t('appointments.form.durationLabel')}
                     onChange={setDurationMinutes}
                     value={durationMinutes}
