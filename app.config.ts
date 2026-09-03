@@ -15,12 +15,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'light',
-  newArchEnabled: true,
-  splash: {
-    image: './assets/splash-icon.png',
-    resizeMode: 'contain',
-    backgroundColor: '#ffffff',
-  },
+  // newArchEnabled removido do config: SDK 57 só roda com a New Architecture,
+  // não é mais opcional.
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.petcardorg.mobile',
@@ -40,7 +36,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#ffffff',
     },
-    edgeToEdgeEnabled: true,
+    // edgeToEdgeEnabled foi removido do config: SDK 57 exige edge-to-edge
+    // sempre ativo no Android (não é mais opcional).
     package: 'com.petcardorg.mobile',
     googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
     config: {
@@ -54,7 +51,24 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   // react-native-web.
   platforms: ['ios', 'android'],
   scheme: 'petcard',
-  plugins: ['expo-localization', 'expo-notifications', 'expo-web-browser'],
+  plugins: [
+    'expo-localization',
+    'expo-notifications',
+    'expo-web-browser',
+    'expo-font',
+    'expo-secure-store',
+    'expo-sharing',
+    'expo-status-bar',
+    // Substitui a chave `splash` legada, removida do ExpoConfig na SDK 57.
+    [
+      'expo-splash-screen',
+      {
+        image: './assets/splash-icon.png',
+        resizeMode: 'contain',
+        backgroundColor: '#ffffff',
+      },
+    ],
+  ],
   extra: {
     // Client IDs do Google para o login social (mobile#54), lidos pelo
     // useGoogleAuth via process.env.EXPO_PUBLIC_*.
