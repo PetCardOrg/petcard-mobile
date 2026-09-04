@@ -576,7 +576,7 @@ const styles = StyleSheet.create({
 
   // Schedule prompt overlay
   promptOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
