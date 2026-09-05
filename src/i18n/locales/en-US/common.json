@@ -149,7 +149,21 @@
     "permissionRequired": "Permission required",
     "permissionGallery": "We need access to your gallery to select a photo.",
     "clinicalHistory": "Clinical history",
-    "openHistoryAccessibility": "Open clinical history"
+    "openHistoryAccessibility": "Open clinical history",
+    "petScans": "Where it was found",
+    "openScansAccessibility": "See where the pet was found"
+  },
+  "petScans": {
+    "title": "Where it was found",
+    "error": "Could not load the collar scans.",
+    "emptyTitle": "No scans yet",
+    "emptyDescription": "When someone scans your pet's collar QR code, it shows up here.",
+    "item": {
+      "title": "Collar QR scanned",
+      "openMap": "Open in maps",
+      "accuracy": "Accurate to about {{meters}} m",
+      "noLocation": "Whoever found the pet did not share their location."
+    }
   },
   "digitalWallet": {
     "title": "Digital Card",

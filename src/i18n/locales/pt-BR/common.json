@@ -149,7 +149,21 @@
     "permissionRequired": "Permissão necessária",
     "permissionGallery": "Precisamos de acesso �� galeria para selecionar uma foto.",
     "clinicalHistory": "Histórico clínico",
-    "openHistoryAccessibility": "Abrir histórico clínico"
+    "openHistoryAccessibility": "Abrir histórico clínico",
+    "petScans": "Onde encontraram",
+    "openScansAccessibility": "Ver onde o pet foi encontrado"
+  },
+  "petScans": {
+    "title": "Onde encontraram",
+    "error": "Não foi possível carregar as leituras da coleira.",
+    "emptyTitle": "Nenhuma leitura ainda",
+    "emptyDescription": "Quando alguém ler o QR da coleira do seu pet, o registro aparece aqui.",
+    "item": {
+      "title": "QR da coleira lido",
+      "openMap": "Abrir no mapa",
+      "accuracy": "Precisão de cerca de {{meters}} m",
+      "noLocation": "Quem encontrou não compartilhou a localização."
+    }
   },
   "digitalWallet": {
     "title": "Carteira Digital",

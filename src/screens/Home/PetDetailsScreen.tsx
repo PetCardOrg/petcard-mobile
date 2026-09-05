@@ -301,6 +301,18 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
         <Text style={styles.historyBtnText}>{t('petDetails.clinicalHistory')}</Text>
       </Pressable>
 
+      {/* Leituras do QR da coleira: a cópia durável do que o push avisa. O
+          tutor pode ter perdido a notificação — aqui a informação fica. */}
+      <Pressable
+        accessibilityLabel={t('petDetails.openScansAccessibility')}
+        accessibilityRole="button"
+        onPress={() => navigation.navigate('PetScans', { petId: pet.id, petName: pet.name })}
+        style={({ pressed }) => [styles.historyBtn, pressed && styles.pressed]}
+      >
+        <Ionicons color={colors.primaryDark} name="location-outline" size={18} />
+        <Text style={styles.historyBtnText}>{t('petDetails.petScans')}</Text>
+      </Pressable>
+
       {/* Action buttons */}
       <View style={styles.actionsRow}>
         <Pressable

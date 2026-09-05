@@ -22,6 +22,10 @@ export type HomeStackParamList = {
     petId: string;
     petName: string;
   };
+  PetScans: {
+    petId: string;
+    petName: string;
+  };
   PetRegistration: undefined;
 };
 
