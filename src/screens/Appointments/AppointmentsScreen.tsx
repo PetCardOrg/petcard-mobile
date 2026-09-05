@@ -29,6 +29,7 @@ import { DurationOptions } from '../../components/ui/DurationOptions';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { FAB } from '../../components/ui/FAB';
+import { PlaceAutocompleteInput } from '../../components/ui/PlaceAutocompleteInput';
 import { usePets } from '../../hooks/usePets';
 import { appointmentService, calendarService } from '../../services';
 import type { AppointmentResponse } from '../../services/appointment.service';
@@ -565,12 +566,9 @@ export function AppointmentsScreen() {
                 {/* Location */}
                 <View style={styles.field}>
                   <Text style={styles.label}>{t('appointments.form.locationLabel')}</Text>
-                  <TextInput
-                    autoCapitalize="sentences"
+                  <PlaceAutocompleteInput
                     onChangeText={setLocation}
                     placeholder={t('appointments.form.locationPlaceholder')}
-                    placeholderTextColor={colors.muted}
-                    style={styles.input}
                     value={location}
                   />
                 </View>
