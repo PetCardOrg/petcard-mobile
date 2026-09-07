@@ -162,7 +162,8 @@
       "title": "QR da coleira lido",
       "openMap": "Abrir no mapa",
       "accuracy": "Precisão de cerca de {{meters}} m",
-      "noLocation": "Quem encontrou não compartilhou a localização."
+      "noLocation": "Quem encontrou não compartilhou a localização.",
+      "mapError": "Não foi possível abrir o mapa neste aparelho."
     }
   },
   "digitalWallet": {

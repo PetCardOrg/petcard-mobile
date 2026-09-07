@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import {
+  Alert,
   ActivityIndicator,
   FlatList,
   Linking,
@@ -12,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -45,14 +47,31 @@ export function temLocalizacao(
 }
 
 /**
- * Abre o ponto no app de mapas do aparelho.
+ * Abre o ponto no mapa.
  *
- * `geo:` com `q=` repetindo a coordenada, e não só `geo:lat,lng`: sem o `q` o
- * Android centraliza o mapa no ponto mas não crava o marcador, e o tutor perde
- * de vista exatamente o que veio ver.
+ * URL https, e não o esquema `geo:`. A partir do Android 11 o app só enxerga
+ * outro app para um esquema próprio se o declarar em `<queries>` no manifesto,
+ * e o Expo Go não declara `geo:` — `openURL` não acha atividade nenhuma e
+ * estoura "Unable to open URL". Com https não há esse problema: quem tiver o
+ * Google Maps instalado cai nele pelo app link, quem não tiver abre no
+ * navegador. É também o que o ClinicDetailCard já faz, com o googleMapsUrl
+ * que vem do Places.
  */
 function urlDoMapa(latitude: number, longitude: number): string {
-  return `geo:${latitude},${longitude}?q=${latitude},${longitude}`;
+  return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+}
+
+/**
+ * O `openURL` rejeita quando nenhum app atende a URL. Sem este catch a
+ * rejeição vazava como "Uncaught (in promise)" e o toque no botão não dava
+ * retorno nenhum ao tutor.
+ */
+async function abrirNoMapa(latitude: number, longitude: number, t: TFunction) {
+  try {
+    await Linking.openURL(urlDoMapa(latitude, longitude));
+  } catch {
+    Alert.alert(t('common.error'), t('petScans.item.mapError'));
+  }
 }
 
 function ScanItem({ scan }: { scan: PetScan }) {
@@ -86,7 +105,7 @@ function ScanItem({ scan }: { scan: PetScan }) {
           ) : null}
           <Pressable
             accessibilityRole="button"
-            onPress={() => void Linking.openURL(urlDoMapa(scan.latitude, scan.longitude))}
+            onPress={() => void abrirNoMapa(scan.latitude, scan.longitude, t)}
             style={({ pressed }) => [styles.mapButton, pressed && styles.pressed]}
             testID={`open-map-${scan.id}`}
           >

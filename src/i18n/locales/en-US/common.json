@@ -162,7 +162,8 @@
       "title": "Collar QR scanned",
       "openMap": "Open in maps",
       "accuracy": "Accurate to about {{meters}} m",
-      "noLocation": "Whoever found the pet did not share their location."
+      "noLocation": "Whoever found the pet did not share their location.",
+      "mapError": "Could not open the map on this device."
     }
   },
   "digitalWallet": {
