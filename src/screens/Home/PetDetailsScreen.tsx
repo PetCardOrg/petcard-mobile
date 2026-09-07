@@ -21,7 +21,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { isAxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
 
-import { petService, uploadService } from '../../services';
+import { petService, scanService, uploadService } from '../../services';
 import type { HomeStackParamList } from '../../navigation/types';
 import { calculateAge } from '../../utils/calculateAge';
 import { formatDateInput, parseDate } from '../../utils/dateUtils';
@@ -66,6 +66,9 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
   const [pet, setPet] = useState<PetResponseDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
+  // O atalho para as leituras da coleira só aparece quando existe alguma:
+  // um botão que leva sempre a uma lista vazia é ruído na tela do pet.
+  const [temLeituras, setTemLeituras] = useState(false);
 
   // Edit modal state
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -91,6 +94,18 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
           if (!cancelled) setError(true);
         } finally {
           if (!cancelled) setIsLoading(false);
+        }
+      })();
+
+      // Busca à parte, e não dentro do try acima: falhar aqui só esconde um
+      // atalho, enquanto falhar no pet impede a tela inteira. Juntar os dois
+      // faria uma indisponibilidade das leituras derrubar a página do pet.
+      (async () => {
+        try {
+          const scans = await scanService.getByPet(route.params.petId);
+          if (!cancelled) setTemLeituras(scans.length > 0);
+        } catch {
+          if (!cancelled) setTemLeituras(false);
         }
       })();
 
@@ -315,16 +330,19 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
       </Pressable>
 
       {/* Leituras do QR da coleira: a cópia durável do que o push avisa. O
-          tutor pode ter perdido a notificação — aqui a informação fica. */}
-      <Pressable
-        accessibilityLabel={t('petDetails.openScansAccessibility')}
-        accessibilityRole="button"
-        onPress={() => navigation.navigate('PetScans', { petId: pet.id, petName: pet.name })}
-        style={({ pressed }) => [styles.historyBtn, pressed && styles.pressed]}
-      >
-        <Ionicons color={colors.primaryDark} name="location-outline" size={18} />
-        <Text style={styles.historyBtnText}>{t('petDetails.petScans')}</Text>
-      </Pressable>
+          tutor pode ter perdido a notificação, e aqui a informação fica. Só
+          aparece quando existe alguma leitura. */}
+      {temLeituras ? (
+        <Pressable
+          accessibilityLabel={t('petDetails.openScansAccessibility')}
+          accessibilityRole="button"
+          onPress={() => navigation.navigate('PetScans', { petId: pet.id, petName: pet.name })}
+          style={({ pressed }) => [styles.historyBtn, pressed && styles.pressed]}
+        >
+          <Ionicons color={colors.primaryDark} name="location-outline" size={18} />
+          <Text style={styles.historyBtnText}>{t('petDetails.petScans')}</Text>
+        </Pressable>
+      ) : null}
 
       {/* Action buttons */}
       <View style={styles.actionsRow}>
