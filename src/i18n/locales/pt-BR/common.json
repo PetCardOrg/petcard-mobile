@@ -180,8 +180,7 @@
     "requestedMessage": "O QR fica pronto em alguns segundos. Volte a esta tela para vê-lo.",
     "generateError": "Não foi possível gerar o QR da coleira.",
     "error": "Não foi possível carregar o QR da coleira.",
-    "imageAccessibility": "QR Code da coleira do pet",
-    "privacyHint": "Este código é diferente do QR da carteira digital. Ele mostra só seu contato e os dados do pet — o histórico de vacinas e medicações não aparece para quem encontrar o animal."
+    "imageAccessibility": "QR Code da coleira do pet"
   },
   "digitalWallet": {
     "title": "Carteira Digital",

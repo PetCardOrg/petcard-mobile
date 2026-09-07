@@ -153,11 +153,6 @@ export function ColeiraQrScreen({ route }: Props) {
           </Pressable>
         </View>
       )}
-
-      <View style={styles.hintBox}>
-        <Ionicons color={colors.primaryDark} name="information-circle-outline" size={18} />
-        <Text style={styles.hintText}>{t('coleiraQr.privacyHint')}</Text>
-      </View>
     </ScrollView>
   );
 }
@@ -214,6 +209,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
     justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
     paddingVertical: 14,
   },
   primaryBtnText: {
@@ -222,19 +218,6 @@ const styles = StyleSheet.create({
   },
   disabledBtn: {
     opacity: 0.6,
-  },
-  hintBox: {
-    alignItems: 'flex-start',
-    backgroundColor: colors.primarySoft,
-    borderRadius: radii.md,
-    flexDirection: 'row',
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  hintText: {
-    ...typography.caption,
-    color: colors.primaryDark,
-    flex: 1,
   },
   pressed: {
     opacity: 0.82,

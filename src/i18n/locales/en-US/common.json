@@ -180,8 +180,7 @@
     "requestedMessage": "The QR will be ready in a few seconds. Come back to this screen to see it.",
     "generateError": "Could not generate the collar QR.",
     "error": "Could not load the collar QR.",
-    "imageAccessibility": "Pet's collar QR code",
-    "privacyHint": "This code is different from the digital wallet QR. It shows only your contact details and the pet's basics — vaccination and medication history is not visible to whoever finds the animal."
+    "imageAccessibility": "Pet's collar QR code"
   },
   "digitalWallet": {
     "title": "Digital Card",
