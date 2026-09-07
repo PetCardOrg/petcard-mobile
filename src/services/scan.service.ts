@@ -17,7 +17,20 @@ export type PetScan = {
   created_at: string;
 };
 
+export type TagColeira = {
+  pet_id: string;
+  /** Imagem PNG no S3. Ausente enquanto a fila ainda não gerou. */
+  qr_code_url?: string;
+  /** Endereço que o QR carrega — serve para compartilhar sem a imagem. */
+  public_url: string;
+};
+
+export async function getTag(petId: string): Promise<TagColeira> {
+  const { data } = await api.get<TagColeira>(`/coleira/pets/${petId}/tag`);
+  return data;
+}
+
 export async function getByPet(petId: string): Promise<PetScan[]> {
-  const { data } = await api.get<PetScan[]>(`/cards/pets/${petId}/scans`);
+  const { data } = await api.get<PetScan[]>(`/coleira/pets/${petId}/scans`);
   return data;
 }

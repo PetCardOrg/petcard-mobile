@@ -301,6 +301,19 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
         <Text style={styles.historyBtnText}>{t('petDetails.clinicalHistory')}</Text>
       </Pressable>
 
+      {/* QR da coleira: o código que quem acha o pet lê na rua. Fica ao lado do
+          da carteira, mas leva a outro lugar — e é essa diferença que impede
+          um estranho de chegar ao prontuário. */}
+      <Pressable
+        accessibilityLabel={t('petDetails.openColeiraQrAccessibility')}
+        accessibilityRole="button"
+        onPress={() => navigation.navigate('ColeiraQr', { petId: pet.id, petName: pet.name })}
+        style={({ pressed }) => [styles.historyBtn, pressed && styles.pressed]}
+      >
+        <Ionicons color={colors.primaryDark} name="qr-code-outline" size={18} />
+        <Text style={styles.historyBtnText}>{t('petDetails.coleiraQr')}</Text>
+      </Pressable>
+
       {/* Leituras do QR da coleira: a cópia durável do que o push avisa. O
           tutor pode ter perdido a notificação — aqui a informação fica. */}
       <Pressable

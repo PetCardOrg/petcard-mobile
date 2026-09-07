@@ -26,6 +26,10 @@ export type HomeStackParamList = {
     petId: string;
     petName: string;
   };
+  ColeiraQr: {
+    petId: string;
+    petName: string;
+  };
   PetRegistration: undefined;
 };
 

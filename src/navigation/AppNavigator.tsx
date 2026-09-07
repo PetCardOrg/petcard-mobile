@@ -18,6 +18,7 @@ import { ResetPasswordScreen } from '../screens/Auth/ResetPasswordScreen';
 import { VerifyEmailScreen } from '../screens/Auth/VerifyEmailScreen';
 import { ClinicalHistoryScreen } from '../screens/Home/ClinicalHistoryScreen';
 import { PetScansScreen } from '../screens/Home/PetScansScreen';
+import { ColeiraQrScreen } from '../screens/Home/ColeiraQrScreen';
 import { DigitalWalletScreen } from '../screens/DigitalWallet/DigitalWalletScreen';
 import { HomeScreen } from '../screens/Home/HomeScreen';
 import { PetDetailsScreen } from '../screens/Home/PetDetailsScreen';
@@ -76,6 +77,11 @@ function HomeNavigator() {
         component={PetScansScreen}
         name="PetScans"
         options={{ title: t('petScans.title') }}
+      />
+      <HomeStack.Screen
+        component={ColeiraQrScreen}
+        name="ColeiraQr"
+        options={{ title: t('coleiraQr.navTitle') }}
       />
       <HomeStack.Screen
         component={PetRegistrationScreen}
