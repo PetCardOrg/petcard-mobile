@@ -149,7 +149,38 @@
     "permissionRequired": "Permissão necessária",
     "permissionGallery": "Precisamos de acesso �� galeria para selecionar uma foto.",
     "clinicalHistory": "Histórico clínico",
-    "openHistoryAccessibility": "Abrir histórico clínico"
+    "openHistoryAccessibility": "Abrir histórico clínico",
+    "petScans": "Onde encontraram",
+    "openScansAccessibility": "Ver onde o pet foi encontrado",
+    "coleiraQr": "QR da coleira",
+    "openColeiraQrAccessibility": "Ver o QR da coleira do pet"
+  },
+  "petScans": {
+    "title": "Onde encontraram",
+    "error": "Não foi possível carregar as leituras da coleira.",
+    "emptyTitle": "Nenhuma leitura ainda",
+    "emptyDescription": "Quando alguém ler o QR da coleira do seu pet, o registro aparece aqui.",
+    "item": {
+      "title": "QR da coleira lido",
+      "openMap": "Abrir no mapa",
+      "accuracy": "Precisão de cerca de {{meters}} m",
+      "noLocation": "Quem encontrou não compartilhou a localização.",
+      "mapError": "Não foi possível abrir o mapa neste aparelho."
+    }
+  },
+  "coleiraQr": {
+    "navTitle": "QR da coleira",
+    "title": "QR da coleira de {{name}}",
+    "subtitle": "Imprima e prenda na coleira. Quem encontrar seu pet lê este código e fala com você.",
+    "share": "Compartilhar",
+    "shareMessage": "Encontrou {{name}}? Abra este link para falar comigo: {{url}}",
+    "generate": "Gerar QR da coleira",
+    "notGeneratedYet": "Este pet ainda não tem QR de coleira. Gere agora — leva alguns segundos.",
+    "requestedTitle": "Geração solicitada",
+    "requestedMessage": "O QR fica pronto em alguns segundos. Volte a esta tela para vê-lo.",
+    "generateError": "Não foi possível gerar o QR da coleira.",
+    "error": "Não foi possível carregar o QR da coleira.",
+    "imageAccessibility": "QR Code da coleira do pet"
   },
   "digitalWallet": {
     "title": "Carteira Digital",

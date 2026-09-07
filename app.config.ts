@@ -70,6 +70,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
   ],
   extra: {
+    // Id do projeto no EAS. Escrito à mão porque o `eas` não consegue editar
+    // config dinâmica (app.config.ts) — ele só avisa e pede que se coloque
+    // aqui. Não é segredo: identifica o projeto, não autentica ninguém.
+    eas: {
+      projectId: 'e007adf6-fa3f-4315-a6ac-9864e0d1a181',
+    },
     // Client IDs do Google para o login social (mobile#54), lidos pelo
     // useGoogleAuth via process.env.EXPO_PUBLIC_*.
     googleAuth: {
