@@ -35,17 +35,19 @@ if (!isRunningInExpoGo()) {
   });
 }
 
-// Deep links dos e-mails de auth (mobile#54): .../reset-password?token=... e
-// .../verify-email?token=... (o scheme vem do APP_DEEP_LINK_BASE na API —
-// exp://<ip>:8081/--/ no Expo Go, petcard:// no dev build). A verificação com
-// o tutor já logado é tratada à parte (useEmailVerificationLink), porque aí a
-// AuthStack não está montada.
+// Os e-mails de auth não abrem mais o app: o link aponta para as páginas que a
+// própria API serve (`/auth/reset-password` e `/auth/verify-email`), em https.
+// `petcard://` é um scheme customizado e scheme customizado não tem dono —
+// qualquer app pode registrar `petcard` e, no Android, ser escolhido para
+// abrir o link do e-mail, levando o token junto. As rotas que existiam só para
+// receber esses links saíram daqui com ele.
+//
+// O scheme continua declarado no app.config.ts: é por ele que volta o OAuth do
+// Google.
 const linking: LinkingOptions<AuthStackParamList> = {
   prefixes: [Linking.createURL('/'), 'petcard://'],
   config: {
     screens: {
-      ResetPassword: 'reset-password',
-      VerifyEmail: 'verify-email',
       ForgotPassword: 'forgot-password',
       Login: 'login',
     },

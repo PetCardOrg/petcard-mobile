@@ -12,12 +12,9 @@ import { SelectedPetProvider } from '../contexts/SelectedPetContext';
 import { HealthRecordsNavigator } from './HealthRecordsNavigator';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { usePetScanNotificationNavigation } from '../hooks/usePetScanNotificationNavigation';
-import { useEmailVerificationLink } from '../hooks/useEmailVerificationLink';
 import { LoginScreen } from '../screens/Auth/LoginScreen';
 import { RegisterScreen } from '../screens/Auth/RegisterScreen';
 import { ForgotPasswordScreen } from '../screens/Auth/ForgotPasswordScreen';
-import { ResetPasswordScreen } from '../screens/Auth/ResetPasswordScreen';
-import { VerifyEmailScreen } from '../screens/Auth/VerifyEmailScreen';
 import { ClinicalHistoryScreen } from '../screens/Home/ClinicalHistoryScreen';
 import { PetScansScreen } from '../screens/Home/PetScansScreen';
 import { ColeiraQrScreen } from '../screens/Home/ColeiraQrScreen';
@@ -41,8 +38,6 @@ function AuthNavigator() {
       <AuthStack.Screen component={LoginScreen} name="Login" />
       <AuthStack.Screen component={RegisterScreen} name="Register" />
       <AuthStack.Screen component={ForgotPasswordScreen} name="ForgotPassword" />
-      <AuthStack.Screen component={ResetPasswordScreen} name="ResetPassword" />
-      <AuthStack.Screen component={VerifyEmailScreen} name="VerifyEmail" />
     </AuthStack.Navigator>
   );
 }
@@ -191,7 +186,6 @@ function MainNavigator() {
 
 export function AppNavigator() {
   const { isAuthenticated, isBootstrapping } = useAuth();
-  useEmailVerificationLink();
 
   if (isBootstrapping) {
     return (
