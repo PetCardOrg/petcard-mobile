@@ -36,7 +36,6 @@ type AuthContextValue = {
   /** Re-busca o tutor em /tutors/me e atualiza a sessão (ex.: após verificar o e-mail pelo navegador). */
   refreshUser: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
-  resetPassword: (token: string, password: string) => Promise<void>;
   resendVerification: () => Promise<void>;
 };
 
@@ -233,10 +232,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await authService.forgotPassword(email);
   }, []);
 
-  const resetPassword = useCallback(async (token: string, password: string) => {
-    await authService.resetPassword(token, password);
-  }, []);
-
   const resendVerification = useCallback(async () => {
     await authService.resendVerification();
   }, []);
@@ -255,7 +250,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       updateUser,
       refreshUser,
       forgotPassword,
-      resetPassword,
       resendVerification,
     }),
     [
@@ -271,7 +265,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       updateUser,
       refreshUser,
       forgotPassword,
-      resetPassword,
       resendVerification,
     ],
   );

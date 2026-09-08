@@ -50,6 +50,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   // Sem isto o `expo start` tenta empacotar para web e falha ao resolver
   // react-native-web.
   platforms: ['ios', 'android'],
+  // Scheme do app. Serve ao retorno do OAuth do Google e ao `Linking.createURL`
+  // do Expo — NÃO aos e-mails de auth: scheme customizado não tem dono, e no
+  // Android outro app que registre `petcard` pode ser escolhido para abrir o
+  // link, levando junto o token de redefinição. Esses e-mails apontam para as
+  // páginas em https que a própria API serve.
   scheme: 'petcard',
   plugins: [
     'expo-localization',
