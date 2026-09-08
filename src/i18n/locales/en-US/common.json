@@ -253,6 +253,8 @@
     "retry": "Try again",
     "updating": "Updating...",
     "openNow": "Open now",
+    "mapUnavailableTitle": "Map unavailable in Expo Go",
+    "mapUnavailableDescription": "Expo Go uses Expo's shared maps key, which is currently refusing authorization. Open the app from the development build to see the map — clinic search still works.",
     "detail": {
       "open": "Open",
       "closed": "Closed",

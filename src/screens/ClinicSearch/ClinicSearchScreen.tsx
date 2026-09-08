@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   AppState,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { MaterialTopTabNavigationProp } from '@react-navigation/material-top-tabs';
 import * as Location from 'expo-location';
+import { isRunningInExpoGo } from 'expo';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import type { Region } from 'react-native-maps';
 import { useTranslation } from 'react-i18next';
@@ -34,6 +36,22 @@ import {
 
 /** Janela em que os marcadores são redesenhados após mudar o resultado. */
 const MARKER_REDRAW_MS = 600;
+
+// Google Maps nas duas plataformas — em build própria ele usa a nossa chave,
+// injetada no nativo pelo config plugin do react-native-maps. A exceção é o
+// Expo Go no iOS: lá o app roda no binário da Expo, que não carrega a nossa
+// chave, e o mapa sobe em branco. A lib não tem callback de erro, então não há
+// como reagir à falha — só evitá-la. `undefined` cai no provider nativo, que
+// no iOS é o Apple Maps.
+const MAP_PROVIDER = Platform.OS === 'ios' && isRunningInExpoGo() ? undefined : PROVIDER_GOOGLE;
+
+// No Android o Expo Go não tem saída: ele usa a chave de mapas compartilhada da
+// Expo, que está com autorização recusada, e o Android não oferece provider
+// alternativo — `undefined` cai no mesmo Google Maps (doc da própria lib). O
+// mapa então sobe preto, sem erro em JS. Em vez de deixar a tela preta sem
+// explicação, troca por um aviso. Vale só para o Expo Go: em build própria a
+// chave é a nossa e o mapa renderiza normalmente.
+const MAP_UNAVAILABLE = Platform.OS === 'android' && isRunningInExpoGo();
 
 type ScreenState = 'loading' | 'permission_denied' | 'error' | 'empty' | 'success';
 
@@ -281,32 +299,42 @@ export function ClinicSearchScreen() {
 
   return (
     <View style={styles.container}>
-      <MapView
-        ref={mapRef}
-        style={styles.map}
-        provider={PROVIDER_GOOGLE}
-        initialRegion={initialRegion}
-        showsUserLocation
-        showsMyLocationButton
-        onPress={handleDismissCard}
-        onRegionChangeComplete={handleRegionChangeComplete}
-      >
-        {clinics.map((clinic) => (
-          <Marker
-            key={clinic.placeId}
-            coordinate={{
-              latitude: clinic.coordinates.lat,
-              longitude: clinic.coordinates.lng,
-            }}
-            onPress={(e) => handleMarkerPress(e, clinic)}
-            tracksViewChanges={tracksViewChanges}
-          >
-            <View style={[styles.markerContainer, clinic.openNow === false && styles.markerClosed]}>
-              <Ionicons name="medkit" size={20} color={colors.white} />
-            </View>
-          </Marker>
-        ))}
-      </MapView>
+      {MAP_UNAVAILABLE ? (
+        <View style={styles.mapFallback}>
+          <Ionicons color={colors.muted} name="map-outline" size={40} />
+          <Text style={styles.mapFallbackTitle}>{t('clinics.mapUnavailableTitle')}</Text>
+          <Text style={styles.mapFallbackText}>{t('clinics.mapUnavailableDescription')}</Text>
+        </View>
+      ) : (
+        <MapView
+          ref={mapRef}
+          style={styles.map}
+          provider={MAP_PROVIDER}
+          initialRegion={initialRegion}
+          showsUserLocation
+          showsMyLocationButton
+          onPress={handleDismissCard}
+          onRegionChangeComplete={handleRegionChangeComplete}
+        >
+          {clinics.map((clinic) => (
+            <Marker
+              key={clinic.placeId}
+              coordinate={{
+                latitude: clinic.coordinates.lat,
+                longitude: clinic.coordinates.lng,
+              }}
+              onPress={(e) => handleMarkerPress(e, clinic)}
+              tracksViewChanges={tracksViewChanges}
+            >
+              <View
+                style={[styles.markerContainer, clinic.openNow === false && styles.markerClosed]}
+              >
+                <Ionicons name="medkit" size={20} color={colors.white} />
+              </View>
+            </Marker>
+          ))}
+        </MapView>
+      )}
 
       <View style={[styles.filtersContainer, { top: insets.top + spacing.sm }]}>
         <ScrollView
@@ -420,6 +448,25 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  mapFallback: {
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  mapFallbackTitle: {
+    ...typography.h3,
+    color: colors.text,
+    marginTop: spacing.md,
+    textAlign: 'center',
+  },
+  mapFallbackText: {
+    ...typography.body,
+    color: colors.muted,
+    marginTop: spacing.sm,
+    textAlign: 'center',
   },
   centered: {
     alignItems: 'center',

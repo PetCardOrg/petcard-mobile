@@ -1,4 +1,5 @@
-import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
@@ -10,6 +11,7 @@ import { PetsProvider } from '../contexts/PetsContext';
 import { SelectedPetProvider } from '../contexts/SelectedPetContext';
 import { HealthRecordsNavigator } from './HealthRecordsNavigator';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import { usePetScanNotificationNavigation } from '../hooks/usePetScanNotificationNavigation';
 import { useEmailVerificationLink } from '../hooks/useEmailVerificationLink';
 import { LoginScreen } from '../screens/Auth/LoginScreen';
 import { RegisterScreen } from '../screens/Auth/RegisterScreen';
@@ -94,7 +96,10 @@ function HomeNavigator() {
 
 function MainNavigator() {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   usePushNotifications();
+  // Dentro do PetsProvider e do NavigationContainer, que o hook precisa.
+  usePetScanNotificationNavigation();
 
   return (
     <MainTabs.Navigator
@@ -113,9 +118,15 @@ function MainNavigator() {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: StyleSheet.hairlineWidth,
-          paddingBottom: Platform.OS === 'ios' ? 20 : 8,
+          // A SDK 57 tornou o edge-to-edge obrigatório no Android: o app
+          // desenha atrás das barras do sistema. Sem reservar `insets.bottom`,
+          // os botões de voltar/início/recentes ficam por cima da tab bar. O
+          // valor vem do sistema, então cobre gestos (~16), três botões (~48) e
+          // o home indicator do iOS (~34) — antes era um 20 fixo que só
+          // aproximava o caso do iOS e ignorava o Android.
+          paddingBottom: insets.bottom + 8,
           paddingTop: 6,
-          height: Platform.OS === 'ios' ? 80 : 64,
+          height: insets.bottom + 64,
         },
         tabBarIndicatorStyle: {
           backgroundColor: colors.primaryDark,
