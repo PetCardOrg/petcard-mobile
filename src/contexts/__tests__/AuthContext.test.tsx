@@ -11,7 +11,6 @@ jest.mock('../../services', () => ({
   authService: {
     googleLogin: jest.fn(),
     forgotPassword: jest.fn().mockResolvedValue(undefined),
-    resetPassword: jest.fn().mockResolvedValue(undefined),
     resendVerification: jest.fn().mockResolvedValue(undefined),
   },
 }));
@@ -281,17 +280,17 @@ describe('AuthContext', () => {
     expect(result.current.user?.email_verified).toBe(true);
   });
 
-  it('forgotPassword e resetPassword delegam ao authService', async () => {
+  it('forgotPassword delega ao authService', async () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
     await waitFor(() => expect(result.current.isBootstrapping).toBe(false));
 
     await act(async () => {
       await result.current.forgotPassword('ana@petcard.com');
-      await result.current.resetPassword('tok-reset', 'NovaSenha1!');
     });
 
+    // Só o disparo do e-mail passa pelo app: redefinir a senha acontece na
+    // página que a própria API serve, e o token nunca chega até aqui.
     expect(authService.forgotPassword).toHaveBeenCalledWith('ana@petcard.com');
-    expect(authService.resetPassword).toHaveBeenCalledWith('tok-reset', 'NovaSenha1!');
   });
 
   it('updateUser não faz nada sem sessão ativa', async () => {

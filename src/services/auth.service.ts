@@ -15,19 +15,15 @@ type SessionResponse = {
   };
 };
 
-/** Inicia o "esqueci minha senha". A API sempre responde 202 (anti-enumeração). */
+/**
+ * Inicia o "esqueci minha senha". A API sempre responde 202 (anti-enumeração).
+ *
+ * O app só dispara o e-mail. Redefinir a senha e confirmar o endereço
+ * acontecem nas páginas que a própria API serve, abertas pelo link — o token
+ * não passa por aqui.
+ */
 export async function forgotPassword(email: string): Promise<void> {
   await api.post(`${AUTH_ENDPOINT}/password/forgot`, { email });
-}
-
-/** Conclui a redefinição com o token do e-mail e a nova senha. */
-export async function resetPassword(token: string, password: string): Promise<void> {
-  await api.post(`${AUTH_ENDPOINT}/password/reset`, { token, password });
-}
-
-/** Confirma o e-mail a partir do token do link. */
-export async function verifyEmail(token: string): Promise<void> {
-  await api.post(`${AUTH_ENDPOINT}/email/verify`, { token });
 }
 
 /** Reenvia o e-mail de verificação ao tutor autenticado. */
