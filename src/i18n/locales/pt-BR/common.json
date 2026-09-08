@@ -229,6 +229,8 @@
     "retry": "Tentar novamente",
     "updating": "Atualizando...",
     "openNow": "Aberto agora",
+    "mapUnavailableTitle": "Mapa indisponível no Expo Go",
+    "mapUnavailableDescription": "O Expo Go usa a chave de mapas compartilhada da Expo, que está recusando autorização. Abra pelo development build para ver o mapa — a busca de clínicas continua funcionando normalmente.",
     "detail": {
       "open": "Aberto",
       "closed": "Fechado",

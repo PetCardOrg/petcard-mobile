@@ -7,6 +7,15 @@ const iosGoogleUrlScheme = iosGoogleClientId
   ? `com.googleusercontent.apps.${iosGoogleClientId.replace('.apps.googleusercontent.com', '')}`
   : undefined;
 
+const googleMapsApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+if (!googleMapsApiKey) {
+  console.warn(
+    '[app.config] EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ausente: o mapa vai abrir em branco. ' +
+      'Defina no .env (local) ou no ambiente do EAS (build).',
+  );
+}
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'petcard-mobile',
@@ -20,9 +29,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.petcardorg.mobile',
-    config: {
-      googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
-    },
     ...(iosGoogleUrlScheme
       ? {
           infoPlist: {
@@ -34,17 +40,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   android: {
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
-      backgroundColor: '#ffffff',
+      backgroundColor: '#27A9D8',
     },
     // edgeToEdgeEnabled foi removido do config: SDK 57 exige edge-to-edge
     // sempre ativo no Android (não é mais opcional).
     package: 'com.petcardorg.mobile',
     googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
-    config: {
-      googleMaps: {
-        apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
-      },
-    },
   },
   // App só de celular — sem `web` (react-native-web nunca foi dependência).
   // Sem isto o `expo start` tenta empacotar para web e falha ao resolver
@@ -58,7 +59,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   scheme: 'petcard',
   plugins: [
     'expo-localization',
-    'expo-notifications',
+    [
+      'expo-notifications',
+      {
+        icon: './assets/notification-icon.png',
+        color: '#27A9D8',
+      },
+    ],
     'expo-web-browser',
     'expo-font',
     'expo-secure-store',
@@ -71,6 +78,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         image: './assets/splash-icon.png',
         resizeMode: 'contain',
         backgroundColor: '#ffffff',
+      },
+    ],
+    [
+      'react-native-maps',
+      {
+        androidGoogleMapsApiKey: googleMapsApiKey,
+        iosGoogleMapsApiKey: googleMapsApiKey,
       },
     ],
   ],

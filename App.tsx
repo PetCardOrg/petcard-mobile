@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import * as Notifications from 'expo-notifications';
+import { isRunningInExpoGo } from 'expo';
 import { NavigationContainer, DefaultTheme, type LinkingOptions } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -13,16 +13,27 @@ import { AuthProvider } from './src/contexts/AuthContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { colors } from './src/utils/theme';
 
-// Present incoming notifications while the app is in the foreground. With the
-// app backgrounded/quitted, the OS shows them from the FCM `notification` block.
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+// Importar expo-notifications já executa o auto-registro de token do próprio
+// pacote (DevicePushTokenAutoRegistration.fx chama addPushTokenListener em
+// escopo de módulo). Desde a SDK 57 isso lança no Android dentro do Expo Go e
+// derruba o app antes de renderizar. Push remoto não existe em Expo Go de
+// qualquer forma, então o módulo só é carregado fora dele — por require, para
+// que o import não seja avaliado na entrada do bundle.
+if (!isRunningInExpoGo()) {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const Notifications = require('expo-notifications') as typeof import('expo-notifications');
+
+  // Present incoming notifications while the app is in the foreground. With the
+  // app backgrounded/quitted, the OS shows them from the FCM `notification` block.
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 // Os e-mails de auth não abrem mais o app: o link aponta para as páginas que a
 // própria API serve (`/auth/reset-password` e `/auth/verify-email`), em https.
