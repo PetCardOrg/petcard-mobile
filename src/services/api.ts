@@ -38,7 +38,11 @@ async function withAuthorizationHeader(config: InternalAxiosRequestConfig) {
 }
 
 function handleApiError(error: AxiosError) {
-  if (error.response?.status === 401) {
+  // Um 401 só significa "sessão expirou" quando a requisição já ia autenticada
+  // — senão o próprio login com senha errada dispara o logout global. A regra
+  // vale para toda rota futura que responda 401 legitimamente sem token.
+  const wasAuthenticated = Boolean(error.config?.headers?.Authorization);
+  if (error.response?.status === 401 && wasAuthenticated) {
     unauthorizedHandler?.();
   }
 
