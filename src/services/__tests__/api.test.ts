@@ -63,13 +63,23 @@ describe('interceptor de response (401)', () => {
     };
   }
 
-  it('chama o handler de não autorizado em 401', async () => {
+  it('chama o handler de não autorizado em 401 numa rota autenticada', async () => {
     const onUnauthorized = jest.fn();
+    setTokenProvider(async () => 'tok-123');
     setUnauthorizedHandler(onUnauthorized);
     api.defaults.adapter = failWith(401);
 
     await expect(api.get('/pets')).rejects.toBeDefined();
     expect(onUnauthorized).toHaveBeenCalledTimes(1);
+  });
+
+  it('não chama o handler em 401 de rota sem token (ex: login com senha errada)', async () => {
+    const onUnauthorized = jest.fn();
+    setUnauthorizedHandler(onUnauthorized);
+    api.defaults.adapter = failWith(401);
+
+    await expect(api.post('/auth/login', {})).rejects.toBeDefined();
+    expect(onUnauthorized).not.toHaveBeenCalled();
   });
 
   it('não chama o handler em outros erros (ex: 500)', async () => {
