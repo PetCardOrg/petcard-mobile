@@ -29,9 +29,11 @@ import { PetSelector } from '../../components/domain/PetSelector';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { FAB } from '../../components/ui/FAB';
+import { useSelectedPet } from '../../contexts/SelectedPetContext';
 import { usePets } from '../../hooks/usePets';
 import { medicationService } from '../../services';
 import { formatDateDisplay, formatDateInput, parseDate } from '../../utils/dateUtils';
+import { confirmarAcaoEmRegistroDeVet, ehRegistroDeVeterinario } from '../../utils/vetRecordGuard';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 
 function isMedicationActive(item: MedicationRecordResponseDto): boolean {
@@ -59,7 +61,11 @@ export function MedicationScreen() {
   const { t } = useTranslation();
   const { pets, isLoading: isPetsLoading } = usePets();
 
-  const [selectedPet, setSelectedPet] = useState<PetResponseDto | null>(null);
+  // Cada aba lembra o próprio pet. Resolvido na lista já carregada: pet
+  // renomeado aparece com o nome novo e pet excluído devolve o tutor para
+  // a seleção.
+  const { selectedPetId, selectPet, clearSelection } = useSelectedPet('medicacoes');
+  const selectedPet = pets.find((pet) => pet.id === selectedPetId) ?? null;
   const [medications, setMedications] = useState<MedicationRecordResponseDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -79,7 +85,7 @@ export function MedicationScreen() {
 
   const loadMedications = useCallback(
     async (mode: 'initial' | 'refresh' = 'initial') => {
-      if (!selectedPet) return;
+      if (!selectedPetId) return;
 
       if (mode === 'refresh') {
         setIsRefreshing(true);
@@ -89,7 +95,7 @@ export function MedicationScreen() {
       setError(null);
 
       try {
-        const data = await medicationService.getMedicationsByPet(selectedPet.id);
+        const data = await medicationService.getMedicationsByPet(selectedPetId);
         setMedications(data);
       } catch (err) {
         let message = t('healthRecords.medication.errorLoad');
@@ -102,19 +108,19 @@ export function MedicationScreen() {
         setIsRefreshing(false);
       }
     },
-    [selectedPet, t],
+    [selectedPetId, t],
   );
 
   useFocusEffect(
     useCallback(() => {
-      if (selectedPet) {
+      if (selectedPetId) {
         void loadMedications();
       }
-    }, [loadMedications, selectedPet]),
+    }, [loadMedications, selectedPetId]),
   );
 
   function handleSelectPet(pet: PetResponseDto) {
-    setSelectedPet(pet);
+    selectPet(pet);
     setMedications([]);
     setError(null);
   }
@@ -136,6 +142,17 @@ export function MedicationScreen() {
   }
 
   function openEditModal(record: MedicationRecordResponseDto) {
+    // Registro de veterinário avisa antes de abrir o formulário (mobile#58).
+    confirmarAcaoEmRegistroDeVet({
+      registro: record,
+      nomeDoRegistro: record.medication_name,
+      acao: 'editar',
+      t,
+      onConfirm: () => abrirFormularioDeEdicao(record),
+    });
+  }
+
+  function abrirFormularioDeEdicao(record: MedicationRecordResponseDto) {
     setEditingRecord(record);
     setMedicationName(record.medication_name);
     setDosage(record.dosage);
@@ -148,6 +165,19 @@ export function MedicationScreen() {
   }
 
   function confirmDelete(record: MedicationRecordResponseDto) {
+    // Registro de veterinário troca o texto da confirmação, em vez de somar
+    // um segundo diálogo em cima do que já existia (mobile#58).
+    if (ehRegistroDeVeterinario(record)) {
+      confirmarAcaoEmRegistroDeVet({
+        registro: record,
+        nomeDoRegistro: record.medication_name,
+        acao: 'apagar',
+        t,
+        onConfirm: () => void handleDelete(record.id),
+      });
+      return;
+    }
+
     Alert.alert(
       t('healthRecords.medication.deleteTitle'),
       t('healthRecords.medication.deleteMessage', { name: record.medication_name }),
@@ -312,7 +342,7 @@ export function MedicationScreen() {
   return (
     <View style={styles.container}>
       {/* Pet header */}
-      <PetHeader petName={selectedPet.name} onBack={() => setSelectedPet(null)} />
+      <PetHeader petName={selectedPet.name} onBack={clearSelection} />
 
       {/* Content */}
       {isLoading ? (

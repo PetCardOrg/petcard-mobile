@@ -19,29 +19,73 @@
     "errorTitle": "Login error",
     "errorMessage": "Invalid email or password. Please try again.",
     "authErrorTitle": "Authentication error",
-    "registerLink": "Create account"
+    "registerLink": "Create account",
+    "forgotPasswordLink": "Forgot my password",
+    "googleButton": "Sign in with Google"
   },
   "register": {
     "title": "Create Account",
     "subtitle": "Sign up to start tracking your pets' health.",
     "button": "Sign up",
+    "addPhoto": "Add photo",
     "nameLabel": "Name",
     "namePlaceholder": "Your full name",
     "emailLabel": "Email",
     "emailPlaceholder": "your@email.com",
+    "phoneLabel": "Phone (optional)",
+    "phonePlaceholder": "(00) 00000-0000",
     "passwordLabel": "Password",
-    "passwordPlaceholder": "At least 6 characters",
+    "passwordPlaceholder": "At least 8 characters",
+    "confirmPasswordLabel": "Confirm password",
+    "confirmPasswordPlaceholder": "Type the password again",
     "fillFields": "Please fill in all fields.",
-    "passwordTooShort": "Password must be at least 6 characters.",
+    "nameTooShort": "Name must be at least 2 characters.",
+    "passwordTooShort": "Password must be at least 8 characters.",
+    "passwordMismatch": "Passwords do not match.",
     "errorTitle": "Registration error",
     "errorMessage": "Could not create account. Please try again.",
-    "loginLink": "Already have an account"
+    "permissionRequired": "Permission required",
+    "permissionGallery": "We need access to your gallery to select a photo.",
+    "loginLink": "Already have an account",
+    "googleButton": "Sign up with Google"
+  },
+  "passwordRules": {
+    "hint": "Use at least 8 characters, with one uppercase letter, one number and one special character.",
+    "tooShort": "Password must be at least 8 characters.",
+    "tooLong": "Password must be at most 72 characters.",
+    "noUppercase": "Password must contain at least one uppercase letter.",
+    "noNumber": "Password must contain at least one number.",
+    "noSpecial": "Password must contain at least one special character.",
+    "checklist": {
+      "minLength": "At least 8 characters",
+      "uppercase": "One uppercase letter",
+      "number": "One number",
+      "special": "One special character"
+    }
+  },
+  "forgotPassword": {
+    "title": "Reset password",
+    "subtitle": "Enter your account email and we'll send you a link to reset your password.",
+    "button": "Send link",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@email.com",
+    "fillEmail": "Enter your email.",
+    "sentMessage": "If an account exists for that email, we've sent a password reset link. Open it in your browser, set the new password and come back here to sign in.",
+    "errorMessage": "We couldn't send the link right now. Please try again.",
+    "backToLogin": "Back to login"
+  },
+  "emailVerification": {
+    "bannerTitle": "Confirm your email",
+    "bannerText": "We sent a confirmation link to your email. Open it in your browser and come back to the app.",
+    "bannerResend": "Resend email",
+    "bannerSending": "Sending...",
+    "bannerSent": "Email resent. Check your inbox.",
+    "bannerError": "Couldn't resend right now. Try again later."
   },
   "home": {
     "title": "My pets",
     "titleWithCount": "My pets ({{count}})",
     "subtitle": "Track your pets' health.",
-    "addButton": "Add",
     "emptyTitle": "No pets registered",
     "emptyDescription": "Add your first pet to track vaccines, dewormings, and medications.",
     "emptyAction": "Add pet",
@@ -79,7 +123,40 @@
       "errorMessage": "Could not delete the pet."
     },
     "permissionRequired": "Permission required",
-    "permissionGallery": "We need access to your gallery to select a photo."
+    "permissionGallery": "We need access to your gallery to select a photo.",
+    "clinicalHistory": "Clinical history",
+    "openHistoryAccessibility": "Open clinical history",
+    "petScans": "Where it was found",
+    "openScansAccessibility": "See where the pet was found",
+    "coleiraQr": "Collar QR",
+    "openColeiraQrAccessibility": "See the pet's collar QR"
+  },
+  "petScans": {
+    "title": "Where it was found",
+    "error": "Could not load the collar scans.",
+    "emptyTitle": "No scans yet",
+    "emptyDescription": "When someone scans your pet's collar QR code, it shows up here.",
+    "item": {
+      "title": "Collar QR scanned",
+      "openMap": "Open in maps",
+      "accuracy": "Accurate to about {{meters}} m",
+      "noLocation": "Whoever found the pet did not share their location.",
+      "mapError": "Could not open the map on this device."
+    }
+  },
+  "coleiraQr": {
+    "navTitle": "Collar QR",
+    "title": "{{name}}'s collar QR",
+    "subtitle": "Print it and attach it to the collar. Whoever finds your pet scans this code and reaches you.",
+    "share": "Share",
+    "shareMessage": "Found {{name}}? Open this link to reach me: {{url}}",
+    "generate": "Generate collar QR",
+    "notGeneratedYet": "This pet has no collar QR yet. Generate one now — it takes a few seconds.",
+    "requestedTitle": "Generation requested",
+    "requestedMessage": "The QR will be ready in a few seconds. Come back to this screen to see it.",
+    "generateError": "Could not generate the collar QR.",
+    "error": "Could not load the collar QR.",
+    "imageAccessibility": "Pet's collar QR code"
   },
   "digitalWallet": {
     "title": "Digital Card",
@@ -100,7 +177,8 @@
       "withNextDose": "with next dose",
       "active": "active",
       "unavailable": "Unavailable",
-      "unavailableHint": "Refresh to try again"
+      "unavailableHint": "Refresh to try again",
+      "openAccessibility": "See this pet's {{label}} records"
     },
     "actions": {
       "share": "Share",
@@ -151,6 +229,8 @@
     "retry": "Try again",
     "updating": "Updating...",
     "openNow": "Open now",
+    "mapUnavailableTitle": "Map unavailable in Expo Go",
+    "mapUnavailableDescription": "Expo Go uses Expo's shared maps key, which is currently refusing authorization. Open the app from the development build to see the map — clinic search still works.",
     "detail": {
       "open": "Open",
       "closed": "Closed",
@@ -270,6 +350,14 @@
       "startDate": "Start: {{date}}",
       "endDate": "End: {{date}}",
       "ongoing": "Ongoing"
+    },
+    "vetRecord": {
+      "editTitle": "Veterinarian record",
+      "editMessage": "\"{{registro}}\" was recorded by {{vet}}. The change is marked in the pet history under your name. Continue?",
+      "deleteTitle": "Delete the veterinarian record?",
+      "deleteMessage": "\"{{registro}}\" was recorded by {{vet}}. Deleting removes it from your list, but the record stays in the pet history along with who deleted it.",
+      "continue": "Continue",
+      "autorDesconhecido": "the attending veterinarian"
     }
   },
   "petRegistration": {
@@ -301,6 +389,29 @@
   "profile": {
     "title": "Profile",
     "defaultName": "User",
+    "editAccessibility": "Edit profile",
+    "editPhoto": "Change photo",
+    "nameLabel": "Name",
+    "namePlaceholder": "Your name",
+    "phoneLabel": "Phone",
+    "phonePlaceholder": "(00) 00000-0000",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saveSuccess": "Profile updated successfully!",
+    "saveError": "Could not save your changes. Please try again.",
+    "permissionRequired": "Permission required",
+    "permissionGallery": "We need access to your gallery to select a photo.",
+    "deleteAccount": "Delete account",
+    "deleteAccountAccessibility": "Delete account",
+    "deleteTitle": "Delete account",
+    "deleteMessage": "Are you sure you want to delete your account?",
+    "deleteCancel": "Cancel",
+    "deleteContinue": "Continue",
+    "deleteConfirmTitle": "This action is irreversible",
+    "deleteConfirmMessage": "All your pets, medical records, and health card will be permanently deleted along with your account. This cannot be undone.",
+    "deleteConfirmCancel": "Cancel",
+    "deleteConfirmButton": "Permanently delete",
+    "deleteError": "Could not delete your account. Please try again.",
     "logout": "Sign out",
     "logoutAccessibility": "Sign out",
     "logoutTitle": "Sign out",
@@ -343,7 +454,9 @@
       "timeLabel": "Time *",
       "durationLabel": "Duration",
       "locationLabel": "Location",
-      "locationPlaceholder": "Clinic name or address...",
+      "locationPlaceholder": "Search for the pet shop, clinic or address...",
+      "locationClear": "Clear location",
+      "locationNoResults": "No place found. You can still type the address.",
       "petLabel": "Pet",
       "noPet": "None",
       "descriptionLabel": "Notes",
@@ -357,22 +470,16 @@
     },
     "calendar": {
       "connected": "Google Calendar connected",
+      "connectedHint": "New appointments go straight to your calendar.",
       "notConnected": "Google Calendar not connected",
+      "notConnectedHint": "Connect so your appointments show up in your calendar.",
       "connect": "Connect",
-      "sync": "Sync",
-      "syncSuccess": "{{count}} appointment(s) synced!",
-      "syncError": "Could not sync with Google Calendar.",
       "connectError": "Could not connect to Google Calendar.",
       "notConfigured": "Google Calendar integration is not configured.",
       "disconnectTitle": "Disconnect Google Calendar",
       "disconnectMessage": "Appointments will no longer be synced. Continue?",
       "disconnectConfirm": "Disconnect",
       "disconnectError": "Could not disconnect Google Calendar."
-    },
-    "syncStatus": {
-      "synced": "Synced",
-      "pending": "Pending",
-      "failed": "Sync failed"
     }
   },
   "common": {
@@ -383,7 +490,11 @@
     "datePlaceholder": "DD/MM/YYYY",
     "dateInvalid": "Invalid date. Use DD/MM/YYYY",
     "required": "required",
-    "errorDefault": "Oops, something went wrong"
+    "errorDefault": "Oops, something went wrong",
+    "ok": "OK",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "or": "or"
   },
   "validation": {
     "nameRequired": "Name is required",
@@ -412,5 +523,24 @@
   "notifications": {
     "permissionDeniedTitle": "Notifications disabled",
     "permissionDenied": "You won't receive vaccine and appointment reminders. Enable notifications in your device settings."
+  },
+  "clinicalHistory": {
+    "title": "Clinical history",
+    "intro": "Everything recorded for this pet, including what you removed from your list.",
+    "emptyTitle": "No records yet",
+    "emptyDescription": "Vaccines, dewormings, medications and vet notes show up here.",
+    "error": "Could not load the history.",
+    "excluido": "Deleted",
+    "entidade": {
+      "VACINA": "Vaccine",
+      "VERMIFUGO": "Deworming",
+      "MEDICACAO": "Medication",
+      "NOTA_CLINICA": "Clinical note"
+    },
+    "acao": {
+      "CRIACAO": "Recorded by",
+      "EDICAO": "Changed by",
+      "EXCLUSAO": "Deleted by"
+    }
   }
 }

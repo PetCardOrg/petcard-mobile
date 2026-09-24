@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   AppState,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,7 +14,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { MaterialTopTabNavigationProp } from '@react-navigation/material-top-tabs';
 import * as Location from 'expo-location';
+import { isRunningInExpoGo } from 'expo';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import type { Region } from 'react-native-maps';
 import { useTranslation } from 'react-i18next';
 import type { PlacesClinicResponseDto } from '@petcardorg/shared';
 
@@ -22,10 +25,33 @@ import * as clinicService from '../../services/clinic.service';
 import { useAuth } from '../../contexts/AuthContext';
 import { ClinicDetailCard } from './ClinicDetailCard';
 import type { MainTabParamList } from '../../navigation/types';
+import {
+  DEFAULT_RADIUS,
+  RADIUS_OPTIONS,
+  formatRadius,
+  radiusFromRegion,
+  regionForRadius,
+  snapRadiusToOption,
+} from './radius';
 
-const RADIUS_OPTIONS = [5, 10, 25, 50];
+/** Janela em que os marcadores são redesenhados após mudar o resultado. */
+const MARKER_REDRAW_MS = 600;
 
-const DEFAULT_DELTA = 0.05;
+// Google Maps nas duas plataformas — em build própria ele usa a nossa chave,
+// injetada no nativo pelo config plugin do react-native-maps. A exceção é o
+// Expo Go no iOS: lá o app roda no binário da Expo, que não carrega a nossa
+// chave, e o mapa sobe em branco. A lib não tem callback de erro, então não há
+// como reagir à falha — só evitá-la. `undefined` cai no provider nativo, que
+// no iOS é o Apple Maps.
+const MAP_PROVIDER = Platform.OS === 'ios' && isRunningInExpoGo() ? undefined : PROVIDER_GOOGLE;
+
+// No Android o Expo Go não tem saída: ele usa a chave de mapas compartilhada da
+// Expo, que está com autorização recusada, e o Android não oferece provider
+// alternativo — `undefined` cai no mesmo Google Maps (doc da própria lib). O
+// mapa então sobe preto, sem erro em JS. Em vez de deixar a tela preta sem
+// explicação, troca por um aviso. Vale só para o Expo Go: em build própria a
+// chave é a nossa e o mapa renderiza normalmente.
+const MAP_UNAVAILABLE = Platform.OS === 'android' && isRunningInExpoGo();
 
 type ScreenState = 'loading' | 'permission_denied' | 'error' | 'empty' | 'success';
 
@@ -43,8 +69,22 @@ export function ClinicSearchScreen() {
   const [selectedClinic, setSelectedClinic] = useState<PlacesClinicResponseDto | null>(null);
   const [isSearching, setIsSearching] = useState(false);
 
-  const [selectedRadius, setSelectedRadius] = useState(10);
+  const [selectedRadius, setSelectedRadius] = useState(DEFAULT_RADIUS);
   const [openNowFilter, setOpenNowFilter] = useState(false);
+
+  // O mapa não repinta marcadores com view customizada quando a lista muda —
+  // eles só apareciam depois de uma interação. Redesenha por uma janela curta
+  // a cada resultado novo e desliga depois, para não ficar redesenhando à toa.
+  const [tracksViewChanges, setTracksViewChanges] = useState(true);
+
+  // Distingue o reenquadramento que nós disparamos do gesto do usuário.
+  const programmaticRegion = useRef(false);
+
+  useEffect(() => {
+    setTracksViewChanges(true);
+    const timer = setTimeout(() => setTracksViewChanges(false), MARKER_REDRAW_MS);
+    return () => clearTimeout(timer);
+  }, [clinics]);
 
   // Schedule prompt state
   const [showSchedulePrompt, setShowSchedulePrompt] = useState(false);
@@ -149,12 +189,44 @@ export function ClinicSearchScreen() {
     [userLocation, loadClinics],
   );
 
+  const focusRadius = useCallback(
+    (radiusKm: number) => {
+      if (!userLocation) return;
+      programmaticRegion.current = true;
+      mapRef.current?.animateToRegion(
+        regionForRadius(userLocation.lat, userLocation.lng, radiusKm),
+        350,
+      );
+    },
+    [userLocation],
+  );
+
   const handleRadiusChange = useCallback(
     (radius: number) => {
       setSelectedRadius(radius);
+      focusRadius(radius);
       applyFilters(radius, openNowFilter);
     },
-    [applyFilters, openNowFilter],
+    [applyFilters, openNowFilter, focusRadius],
+  );
+
+  // Ao dar zoom, o raio acompanha o que está visível. Como o valor é encaixado
+  // nas opções da barra, só refaz a busca quando a faixa realmente muda.
+  const handleRegionChangeComplete = useCallback(
+    (region: Region) => {
+      if (programmaticRegion.current) {
+        programmaticRegion.current = false;
+        return;
+      }
+      if (!userLocation) return;
+
+      const nextRadius = snapRadiusToOption(radiusFromRegion(region));
+      if (nextRadius === selectedRadius) return;
+
+      setSelectedRadius(nextRadius);
+      applyFilters(nextRadius, openNowFilter);
+    },
+    [userLocation, selectedRadius, openNowFilter, applyFilters],
   );
 
   const handleOpenNowToggle = useCallback(() => {
@@ -222,40 +294,47 @@ export function ClinicSearchScreen() {
   }
 
   const initialRegion = userLocation
-    ? {
-        latitude: userLocation.lat,
-        longitude: userLocation.lng,
-        latitudeDelta: DEFAULT_DELTA,
-        longitudeDelta: DEFAULT_DELTA,
-      }
+    ? regionForRadius(userLocation.lat, userLocation.lng, selectedRadius)
     : undefined;
 
   return (
     <View style={styles.container}>
-      <MapView
-        ref={mapRef}
-        style={styles.map}
-        provider={PROVIDER_GOOGLE}
-        initialRegion={initialRegion}
-        showsUserLocation
-        showsMyLocationButton
-        onPress={handleDismissCard}
-      >
-        {clinics.map((clinic) => (
-          <Marker
-            key={clinic.placeId}
-            coordinate={{
-              latitude: clinic.coordinates.lat,
-              longitude: clinic.coordinates.lng,
-            }}
-            onPress={(e) => handleMarkerPress(e, clinic)}
-          >
-            <View style={[styles.markerContainer, clinic.openNow === false && styles.markerClosed]}>
-              <Ionicons name="medkit" size={20} color={colors.white} />
-            </View>
-          </Marker>
-        ))}
-      </MapView>
+      {MAP_UNAVAILABLE ? (
+        <View style={styles.mapFallback}>
+          <Ionicons color={colors.muted} name="map-outline" size={40} />
+          <Text style={styles.mapFallbackTitle}>{t('clinics.mapUnavailableTitle')}</Text>
+          <Text style={styles.mapFallbackText}>{t('clinics.mapUnavailableDescription')}</Text>
+        </View>
+      ) : (
+        <MapView
+          ref={mapRef}
+          style={styles.map}
+          provider={MAP_PROVIDER}
+          initialRegion={initialRegion}
+          showsUserLocation
+          showsMyLocationButton
+          onPress={handleDismissCard}
+          onRegionChangeComplete={handleRegionChangeComplete}
+        >
+          {clinics.map((clinic) => (
+            <Marker
+              key={clinic.placeId}
+              coordinate={{
+                latitude: clinic.coordinates.lat,
+                longitude: clinic.coordinates.lng,
+              }}
+              onPress={(e) => handleMarkerPress(e, clinic)}
+              tracksViewChanges={tracksViewChanges}
+            >
+              <View
+                style={[styles.markerContainer, clinic.openNow === false && styles.markerClosed]}
+              >
+                <Ionicons name="medkit" size={20} color={colors.white} />
+              </View>
+            </Marker>
+          ))}
+        </MapView>
+      )}
 
       <View style={[styles.filtersContainer, { top: insets.top + spacing.sm }]}>
         <ScrollView
@@ -275,7 +354,7 @@ export function ClinicSearchScreen() {
                 color={selectedRadius === radius ? colors.white : colors.text}
               />
               <Text style={[styles.chipText, selectedRadius === radius && styles.chipTextActive]}>
-                {radius} km
+                {formatRadius(radius)}
               </Text>
             </Pressable>
           ))}
@@ -369,6 +448,25 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  mapFallback: {
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  mapFallbackTitle: {
+    ...typography.h3,
+    color: colors.text,
+    marginTop: spacing.md,
+    textAlign: 'center',
+  },
+  mapFallbackText: {
+    ...typography.body,
+    color: colors.muted,
+    marginTop: spacing.sm,
+    textAlign: 'center',
   },
   centered: {
     alignItems: 'center',
@@ -525,7 +623,7 @@ const styles = StyleSheet.create({
 
   // Schedule prompt overlay
   promptOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',

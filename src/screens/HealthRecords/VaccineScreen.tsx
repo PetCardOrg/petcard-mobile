@@ -29,9 +29,11 @@ import { PetSelector } from '../../components/domain/PetSelector';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { FAB } from '../../components/ui/FAB';
+import { useSelectedPet } from '../../contexts/SelectedPetContext';
 import { usePets } from '../../hooks/usePets';
 import { vaccineService } from '../../services';
 import { formatDateDisplay, formatDateInput, parseDate } from '../../utils/dateUtils';
+import { confirmarAcaoEmRegistroDeVet, ehRegistroDeVeterinario } from '../../utils/vetRecordGuard';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 
 type FormErrors = {
@@ -49,7 +51,11 @@ export function VaccineScreen() {
   const { t } = useTranslation();
   const { pets, isLoading: isPetsLoading } = usePets();
 
-  const [selectedPet, setSelectedPet] = useState<PetResponseDto | null>(null);
+  // Cada aba lembra o próprio pet. Resolvido na lista já carregada: pet
+  // renomeado aparece com o nome novo e pet excluído devolve o tutor para
+  // a seleção.
+  const { selectedPetId, selectPet, clearSelection } = useSelectedPet('vacinas');
+  const selectedPet = pets.find((pet) => pet.id === selectedPetId) ?? null;
   const [vaccines, setVaccines] = useState<VaccineRecordResponseDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -68,7 +74,7 @@ export function VaccineScreen() {
 
   const loadVaccines = useCallback(
     async (mode: 'initial' | 'refresh' = 'initial') => {
-      if (!selectedPet) return;
+      if (!selectedPetId) return;
 
       if (mode === 'refresh') {
         setIsRefreshing(true);
@@ -78,7 +84,7 @@ export function VaccineScreen() {
       setError(null);
 
       try {
-        const data = await vaccineService.getVaccinesByPet(selectedPet.id);
+        const data = await vaccineService.getVaccinesByPet(selectedPetId);
         setVaccines(data);
       } catch (err) {
         let message = t('healthRecords.vaccine.errorLoad');
@@ -91,19 +97,19 @@ export function VaccineScreen() {
         setIsRefreshing(false);
       }
     },
-    [selectedPet, t],
+    [selectedPetId, t],
   );
 
   useFocusEffect(
     useCallback(() => {
-      if (selectedPet) {
+      if (selectedPetId) {
         void loadVaccines();
       }
-    }, [loadVaccines, selectedPet]),
+    }, [loadVaccines, selectedPetId]),
   );
 
   function handleSelectPet(pet: PetResponseDto) {
-    setSelectedPet(pet);
+    selectPet(pet);
     setVaccines([]);
     setError(null);
   }
@@ -124,6 +130,17 @@ export function VaccineScreen() {
   }
 
   function openEditModal(record: VaccineRecordResponseDto) {
+    // Registro de veterinário avisa antes de abrir o formulário (mobile#58).
+    confirmarAcaoEmRegistroDeVet({
+      registro: record,
+      nomeDoRegistro: record.vaccine_name,
+      acao: 'editar',
+      t,
+      onConfirm: () => abrirFormularioDeEdicao(record),
+    });
+  }
+
+  function abrirFormularioDeEdicao(record: VaccineRecordResponseDto) {
     setEditingRecord(record);
     setVaccineName(record.vaccine_name);
     setAppliedAt(isoToDisplay(record.applied_at));
@@ -135,6 +152,19 @@ export function VaccineScreen() {
   }
 
   function confirmDelete(record: VaccineRecordResponseDto) {
+    // Registro de veterinário troca o texto da confirmação, em vez de somar
+    // um segundo diálogo em cima do que já existia (mobile#58).
+    if (ehRegistroDeVeterinario(record)) {
+      confirmarAcaoEmRegistroDeVet({
+        registro: record,
+        nomeDoRegistro: record.vaccine_name,
+        acao: 'apagar',
+        t,
+        onConfirm: () => void handleDelete(record.id),
+      });
+      return;
+    }
+
     Alert.alert(
       t('healthRecords.vaccine.deleteTitle'),
       t('healthRecords.vaccine.deleteMessage', { name: record.vaccine_name }),
@@ -283,7 +313,7 @@ export function VaccineScreen() {
   return (
     <View style={styles.container}>
       {/* Pet header */}
-      <PetHeader petName={selectedPet.name} onBack={() => setSelectedPet(null)} />
+      <PetHeader petName={selectedPet.name} onBack={clearSelection} />
 
       {/* Content */}
       {isLoading ? (

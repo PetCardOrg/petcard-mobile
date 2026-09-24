@@ -20,3 +20,36 @@ export async function findNearbyPlaces(
   });
   return data;
 }
+
+/**
+ * Uma sugestão do autocomplete de local.
+ *
+ * Tipo local, e não do `@petcardorg/shared`, porque nada disso é persistido: o
+ * agendamento guarda apenas `fullText` no campo `location`.
+ */
+export type PlaceSuggestion = {
+  placeId: string;
+  mainText: string;
+  secondaryText?: string;
+  fullText: string;
+};
+
+type AutocompleteParams = {
+  input: string;
+  lat?: number;
+  lng?: number;
+  /** Agrupa as teclas de uma mesma edição numa sessão de cobrança do Places. */
+  sessionToken?: string;
+  signal?: AbortSignal;
+};
+
+export async function autocompletePlaces({
+  signal,
+  ...params
+}: AutocompleteParams): Promise<PlaceSuggestion[]> {
+  const { data } = await api.get<PlaceSuggestion[]>(`${CLINICS_ENDPOINT}/autocomplete`, {
+    params,
+    signal,
+  });
+  return data;
+}

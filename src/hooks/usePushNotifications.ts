@@ -1,13 +1,17 @@
 import { useEffect, useRef } from 'react';
 import { Alert, Platform } from 'react-native';
 import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
 import { useTranslation } from 'react-i18next';
 
 import { DevicePlatform } from '@petcardorg/shared';
 
 import { useAuth } from '../contexts/AuthContext';
 import { deviceService } from '../services';
+import {
+  isPushAvailable,
+  loadNotifications,
+  type NotificationsModule,
+} from '../utils/notifications';
 
 const ANDROID_CHANNEL_ID = 'default';
 
@@ -16,7 +20,7 @@ function resolvePlatform(tokenType: string): DevicePlatform {
   return DevicePlatform.ANDROID;
 }
 
-async function ensureAndroidChannel(): Promise<void> {
+async function ensureAndroidChannel(Notifications: NotificationsModule): Promise<void> {
   if (Platform.OS !== 'android') return;
   await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
     name: 'PetCard',
@@ -24,7 +28,7 @@ async function ensureAndroidChannel(): Promise<void> {
   });
 }
 
-async function ensurePermission(): Promise<boolean> {
+async function ensurePermission(Notifications: NotificationsModule): Promise<boolean> {
   const settings = await Notifications.getPermissionsAsync();
   if (settings.granted) return true;
   if (!settings.canAskAgain) return false;
@@ -44,11 +48,19 @@ export function usePushNotifications(): void {
   const registeredToken = useRef<string | null>(null);
 
   useEffect(() => {
+    // Push remoto saiu do Expo Go na SDK 53. No Android as APIs de token não
+    // avisam: elas lançam (warnOfExpoGoPushUsage), e como addPushTokenListener
+    // fica fora do try/catch do bootstrap, o app inteiro caía na inicialização.
+    // Sem dev build não há token a registrar, então sai cedo e deixa o resto do
+    // app utilizável no Expo Go.
+    if (!isPushAvailable()) return;
+
     if (!isAuthenticated) {
       registeredToken.current = null;
       return;
     }
 
+    const Notifications = loadNotifications();
     let cancelled = false;
 
     async function registerToken(token: string, type: string): Promise<void> {
@@ -64,13 +76,13 @@ export function usePushNotifications(): void {
     async function bootstrap(): Promise<void> {
       if (!Device.isDevice) return;
 
-      const granted = await ensurePermission();
+      const granted = await ensurePermission(Notifications);
       if (!granted) {
         Alert.alert(t('notifications.permissionDeniedTitle'), t('notifications.permissionDenied'));
         return;
       }
 
-      await ensureAndroidChannel();
+      await ensureAndroidChannel(Notifications);
 
       try {
         const devicePushToken = await Notifications.getDevicePushTokenAsync();

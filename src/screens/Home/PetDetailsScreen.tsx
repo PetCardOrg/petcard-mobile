@@ -21,7 +21,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { isAxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
 
-import { petService, uploadService } from '../../services';
+import { petService, scanService, uploadService } from '../../services';
 import type { HomeStackParamList } from '../../navigation/types';
 import { calculateAge } from '../../utils/calculateAge';
 import { formatDateInput, parseDate } from '../../utils/dateUtils';
@@ -66,6 +66,9 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
   const [pet, setPet] = useState<PetResponseDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
+  // O atalho para as leituras da coleira só aparece quando existe alguma:
+  // um botão que leva sempre a uma lista vazia é ruído na tela do pet.
+  const [temLeituras, setTemLeituras] = useState(false);
 
   // Edit modal state
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -91,6 +94,18 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
           if (!cancelled) setError(true);
         } finally {
           if (!cancelled) setIsLoading(false);
+        }
+      })();
+
+      // Busca à parte, e não dentro do try acima: falhar aqui só esconde um
+      // atalho, enquanto falhar no pet impede a tela inteira. Juntar os dois
+      // faria uma indisponibilidade das leituras derrubar a página do pet.
+      (async () => {
+        try {
+          const scans = await scanService.getByPet(route.params.petId);
+          if (!cancelled) setTemLeituras(scans.length > 0);
+        } catch {
+          if (!cancelled) setTemLeituras(false);
         }
       })();
 
@@ -289,6 +304,45 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
         <Ionicons color={colors.white} name="card-outline" size={18} />
         <Text style={styles.walletBtnText}>{t('petDetails.digitalWallet')}</Text>
       </Pressable>
+
+      {/* Histórico clínico: até aqui só o veterinário via a linha do tempo. */}
+      <Pressable
+        accessibilityLabel={t('petDetails.openHistoryAccessibility')}
+        accessibilityRole="button"
+        onPress={() => navigation.navigate('ClinicalHistory', { petId: pet.id, petName: pet.name })}
+        style={({ pressed }) => [styles.historyBtn, pressed && styles.pressed]}
+      >
+        <Ionicons color={colors.primaryDark} name="time-outline" size={18} />
+        <Text style={styles.historyBtnText}>{t('petDetails.clinicalHistory')}</Text>
+      </Pressable>
+
+      {/* QR da coleira: o código que quem acha o pet lê na rua. Fica ao lado do
+          da carteira, mas leva a outro lugar — e é essa diferença que impede
+          um estranho de chegar ao prontuário. */}
+      <Pressable
+        accessibilityLabel={t('petDetails.openColeiraQrAccessibility')}
+        accessibilityRole="button"
+        onPress={() => navigation.navigate('ColeiraQr', { petId: pet.id, petName: pet.name })}
+        style={({ pressed }) => [styles.historyBtn, pressed && styles.pressed]}
+      >
+        <Ionicons color={colors.primaryDark} name="qr-code-outline" size={18} />
+        <Text style={styles.historyBtnText}>{t('petDetails.coleiraQr')}</Text>
+      </Pressable>
+
+      {/* Leituras do QR da coleira: a cópia durável do que o push avisa. O
+          tutor pode ter perdido a notificação, e aqui a informação fica. Só
+          aparece quando existe alguma leitura. */}
+      {temLeituras ? (
+        <Pressable
+          accessibilityLabel={t('petDetails.openScansAccessibility')}
+          accessibilityRole="button"
+          onPress={() => navigation.navigate('PetScans', { petId: pet.id, petName: pet.name })}
+          style={({ pressed }) => [styles.historyBtn, pressed && styles.pressed]}
+        >
+          <Ionicons color={colors.primaryDark} name="location-outline" size={18} />
+          <Text style={styles.historyBtnText}>{t('petDetails.petScans')}</Text>
+        </Pressable>
+      ) : null}
 
       {/* Action buttons */}
       <View style={styles.actionsRow}>
@@ -530,6 +584,21 @@ const styles = StyleSheet.create({
   },
 
   // Wallet button
+  historyBtn: {
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    backgroundColor: colors.primarySoft,
+    borderRadius: radii.md,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'center',
+    marginTop: spacing.sm,
+    paddingVertical: 14,
+  },
+  historyBtnText: {
+    ...typography.button,
+    color: colors.primaryDark,
+  },
   walletBtn: {
     alignItems: 'center',
     alignSelf: 'stretch',

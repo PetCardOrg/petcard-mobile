@@ -25,14 +25,17 @@ import { useTranslation } from 'react-i18next';
 
 import type { MainTabParamList } from '../../navigation/types';
 
+import { DurationOptions } from '../../components/ui/DurationOptions';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { FAB } from '../../components/ui/FAB';
+import { PlaceAutocompleteInput } from '../../components/ui/PlaceAutocompleteInput';
 import { usePets } from '../../hooks/usePets';
 import { appointmentService, calendarService } from '../../services';
 import type { AppointmentResponse } from '../../services/appointment.service';
-import { formatDateDisplay, formatDateInput, parseDate } from '../../utils/dateUtils';
+import { formatDateInput, parseDate } from '../../utils/dateUtils';
 import { colors, radii, spacing, typography } from '../../utils/theme';
+import { getRelativeDays } from './relativeDate';
 
 type FormErrors = {
   title?: string;
@@ -69,15 +72,6 @@ function isUpcoming(iso: string): boolean {
   return new Date(iso) >= new Date();
 }
 
-function getRelativeDays(iso: string): number {
-  const date = new Date(iso);
-  const now = new Date();
-  const diffMs = date.getTime() - now.getTime();
-  return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-}
-
-const DURATION_OPTIONS = [30, 45, 60, 90, 120];
-
 export function AppointmentsScreen() {
   const { t } = useTranslation();
   const { pets } = usePets();
@@ -92,7 +86,6 @@ export function AppointmentsScreen() {
 
   // Calendar sync state
   const [calendarConnected, setCalendarConnected] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
 
   // Form state
   const [modalVisible, setModalVisible] = useState(false);
@@ -290,18 +283,6 @@ export function AppointmentsScreen() {
     }
   }
 
-  async function handleCalendarSync() {
-    setIsSyncing(true);
-    try {
-      const count = await calendarService.syncAll();
-      Alert.alert(t('common.success'), t('appointments.calendar.syncSuccess', { count }));
-    } catch {
-      Alert.alert(t('common.error'), t('appointments.calendar.syncError'));
-    } finally {
-      setIsSyncing(false);
-    }
-  }
-
   async function handleCalendarDisconnect() {
     Alert.alert(
       t('appointments.calendar.disconnectTitle'),
@@ -322,31 +303,6 @@ export function AppointmentsScreen() {
         },
       ],
     );
-  }
-
-  function getSyncStatusColor(status: string) {
-    switch (status) {
-      case 'SYNCED':
-        return colors.success;
-      case 'FAILED':
-        return colors.danger;
-      default:
-        return colors.warning;
-    }
-  }
-
-  function getSyncStatusLabel(status: string): string {
-    switch (status) {
-      case 'SYNCED':
-        return t('appointments.syncStatus.synced');
-      case 'FAILED':
-        return t('appointments.syncStatus.failed');
-      case 'PENDING_CREATE':
-      case 'PENDING_UPDATE':
-        return t('appointments.syncStatus.pending');
-      default:
-        return status;
-    }
   }
 
   function renderAppointmentItem({ item }: { item: AppointmentResponse }) {
@@ -402,17 +358,6 @@ export function AppointmentsScreen() {
               <Text style={styles.metaText}>{item.pet_name}</Text>
             </View>
           ) : null}
-
-          {calendarConnected ? (
-            <View style={styles.metaRow}>
-              <View
-                style={[styles.syncDot, { backgroundColor: getSyncStatusColor(item.sync_status) }]}
-              />
-              <Text style={[styles.metaText, { color: getSyncStatusColor(item.sync_status) }]}>
-                {getSyncStatusLabel(item.sync_status)}
-              </Text>
-            </View>
-          ) : null}
         </View>
 
         {upcoming ? (
@@ -423,7 +368,9 @@ export function AppointmentsScreen() {
                 if (days === 0) return t('appointments.today');
                 if (days === 1) return t('appointments.tomorrow');
                 if (days > 1 && days <= 7) return `${days} ${t('appointments.daysAway')}`;
-                return formatDateDisplay(item.scheduled_at.split('T')[0]);
+                // `date` já vem em horário local; fatiar o ISO daria a data UTC,
+                // um dia à frente para agendamentos à noite.
+                return date;
               })()}
             </Text>
           </View>
@@ -450,33 +397,26 @@ export function AppointmentsScreen() {
             size={20}
             color={calendarConnected ? colors.success : colors.primaryDark}
           />
-          <Text style={styles.calendarBannerText}>
-            {calendarConnected
-              ? t('appointments.calendar.connected')
-              : t('appointments.calendar.notConnected')}
-          </Text>
+          {/* Único lugar que fala de sincronização: a regra é dita uma vez
+              aqui, em vez de repetida em cada card. */}
+          <View style={styles.calendarBannerTexts}>
+            <Text style={styles.calendarBannerText}>
+              {calendarConnected
+                ? t('appointments.calendar.connected')
+                : t('appointments.calendar.notConnected')}
+            </Text>
+            <Text style={styles.calendarBannerHint}>
+              {calendarConnected
+                ? t('appointments.calendar.connectedHint')
+                : t('appointments.calendar.notConnectedHint')}
+            </Text>
+          </View>
         </View>
         <View style={styles.calendarBannerActions}>
           {calendarConnected ? (
-            <>
-              <Pressable
-                onPress={handleCalendarSync}
-                disabled={isSyncing}
-                style={({ pressed }) => [styles.syncButton, pressed && styles.pressed]}
-              >
-                {isSyncing ? (
-                  <ActivityIndicator color={colors.white} size="small" />
-                ) : (
-                  <>
-                    <Ionicons name="sync" size={14} color={colors.white} />
-                    <Text style={styles.syncButtonText}>{t('appointments.calendar.sync')}</Text>
-                  </>
-                )}
-              </Pressable>
-              <Pressable onPress={handleCalendarDisconnect} hitSlop={8}>
-                <Ionicons name="close-circle-outline" size={22} color={colors.danger} />
-              </Pressable>
-            </>
+            <Pressable onPress={handleCalendarDisconnect} hitSlop={8}>
+              <Ionicons name="close-circle-outline" size={22} color={colors.danger} />
+            </Pressable>
           ) : (
             <Pressable
               onPress={handleCalendarConnect}
@@ -614,41 +554,21 @@ export function AppointmentsScreen() {
                   </View>
                 </View>
 
-                {/* Duration */}
                 <View style={styles.field}>
                   <Text style={styles.label}>{t('appointments.form.durationLabel')}</Text>
-                  <View style={styles.durationRow}>
-                    {DURATION_OPTIONS.map((d) => (
-                      <Pressable
-                        key={d}
-                        onPress={() => setDurationMinutes(d)}
-                        style={[
-                          styles.durationChip,
-                          durationMinutes === d && styles.durationChipActive,
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.durationChipText,
-                            durationMinutes === d && styles.durationChipTextActive,
-                          ]}
-                        >
-                          {d}min
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
+                  <DurationOptions
+                    accessibilityLabel={t('appointments.form.durationLabel')}
+                    onChange={setDurationMinutes}
+                    value={durationMinutes}
+                  />
                 </View>
 
                 {/* Location */}
                 <View style={styles.field}>
                   <Text style={styles.label}>{t('appointments.form.locationLabel')}</Text>
-                  <TextInput
-                    autoCapitalize="sentences"
+                  <PlaceAutocompleteInput
                     onChangeText={setLocation}
                     placeholder={t('appointments.form.locationPlaceholder')}
-                    placeholderTextColor={colors.muted}
-                    style={styles.input}
                     value={location}
                   />
                 </View>
@@ -785,10 +705,17 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: spacing.sm,
   },
+  calendarBannerTexts: {
+    flex: 1,
+    gap: 2,
+  },
   calendarBannerText: {
     ...typography.bodySmall,
     color: colors.text,
-    flex: 1,
+  },
+  calendarBannerHint: {
+    color: colors.muted,
+    fontSize: 12,
   },
   calendarBannerActions: {
     alignItems: 'center',
@@ -883,11 +810,6 @@ const styles = StyleSheet.create({
     color: colors.muted,
     flex: 1,
   },
-  syncDot: {
-    borderRadius: 4,
-    height: 8,
-    width: 8,
-  },
   relativeContainer: {
     alignSelf: 'flex-start',
     backgroundColor: colors.primarySoft,
@@ -966,28 +888,6 @@ const styles = StyleSheet.create({
   },
   flex1: {
     flex: 1,
-  },
-  durationRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  durationChip: {
-    borderColor: colors.border,
-    borderRadius: radii.sm,
-    borderWidth: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  durationChipActive: {
-    backgroundColor: colors.primaryDark,
-    borderColor: colors.primaryDark,
-  },
-  durationChipText: {
-    ...typography.caption,
-    color: colors.muted,
-  },
-  durationChipTextActive: {
-    color: colors.white,
   },
   petChipRow: {
     flexDirection: 'row',

@@ -1,6 +1,7 @@
 # 🐾 PetCard Mobile
 
 [![CI](https://github.com/PetCardOrg/petcard-mobile/actions/workflows/ci.yml/badge.svg)](https://github.com/PetCardOrg/petcard-mobile/actions)
+[![Coverage](.github/badges/coverage.svg)](https://github.com/PetCardOrg/petcard-mobile/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Aplicativo mobile do tutor no ecossistema PetCard. App construído com React Native (Expo) para gerenciamento da saúde dos pets, carteira digital e busca de clínicas veterinárias.

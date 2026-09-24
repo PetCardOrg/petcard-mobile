@@ -29,9 +29,11 @@ import { PetSelector } from '../../components/domain/PetSelector';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { FAB } from '../../components/ui/FAB';
+import { useSelectedPet } from '../../contexts/SelectedPetContext';
 import { usePets } from '../../hooks/usePets';
 import { dewormingService } from '../../services';
 import { formatDateDisplay, formatDateInput, parseDate } from '../../utils/dateUtils';
+import { confirmarAcaoEmRegistroDeVet, ehRegistroDeVeterinario } from '../../utils/vetRecordGuard';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 
 type FormErrors = {
@@ -49,7 +51,11 @@ export function DewormingScreen() {
   const { t } = useTranslation();
   const { pets, isLoading: isPetsLoading } = usePets();
 
-  const [selectedPet, setSelectedPet] = useState<PetResponseDto | null>(null);
+  // Cada aba lembra o próprio pet. Resolvido na lista já carregada: pet
+  // renomeado aparece com o nome novo e pet excluído devolve o tutor para
+  // a seleção.
+  const { selectedPetId, selectPet, clearSelection } = useSelectedPet('vermifugos');
+  const selectedPet = pets.find((pet) => pet.id === selectedPetId) ?? null;
   const [dewormings, setDewormings] = useState<DewormingRecordResponseDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -68,7 +74,7 @@ export function DewormingScreen() {
 
   const loadDewormings = useCallback(
     async (mode: 'initial' | 'refresh' = 'initial') => {
-      if (!selectedPet) return;
+      if (!selectedPetId) return;
 
       if (mode === 'refresh') {
         setIsRefreshing(true);
@@ -78,7 +84,7 @@ export function DewormingScreen() {
       setError(null);
 
       try {
-        const data = await dewormingService.getDewormingsByPet(selectedPet.id);
+        const data = await dewormingService.getDewormingsByPet(selectedPetId);
         setDewormings(data);
       } catch (err) {
         let message = t('healthRecords.deworming.errorLoad');
@@ -91,19 +97,19 @@ export function DewormingScreen() {
         setIsRefreshing(false);
       }
     },
-    [selectedPet, t],
+    [selectedPetId, t],
   );
 
   useFocusEffect(
     useCallback(() => {
-      if (selectedPet) {
+      if (selectedPetId) {
         void loadDewormings();
       }
-    }, [loadDewormings, selectedPet]),
+    }, [loadDewormings, selectedPetId]),
   );
 
   function handleSelectPet(pet: PetResponseDto) {
-    setSelectedPet(pet);
+    selectPet(pet);
     setDewormings([]);
     setError(null);
   }
@@ -124,6 +130,17 @@ export function DewormingScreen() {
   }
 
   function openEditModal(record: DewormingRecordResponseDto) {
+    // Registro de veterinário avisa antes de abrir o formulário (mobile#58).
+    confirmarAcaoEmRegistroDeVet({
+      registro: record,
+      nomeDoRegistro: record.product_name,
+      acao: 'editar',
+      t,
+      onConfirm: () => abrirFormularioDeEdicao(record),
+    });
+  }
+
+  function abrirFormularioDeEdicao(record: DewormingRecordResponseDto) {
     setEditingRecord(record);
     setProductName(record.product_name);
     setAppliedAt(isoToDisplay(record.applied_at));
@@ -135,6 +152,19 @@ export function DewormingScreen() {
   }
 
   function confirmDelete(record: DewormingRecordResponseDto) {
+    // Registro de veterinário troca o texto da confirmação, em vez de somar
+    // um segundo diálogo em cima do que já existia (mobile#58).
+    if (ehRegistroDeVeterinario(record)) {
+      confirmarAcaoEmRegistroDeVet({
+        registro: record,
+        nomeDoRegistro: record.product_name,
+        acao: 'apagar',
+        t,
+        onConfirm: () => void handleDelete(record.id),
+      });
+      return;
+    }
+
     Alert.alert(
       t('healthRecords.deworming.deleteTitle'),
       t('healthRecords.deworming.deleteMessage', { name: record.product_name }),
@@ -283,7 +313,7 @@ export function DewormingScreen() {
   return (
     <View style={styles.container}>
       {/* Pet header */}
-      <PetHeader petName={selectedPet.name} onBack={() => setSelectedPet(null)} />
+      <PetHeader petName={selectedPet.name} onBack={clearSelection} />
 
       {/* Content */}
       {isLoading ? (

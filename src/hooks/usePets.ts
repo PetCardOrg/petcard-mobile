@@ -1,10 +1,9 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback } from 'react';
 import type { PetResponseDto } from '@petcardorg/shared';
 import { useFocusEffect } from '@react-navigation/native';
-import { isAxiosError } from 'axios';
 
 import { useAuth } from '../contexts/AuthContext';
-import { petService } from '../services';
+import { usePetsContext } from '../contexts/PetsContext';
 
 type UsePetsReturn = {
   pets: PetResponseDto[];
@@ -15,55 +14,24 @@ type UsePetsReturn = {
   retry: () => void;
 };
 
+/**
+ * Lista de pets do tutor, vinda do cache compartilhado.
+ *
+ * A assinatura é a mesma de antes — as telas não mudam. O que mudou é de onde
+ * o estado vem: era um por tela, agora é um só no `PetsProvider`. Focar uma
+ * tela pede a lista, e o provider decide se isso vira requisição ou não.
+ */
 export function usePets(): UsePetsReturn {
   const { isAuthenticated } = useAuth();
-  const hasLoaded = useRef(false);
-
-  const [pets, setPets] = useState<PetResponseDto[]>([]);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const loadPets = useCallback(async (mode: 'initial' | 'refresh' = 'initial') => {
-    if (mode === 'refresh') {
-      setIsRefreshing(true);
-    } else if (!hasLoaded.current) {
-      setIsLoading(true);
-    }
-
-    try {
-      const data = await petService.getMyPets();
-      setPets(data);
-      setErrorMessage(null);
-      hasLoaded.current = true;
-    } catch (err) {
-      if (isAxiosError(err) && err.response?.status === 403) {
-        setErrorMessage(
-          'Sem permissão para acessar seus pets. Peça ao administrador para configurar sua conta.',
-        );
-      } else {
-        setErrorMessage('Não foi possível carregar seus pets. Tente novamente.');
-      }
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, []);
+  const { pets, isLoading, isRefreshing, errorMessage, garantirCarregado, refresh, retry } =
+    usePetsContext();
 
   useFocusEffect(
     useCallback(() => {
       if (!isAuthenticated) return;
-      void loadPets();
-    }, [loadPets, isAuthenticated]),
+      garantirCarregado();
+    }, [garantirCarregado, isAuthenticated]),
   );
-
-  const refresh = useCallback(() => {
-    void loadPets('refresh');
-  }, [loadPets]);
-
-  const retry = useCallback(() => {
-    void loadPets();
-  }, [loadPets]);
 
   return { pets, isLoading, isRefreshing, errorMessage, refresh, retry };
 }
