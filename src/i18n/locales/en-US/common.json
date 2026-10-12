@@ -540,7 +540,27 @@
     "acao": {
       "CRIACAO": "Recorded by",
       "EDICAO": "Changed by",
-      "EXCLUSAO": "Deleted by"
+      "EXCLUSAO": "Deleted by",
+      "ANEXO_ADICIONADO": "Attachment added by",
+      "ANEXO_REMOVIDO": "Attachment removed by",
+      "ANEXO_VERIFICADO": "Attachment verified by"
     }
+  },
+  "anexos": {
+    "titulo": "Proof of treatment",
+    "adicionar": "Attach photo",
+    "abrir": "Open attachment",
+    "remover": "Remove attachment",
+    "verificadoPor": "Verified by {{name}} ({{crmv}})",
+    "aguardandoVerificacao": "Awaiting veterinarian verification",
+    "removerTitulo": "Remove attachment",
+    "removerMensagem": "Remove \"{{name}}\" from the card? The file stays saved in the pet's history.",
+    "removerVerificadoMensagem": "\"{{name}}\" was verified by a veterinarian. Remove it from the card? The file and the verification stay saved in the pet's history.",
+    "tipoInvalido": "Unsupported format. Use a JPEG, PNG or WebP photo.",
+    "grandeDemais": "The file exceeds the 10 MB limit.",
+    "erroEnviar": "Could not upload the attachment. Please try again.",
+    "erroAbrir": "Could not open the attachment.",
+    "erroRemover": "Could not remove the attachment.",
+    "permissaoGaleria": "We need access to your gallery to select the attachment."
   }
 }

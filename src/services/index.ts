@@ -7,6 +7,7 @@ export * as vaccineService from './vaccine.service';
 export * as dewormingService from './deworming.service';
 export * as medicationService from './medication.service';
 export * as historicoService from './historico.service';
+export * as anexoService from './anexo.service';
 export * as uploadService from './upload.service';
 export * as clinicService from './clinic.service';
 export * as scanService from './scan.service';

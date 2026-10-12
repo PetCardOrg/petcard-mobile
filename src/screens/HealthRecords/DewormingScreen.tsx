@@ -24,6 +24,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { isAxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
 
+import { AnexosDoRegistro } from '../../components/domain/AnexosDoRegistro';
 import { PetHeader } from '../../components/domain/PetHeader';
 import { PetSelector } from '../../components/domain/PetSelector';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -306,6 +307,14 @@ export function DewormingScreen() {
             </View>
           ) : null}
         </View>
+
+        <AnexosDoRegistro
+          petId={item.pet_id}
+          entidade="VERMIFUGO"
+          entidadeId={item.id}
+          anexos={item.anexos ?? []}
+          onChanged={() => void loadDewormings('refresh')}
+        />
       </View>
     );
   }
