@@ -67,6 +67,25 @@ function HistoricoItem({ item }: { item: HistoricoClinicoItemResponseDto }) {
         </View>
       ) : null}
 
+      {(item.anexos ?? []).map((anexo) => (
+        <View key={anexo.id} style={styles.cardAuthor}>
+          <Ionicons
+            color={anexo.verificado ? colors.success : colors.muted}
+            name={anexo.verificado ? 'shield-checkmark' : 'attach'}
+            size={13}
+          />
+          <Text style={styles.cardAuthorText}>
+            {anexo.nome_arquivo} ·{' '}
+            {anexo.verificado
+              ? t('anexos.verificadoPor', {
+                  name: anexo.verificado_por_nome,
+                  crmv: anexo.verificado_por_crmv,
+                })
+              : t('anexos.aguardandoVerificacao')}
+          </Text>
+        </View>
+      ))}
+
       {item.excluido ? (
         <View style={styles.badgeExcluido}>
           <Ionicons color={colors.danger} name="trash-outline" size={12} />

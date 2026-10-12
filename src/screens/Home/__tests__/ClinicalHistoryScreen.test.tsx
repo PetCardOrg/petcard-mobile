@@ -75,4 +75,31 @@ describe('ClinicalHistoryScreen', () => {
     expect(await screen.findByText('Excluído')).toBeVisible();
     expect(screen.getByText(/Apagado por · Ana Silva/)).toBeVisible();
   });
+
+  it('mostra os comprovantes do registro e se um veterinário os verificou', async () => {
+    mockGetHistorico.mockResolvedValue(
+      historico([
+        {
+          ...vacina,
+          anexos: [
+            {
+              id: 'x1',
+              nome_arquivo: 'carteirinha.jpg',
+              verificado: true,
+              verificado_por_nome: 'Dra. Camila',
+              verificado_por_crmv: 'CRMV-SP 12345',
+            },
+            { id: 'x2', nome_arquivo: 'receita.pdf', verificado: false },
+          ],
+        },
+      ]),
+    );
+
+    renderWithProviders(<ClinicalHistoryScreen navigation={{} as never} route={route} />);
+
+    expect(
+      await screen.findByText(/carteirinha\.jpg · Verificado por Dra\. Camila \(CRMV-SP 12345\)/),
+    ).toBeVisible();
+    expect(screen.getByText(/receita\.pdf · Aguardando verificação/)).toBeVisible();
+  });
 });
