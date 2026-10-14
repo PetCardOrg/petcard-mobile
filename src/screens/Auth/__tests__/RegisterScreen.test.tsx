@@ -115,11 +115,11 @@ describe('RegisterScreen', () => {
     );
   });
 
-  it('mostra a mensagem de erro devolvida pela api', async () => {
+  it('avisa em português que o e-mail já está cadastrado (409)', async () => {
     mockRegister.mockRejectedValueOnce(
       Object.assign(new Error('409'), {
         isAxiosError: true,
-        response: { data: { message: 'Email already registered' } },
+        response: { status: 409, data: { message: 'Email already registered' } },
       }),
     );
 
@@ -127,7 +127,30 @@ describe('RegisterScreen', () => {
     preencherCamposObrigatorios();
     fireEvent.press(screen.getByRole('button', { name: 'Cadastrar' }));
 
-    await waitFor(() => expect(screen.getByText('Email already registered')).toBeVisible());
+    await waitFor(() =>
+      expect(
+        screen.getByText('Este e-mail já está cadastrado. Entre na sua conta ou use outro e-mail.'),
+      ).toBeVisible(),
+    );
+    expect(screen.queryByText('Email already registered')).toBeNull();
+  });
+
+  it('traduz os demais erros da api sem mostrar o texto em inglês', async () => {
+    mockRegister.mockRejectedValueOnce(
+      Object.assign(new Error('400'), {
+        isAxiosError: true,
+        response: { status: 400, data: { message: ['phone must be a phone number'] } },
+      }),
+    );
+
+    renderWithProviders(<RegisterScreen />);
+    preencherCamposObrigatorios();
+    fireEvent.press(screen.getByRole('button', { name: 'Cadastrar' }));
+
+    await waitFor(() =>
+      expect(screen.getByText('Confira os dados informados e tente novamente.')).toBeVisible(),
+    );
+    expect(screen.queryByText('phone must be a phone number')).toBeNull();
   });
 
   it('volta para o login pelo link secundário', () => {

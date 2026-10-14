@@ -1,14 +1,22 @@
-import { renderWithProviders, screen, waitFor } from '../../../test/renderWithProviders';
+import { Alert } from 'react-native';
+import { renderWithProviders, screen, waitFor, fireEvent } from '../../../test/renderWithProviders';
 import { PetDetailsScreen } from '../PetDetailsScreen';
 
+const mockRemoverPet = jest.fn();
+const mockInvalidar = jest.fn();
+const mockDeletePet = jest.fn();
 const mockGetPetById = jest.fn();
+
+jest.mock('../../../contexts/PetsContext', () => ({
+  usePetsContext: () => ({ removerPet: mockRemoverPet, invalidar: mockInvalidar }),
+}));
 const mockGetByPet = jest.fn();
 
 jest.mock('../../../services', () => ({
   petService: {
     getPetById: (id: string) => mockGetPetById(id) as unknown,
     updatePet: jest.fn(),
-    deletePet: jest.fn(),
+    deletePet: (id: string) => mockDeletePet(id) as unknown,
   },
   scanService: {
     getByPet: (id: string) => mockGetByPet(id) as unknown,
@@ -72,5 +80,44 @@ describe('PetDetailsScreen — atalho para as leituras da coleira', () => {
     expect(await screen.findByText('Rex')).toBeTruthy();
     await waitFor(() => expect(mockGetByPet).toHaveBeenCalled());
     expect(screen.queryByText('Onde encontraram')).toBeNull();
+  });
+});
+
+describe('PetDetailsScreen — exclusão do pet', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetPetById.mockReset().mockResolvedValue(PET);
+    mockGetByPet.mockReset().mockResolvedValue([]);
+    mockDeletePet.mockReset();
+  });
+
+  /** Aperta "Excluir" e confirma no diálogo do sistema. */
+  async function excluirOPet() {
+    const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    renderizar();
+    fireEvent.press(await screen.findByText('Excluir'));
+
+    const botoes = alerta.mock.calls[0]?.[2] ?? [];
+    const confirmar = botoes.find((b) => b.style === 'destructive');
+    await confirmar?.onPress?.();
+    return alerta;
+  }
+
+  it('tira o pet da lista da Home quando a exclusão dá certo', async () => {
+    mockDeletePet.mockResolvedValue(undefined);
+
+    await excluirOPet();
+
+    await waitFor(() => expect(mockRemoverPet).toHaveBeenCalledWith('p1'));
+    expect(mockDeletePet).toHaveBeenCalledWith('p1');
+  });
+
+  it('mantém o pet na lista quando a exclusão falha', async () => {
+    mockDeletePet.mockRejectedValue(new Error('rede'));
+
+    await excluirOPet();
+
+    await waitFor(() => expect(mockDeletePet).toHaveBeenCalled());
+    expect(mockRemoverPet).not.toHaveBeenCalled();
   });
 });

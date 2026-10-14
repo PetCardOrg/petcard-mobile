@@ -17,7 +17,6 @@ import { Species } from '@petcardorg/shared';
 import type { MaterialTopTabNavigationProp } from '@react-navigation/material-top-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { isAxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
 
 import { ErrorState } from '../../components/ui/ErrorState';
@@ -28,6 +27,7 @@ import { calculateAge } from '../../utils/calculateAge';
 import { exportWalletPdf, SHARING_UNAVAILABLE } from '../../utils/generateWalletPdf';
 import { getPhotoUrl, SEX_CONFIG, SPECIES_CONFIG } from '../../utils/petConfig';
 import { colors, radii, spacing, typography } from '../../utils/theme';
+import { apiErrorMessage } from '../../utils/apiErrorMessage';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'DigitalWallet'>;
 
@@ -194,10 +194,7 @@ export function DigitalWalletScreen({ route }: Props) {
               );
               await pollWalletAfterRegeneration(hadQrCodeBefore);
             } catch (err) {
-              let message = t('digitalWallet.actions.regenerateError');
-              if (isAxiosError(err) && err.response?.data?.message) {
-                message = String(err.response.data.message);
-              }
+              const message = apiErrorMessage(err, t('digitalWallet.actions.regenerateError'), t);
               Alert.alert(t('common.error'), message);
             } finally {
               setIsRegenerating(false);
