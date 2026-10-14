@@ -20,7 +20,6 @@ import type { PetResponseDto } from '@petcardorg/shared';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { isAxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
 
 import type { MainTabParamList } from '../../navigation/types';
@@ -36,6 +35,7 @@ import type { AppointmentResponse } from '../../services/appointment.service';
 import { formatDateInput, parseDate } from '../../utils/dateUtils';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 import { getRelativeDays } from './relativeDate';
+import { apiErrorMessage } from '../../utils/apiErrorMessage';
 
 type FormErrors = {
   title?: string;
@@ -113,10 +113,7 @@ export function AppointmentsScreen() {
         const data = await appointmentService.getUpcoming();
         setAppointments(data);
       } catch (err) {
-        let message = t('appointments.errorLoad');
-        if (isAxiosError(err) && err.response?.data?.message) {
-          message = String(err.response.data.message);
-        }
+        const message = apiErrorMessage(err, t('appointments.errorLoad'), t);
         setError(message);
       } finally {
         setIsLoading(false);
@@ -204,10 +201,7 @@ export function AppointmentsScreen() {
       await appointmentService.remove(id);
       void loadAppointments();
     } catch (err) {
-      let message = t('appointments.errorDelete');
-      if (isAxiosError(err) && err.response?.data?.message) {
-        message = String(err.response.data.message);
-      }
+      const message = apiErrorMessage(err, t('appointments.errorDelete'), t);
       Alert.alert(t('common.error'), message);
     }
   }
@@ -260,10 +254,11 @@ export function AppointmentsScreen() {
       }
       void loadAppointments();
     } catch (err) {
-      let message = editingRecord ? t('appointments.errorEdit') : t('appointments.errorCreate');
-      if (isAxiosError(err) && err.response?.data?.message) {
-        message = String(err.response.data.message);
-      }
+      const message = apiErrorMessage(
+        err,
+        editingRecord ? t('appointments.errorEdit') : t('appointments.errorCreate'),
+        t,
+      );
       Alert.alert(t('common.error'), message);
     } finally {
       setIsSubmitting(false);

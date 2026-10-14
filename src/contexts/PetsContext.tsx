@@ -30,6 +30,13 @@ type PetsContextValue = {
   garantirCarregado: () => void;
   /** Força a busca, ignorando o frescor. Pull-to-refresh. */
   refresh: () => void;
+  /**
+   * Avisa que a lista no servidor mudou (pet criado ou editado): descarta o
+   * frescor e busca de novo, mesmo que haja uma busca em voo com dado velho.
+   */
+  invalidar: () => void;
+  /** Tira o pet da lista na hora (exclusão) e confirma com uma nova busca. */
+  removerPet: (petId: string) => void;
   retry: () => void;
 };
 
@@ -102,6 +109,23 @@ export function PetsProvider({ children }: { children: ReactNode }) {
     void buscar('refresh');
   }, [buscar]);
 
+  const invalidar = useCallback(() => {
+    carregadoEm.current = null;
+    const emVoo = buscaEmVoo.current;
+    // Uma busca que já corria pode trazer a lista de antes da mudança: espera
+    // ela terminar e busca de novo.
+    if (emVoo) void emVoo.then(() => buscar('refresh'));
+    else void buscar('refresh');
+  }, [buscar]);
+
+  const removerPet = useCallback(
+    (petId: string) => {
+      setPets((atuais) => atuais.filter((pet) => pet.id !== petId));
+      invalidar();
+    },
+    [invalidar],
+  );
+
   const retry = useCallback(() => {
     // Depois de erro a lista não é fresca coisa nenhuma: força.
     carregadoEm.current = null;
@@ -116,9 +140,21 @@ export function PetsProvider({ children }: { children: ReactNode }) {
       errorMessage,
       garantirCarregado,
       refresh,
+      invalidar,
+      removerPet,
       retry,
     }),
-    [pets, isLoading, isRefreshing, errorMessage, garantirCarregado, refresh, retry],
+    [
+      pets,
+      isLoading,
+      isRefreshing,
+      errorMessage,
+      garantirCarregado,
+      refresh,
+      invalidar,
+      removerPet,
+      retry,
+    ],
   );
 
   return <PetsContext.Provider value={value}>{children}</PetsContext.Provider>;

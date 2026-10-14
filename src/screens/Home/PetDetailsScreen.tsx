@@ -18,15 +18,16 @@ import { Species, type PetResponseDto } from '@petcardorg/shared';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { isAxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
 
 import { petService, scanService, uploadService } from '../../services';
+import { usePetsContext } from '../../contexts/PetsContext';
 import type { HomeStackParamList } from '../../navigation/types';
 import { calculateAge } from '../../utils/calculateAge';
 import { formatDateInput, parseDate } from '../../utils/dateUtils';
 import { getPhotoUrl, SEX_CONFIG, SPECIES_CONFIG } from '../../utils/petConfig';
 import { colors, radii, spacing, typography } from '../../utils/theme';
+import { apiErrorMessage } from '../../utils/apiErrorMessage';
 
 type PetDetailsScreenProps = NativeStackScreenProps<HomeStackParamList, 'PetDetails'>;
 
@@ -62,6 +63,7 @@ type EditFormErrors = {
 
 export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
   const { t } = useTranslation();
+  const { invalidar, removerPet } = usePetsContext();
 
   const [pet, setPet] = useState<PetResponseDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -180,14 +182,12 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
 
       const updated = await petService.updatePet(pet.id, payload);
       setPet(updated);
+      invalidar();
       navigation.setParams({ petName: updated.name });
       setEditModalVisible(false);
       Alert.alert(t('petDetails.editModal.successTitle'), t('petDetails.editModal.successMessage'));
     } catch (err) {
-      let message = t('petDetails.editModal.errorMessage');
-      if (isAxiosError(err) && err.response?.data?.message) {
-        message = String(err.response.data.message);
-      }
+      const message = apiErrorMessage(err, t('petDetails.editModal.errorMessage'), t);
       Alert.alert(t('common.error'), message);
     } finally {
       setIsSubmitting(false);
@@ -214,16 +214,14 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
     if (!pet) return;
     try {
       await petService.deletePet(pet.id);
+      removerPet(pet.id);
       Alert.alert(
         t('petDetails.deleteDialog.successTitle'),
         t('petDetails.deleteDialog.successMessage'),
       );
       navigation.goBack();
     } catch (err) {
-      let message = t('petDetails.deleteDialog.errorMessage');
-      if (isAxiosError(err) && err.response?.data?.message) {
-        message = String(err.response.data.message);
-      }
+      const message = apiErrorMessage(err, t('petDetails.deleteDialog.errorMessage'), t);
       Alert.alert(t('common.error'), message);
     }
   }

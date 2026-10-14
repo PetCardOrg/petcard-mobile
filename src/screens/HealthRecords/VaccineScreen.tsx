@@ -21,7 +21,6 @@ import type {
   VaccineRecordResponseDto,
 } from '@petcardorg/shared';
 import { useFocusEffect } from '@react-navigation/native';
-import { isAxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
 
 import { AnexosDoRegistro } from '../../components/domain/AnexosDoRegistro';
@@ -36,6 +35,7 @@ import { vaccineService } from '../../services';
 import { formatDateDisplay, formatDateInput, parseDate } from '../../utils/dateUtils';
 import { confirmarAcaoEmRegistroDeVet, ehRegistroDeVeterinario } from '../../utils/vetRecordGuard';
 import { colors, radii, spacing, typography } from '../../utils/theme';
+import { apiErrorMessage } from '../../utils/apiErrorMessage';
 
 type FormErrors = {
   vaccineName?: string;
@@ -88,10 +88,7 @@ export function VaccineScreen() {
         const data = await vaccineService.getVaccinesByPet(selectedPetId);
         setVaccines(data);
       } catch (err) {
-        let message = t('healthRecords.vaccine.errorLoad');
-        if (isAxiosError(err) && err.response?.data?.message) {
-          message = String(err.response.data.message);
-        }
+        const message = apiErrorMessage(err, t('healthRecords.vaccine.errorLoad'), t);
         setError(message);
       } finally {
         setIsLoading(false);
@@ -185,10 +182,7 @@ export function VaccineScreen() {
       await vaccineService.deleteVaccine(id);
       void loadVaccines();
     } catch (err) {
-      let message = t('healthRecords.vaccine.errorDelete');
-      if (isAxiosError(err) && err.response?.data?.message) {
-        message = String(err.response.data.message);
-      }
+      const message = apiErrorMessage(err, t('healthRecords.vaccine.errorDelete'), t);
       Alert.alert(t('common.error'), message);
     }
   }
@@ -241,12 +235,13 @@ export function VaccineScreen() {
       }
       void loadVaccines();
     } catch (err) {
-      let message = editingRecord
-        ? t('healthRecords.vaccine.errorEdit')
-        : t('healthRecords.vaccine.errorCreate');
-      if (isAxiosError(err) && err.response?.data?.message) {
-        message = String(err.response.data.message);
-      }
+      const message = apiErrorMessage(
+        err,
+        editingRecord
+          ? t('healthRecords.vaccine.errorEdit')
+          : t('healthRecords.vaccine.errorCreate'),
+        t,
+      );
       Alert.alert(t('common.error'), message);
     } finally {
       setIsSubmitting(false);

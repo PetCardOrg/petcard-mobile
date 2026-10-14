@@ -21,7 +21,6 @@ import type {
   PetResponseDto,
 } from '@petcardorg/shared';
 import { useFocusEffect } from '@react-navigation/native';
-import { isAxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
 
 import { AnexosDoRegistro } from '../../components/domain/AnexosDoRegistro';
@@ -36,6 +35,7 @@ import { dewormingService } from '../../services';
 import { formatDateDisplay, formatDateInput, parseDate } from '../../utils/dateUtils';
 import { confirmarAcaoEmRegistroDeVet, ehRegistroDeVeterinario } from '../../utils/vetRecordGuard';
 import { colors, radii, spacing, typography } from '../../utils/theme';
+import { apiErrorMessage } from '../../utils/apiErrorMessage';
 
 type FormErrors = {
   productName?: string;
@@ -88,10 +88,7 @@ export function DewormingScreen() {
         const data = await dewormingService.getDewormingsByPet(selectedPetId);
         setDewormings(data);
       } catch (err) {
-        let message = t('healthRecords.deworming.errorLoad');
-        if (isAxiosError(err) && err.response?.data?.message) {
-          message = String(err.response.data.message);
-        }
+        const message = apiErrorMessage(err, t('healthRecords.deworming.errorLoad'), t);
         setError(message);
       } finally {
         setIsLoading(false);
@@ -185,10 +182,7 @@ export function DewormingScreen() {
       await dewormingService.deleteDeworming(id);
       void loadDewormings();
     } catch (err) {
-      let message = t('healthRecords.deworming.errorDelete');
-      if (isAxiosError(err) && err.response?.data?.message) {
-        message = String(err.response.data.message);
-      }
+      const message = apiErrorMessage(err, t('healthRecords.deworming.errorDelete'), t);
       Alert.alert(t('common.error'), message);
     }
   }
@@ -241,12 +235,13 @@ export function DewormingScreen() {
       }
       void loadDewormings();
     } catch (err) {
-      let message = editingRecord
-        ? t('healthRecords.deworming.errorEdit')
-        : t('healthRecords.deworming.errorCreate');
-      if (isAxiosError(err) && err.response?.data?.message) {
-        message = String(err.response.data.message);
-      }
+      const message = apiErrorMessage(
+        err,
+        editingRecord
+          ? t('healthRecords.deworming.errorEdit')
+          : t('healthRecords.deworming.errorCreate'),
+        t,
+      );
       Alert.alert(t('common.error'), message);
     } finally {
       setIsSubmitting(false);

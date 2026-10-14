@@ -166,4 +166,92 @@ describe('PetsContext', () => {
 
     await waitFor(() => expect(screen.getByTestId('tela-a')).toHaveTextContent(/Sem permissão/));
   });
+
+  describe('depois de mudar a lista no servidor', () => {
+    function TelaComAcoes() {
+      const { pets, garantirCarregado, removerPet, invalidar } = usePetsContext();
+
+      useEffect(() => {
+        garantirCarregado();
+      }, [garantirCarregado]);
+
+      return (
+        <>
+          <Text testID="lista">{pets.map((p) => p.name).join(',')}</Text>
+          <Text testID="remover" onPress={() => removerPet('p1')}>
+            remover
+          </Text>
+          <Text testID="invalidar" onPress={invalidar}>
+            invalidar
+          </Text>
+        </>
+      );
+    }
+
+    async function montarComListaCarregada() {
+      render(
+        <PetsProvider>
+          <TelaComAcoes />
+        </PetsProvider>,
+      );
+      await waitFor(() => expect(screen.getByTestId('lista')).toHaveTextContent('Rex,Mia'));
+    }
+
+    it('removerPet tira o pet da lista na hora, sem esperar o servidor', async () => {
+      await montarComListaCarregada();
+      // A nova busca nunca responde: a lista na tela só pode ter mudado por causa do filtro local.
+      getMyPets.mockReturnValue(new Promise(() => {}));
+
+      act(() => screen.getByTestId('remover').props.onPress());
+
+      expect(screen.getByTestId('lista')).toHaveTextContent('Mia');
+      expect(screen.getByTestId('lista')).not.toHaveTextContent('Rex');
+    });
+
+    it('removerPet confirma com uma nova busca, ignorando a janela de frescor', async () => {
+      await montarComListaCarregada();
+      getMyPets.mockResolvedValue([{ id: 'p2', name: 'Mia' }]);
+
+      act(() => screen.getByTestId('remover').props.onPress());
+
+      await waitFor(() => expect(getMyPets).toHaveBeenCalledTimes(2));
+      await waitFor(() => expect(screen.getByTestId('lista')).toHaveTextContent('Mia'));
+    });
+
+    it('invalidar traz o pet recém-criado mesmo com a lista ainda fresca', async () => {
+      await montarComListaCarregada();
+      getMyPets.mockResolvedValue([...PETS, { id: 'p3', name: 'Bidu' }]);
+
+      act(() => screen.getByTestId('invalidar').props.onPress());
+
+      await waitFor(() => expect(screen.getByTestId('lista')).toHaveTextContent('Rex,Mia,Bidu'));
+    });
+
+    it('invalidar durante uma busca em voo busca de novo, em vez de aceitar a lista velha', async () => {
+      let responderPrimeira: (pets: typeof PETS) => void = () => {};
+      getMyPets.mockReset();
+      getMyPets.mockReturnValueOnce(
+        new Promise((resolve) => {
+          responderPrimeira = resolve;
+        }),
+      );
+      getMyPets.mockResolvedValue([{ id: 'p2', name: 'Mia' }]);
+
+      render(
+        <PetsProvider>
+          <TelaComAcoes />
+        </PetsProvider>,
+      );
+      await waitFor(() => expect(getMyPets).toHaveBeenCalledTimes(1));
+
+      act(() => screen.getByTestId('invalidar').props.onPress());
+      await act(async () => {
+        responderPrimeira(PETS);
+      });
+
+      await waitFor(() => expect(getMyPets).toHaveBeenCalledTimes(2));
+      await waitFor(() => expect(screen.getByTestId('lista')).toHaveTextContent('Mia'));
+      expect(screen.getByTestId('lista')).not.toHaveTextContent('Rex');
+    });
+  });
 });

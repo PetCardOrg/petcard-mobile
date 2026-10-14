@@ -21,7 +21,6 @@ import type {
   PetResponseDto,
 } from '@petcardorg/shared';
 import { useFocusEffect } from '@react-navigation/native';
-import { isAxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
 
 import { AnexosDoRegistro } from '../../components/domain/AnexosDoRegistro';
@@ -36,6 +35,7 @@ import { medicationService } from '../../services';
 import { formatDateDisplay, formatDateInput, parseDate } from '../../utils/dateUtils';
 import { confirmarAcaoEmRegistroDeVet, ehRegistroDeVeterinario } from '../../utils/vetRecordGuard';
 import { colors, radii, spacing, typography } from '../../utils/theme';
+import { apiErrorMessage } from '../../utils/apiErrorMessage';
 
 function isMedicationActive(item: MedicationRecordResponseDto): boolean {
   if (!item.end_date) return true;
@@ -99,10 +99,7 @@ export function MedicationScreen() {
         const data = await medicationService.getMedicationsByPet(selectedPetId);
         setMedications(data);
       } catch (err) {
-        let message = t('healthRecords.medication.errorLoad');
-        if (isAxiosError(err) && err.response?.data?.message) {
-          message = String(err.response.data.message);
-        }
+        const message = apiErrorMessage(err, t('healthRecords.medication.errorLoad'), t);
         setError(message);
       } finally {
         setIsLoading(false);
@@ -198,10 +195,7 @@ export function MedicationScreen() {
       await medicationService.deleteMedication(id);
       void loadMedications();
     } catch (err) {
-      let message = t('healthRecords.medication.errorDelete');
-      if (isAxiosError(err) && err.response?.data?.message) {
-        message = String(err.response.data.message);
-      }
+      const message = apiErrorMessage(err, t('healthRecords.medication.errorDelete'), t);
       Alert.alert(t('common.error'), message);
     }
   }
@@ -258,12 +252,13 @@ export function MedicationScreen() {
       }
       void loadMedications();
     } catch (err) {
-      let message = editingRecord
-        ? t('healthRecords.medication.errorEdit')
-        : t('healthRecords.medication.errorCreate');
-      if (isAxiosError(err) && err.response?.data?.message) {
-        message = String(err.response.data.message);
-      }
+      const message = apiErrorMessage(
+        err,
+        editingRecord
+          ? t('healthRecords.medication.errorEdit')
+          : t('healthRecords.medication.errorCreate'),
+        t,
+      );
       Alert.alert(t('common.error'), message);
     } finally {
       setIsSubmitting(false);

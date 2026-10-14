@@ -44,10 +44,20 @@
     "passwordMismatch": "Passwords do not match.",
     "errorTitle": "Registration error",
     "errorMessage": "Could not create account. Please try again.",
+    "emailInUse": "This email is already registered. Sign in or use a different email.",
     "permissionRequired": "Permission required",
     "permissionGallery": "We need access to your gallery to select a photo.",
     "loginLink": "Already have an account",
     "googleButton": "Sign up with Google"
+  },
+  "apiErrors": {
+    "400": "Check the information provided and try again.",
+    "403": "You don't have permission to do that.",
+    "404": "We couldn't find what you're looking for. Refresh the screen and try again.",
+    "409": "A record with these details already exists.",
+    "413": "The file is too large.",
+    "415": "That file format isn't supported.",
+    "429": "Too many attempts in a short time. Wait a moment and try again."
   },
   "passwordRules": {
     "hint": "Use at least 8 characters, with one uppercase letter, one number and one special character.",
