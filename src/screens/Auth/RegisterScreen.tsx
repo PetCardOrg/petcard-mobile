@@ -13,7 +13,6 @@ import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { isAxiosError } from 'axios';
 
 import { GoogleSignInButton } from '../../components/GoogleSignInButton';
 import { PasswordInput } from '../../components/PasswordInput';
@@ -24,6 +23,7 @@ import { colors, radii, spacing, typography } from '../../utils/theme';
 import { formatPhoneBR, unformatPhone } from '../../utils/phoneMask';
 import { PASSWORD_MAX_LENGTH, validatePasswordStrength } from '../../utils/passwordStrength';
 import type { AuthStackParamList } from '../../navigation/types';
+import { apiErrorMessage } from '../../utils/apiErrorMessage';
 
 type RegisterNav = NativeStackNavigationProp<AuthStackParamList, 'Register'>;
 
@@ -93,10 +93,9 @@ export function RegisterScreen() {
         photoUri: imageUri ?? undefined,
       });
     } catch (err) {
-      let message = t('register.errorMessage');
-      if (isAxiosError(err) && err.response?.data?.message) {
-        message = String(err.response.data.message);
-      }
+      const message = apiErrorMessage(err, t('register.errorMessage'), t, {
+        409: t('register.emailInUse'),
+      });
       setError(message);
     }
   };

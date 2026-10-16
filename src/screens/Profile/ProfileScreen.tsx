@@ -15,7 +15,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { isAxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../../contexts/AuthContext';
@@ -23,6 +22,7 @@ import { tutorService, uploadService } from '../../services';
 import { supportedLanguages } from '../../i18n';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 import { formatPhoneBR, unformatPhone } from '../../utils/phoneMask';
+import { apiErrorMessage } from '../../utils/apiErrorMessage';
 
 export function ProfileScreen() {
   const { user, logout, updateUser } = useAuth();
@@ -85,10 +85,7 @@ export function ProfileScreen() {
       setIsEditing(false);
       setImageUri(null);
     } catch (err) {
-      let message = t('profile.saveError');
-      if (isAxiosError(err) && err.response?.data?.message) {
-        message = String(err.response.data.message);
-      }
+      const message = apiErrorMessage(err, t('profile.saveError'), t);
       Alert.alert(t('common.error'), message);
     } finally {
       setIsSaving(false);

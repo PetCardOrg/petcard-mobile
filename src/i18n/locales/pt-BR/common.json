@@ -44,10 +44,20 @@
     "passwordMismatch": "As senhas não coincidem.",
     "errorTitle": "Erro no cadastro",
     "errorMessage": "Não foi possível criar a conta. Tente novamente.",
+    "emailInUse": "Este e-mail já está cadastrado. Entre na sua conta ou use outro e-mail.",
     "permissionRequired": "Permissão necessária",
     "permissionGallery": "Precisamos de acesso à galeria para selecionar uma foto.",
     "loginLink": "Já tenho conta",
     "googleButton": "Cadastrar com Google"
+  },
+  "apiErrors": {
+    "400": "Confira os dados informados e tente novamente.",
+    "403": "Você não tem permissão para fazer isso.",
+    "404": "Não encontramos o que você procura. Atualize a tela e tente de novo.",
+    "409": "Já existe um registro com esses dados.",
+    "413": "O arquivo é grande demais.",
+    "415": "Esse formato de arquivo não é aceito.",
+    "429": "Muitas tentativas em pouco tempo. Aguarde um instante e tente novamente."
   },
   "passwordRules": {
     "hint": "Use no mínimo 8 caracteres, com uma letra maiúscula, um número e um caractere especial.",
@@ -540,7 +550,27 @@
     "acao": {
       "CRIACAO": "Registrado por",
       "EDICAO": "Alterado por",
-      "EXCLUSAO": "Apagado por"
+      "EXCLUSAO": "Apagado por",
+      "ANEXO_ADICIONADO": "Comprovante anexado por",
+      "ANEXO_REMOVIDO": "Comprovante removido por",
+      "ANEXO_VERIFICADO": "Comprovante verificado por"
     }
+  },
+  "anexos": {
+    "titulo": "Comprovantes",
+    "adicionar": "Anexar foto",
+    "abrir": "Abrir comprovante",
+    "remover": "Remover comprovante",
+    "verificadoPor": "Verificado por {{name}} ({{crmv}})",
+    "aguardandoVerificacao": "Aguardando verificação do veterinário",
+    "removerTitulo": "Remover comprovante",
+    "removerMensagem": "Remover \"{{name}}\" da carteira? O arquivo fica guardado no histórico do pet.",
+    "removerVerificadoMensagem": "\"{{name}}\" foi verificado por um veterinário. Remover da carteira? O arquivo e a verificação ficam guardados no histórico do pet.",
+    "tipoInvalido": "Formato não aceito. Use uma foto JPEG, PNG ou WebP.",
+    "grandeDemais": "O arquivo excede o limite de 10 MB.",
+    "erroEnviar": "Não foi possível enviar o comprovante. Tente novamente.",
+    "erroAbrir": "Não foi possível abrir o comprovante.",
+    "erroRemover": "Não foi possível remover o comprovante.",
+    "permissaoGaleria": "Precisamos de acesso à galeria para selecionar o comprovante."
   }
 }

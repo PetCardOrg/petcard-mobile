@@ -21,13 +21,14 @@ import type { CreatePetDto } from '@petcardorg/shared';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as ImagePicker from 'expo-image-picker';
-import { isAxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
 
+import { usePetsContext } from '../../contexts/PetsContext';
 import { petService, uploadService } from '../../services';
 import type { HomeStackParamList } from '../../navigation/types';
 import { formatDateInput, parseDate } from '../../utils/dateUtils';
 import { colors, radii, spacing, typography } from '../../utils/theme';
+import { apiErrorMessage } from '../../utils/apiErrorMessage';
 
 type PetFormData = Omit<CreatePetDto, 'photo_url'>;
 
@@ -75,6 +76,7 @@ const BREED_SUGGESTIONS: Record<Species, string[]> = {
 
 export function PetRegistrationScreen() {
   const { t } = useTranslation();
+  const { invalidar } = usePetsContext();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
 
   const SPECIES_OPTIONS: { label: string; value: Species }[] = [
@@ -181,6 +183,7 @@ export function PetRegistrationScreen() {
         ...payload,
         ...(photoUrl ? { photo_url: photoUrl } : {}),
       });
+      invalidar();
 
       setName('');
       setSpecies(null);
@@ -197,10 +200,7 @@ export function PetRegistrationScreen() {
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (err) {
-      let message = t('petRegistration.errorMessage');
-      if (isAxiosError(err) && err.response?.data?.message) {
-        message = String(err.response.data.message);
-      }
+      const message = apiErrorMessage(err, t('petRegistration.errorMessage'), t);
       Alert.alert(t('common.error'), message);
     } finally {
       setIsSubmitting(false);

@@ -44,10 +44,20 @@
     "passwordMismatch": "Passwords do not match.",
     "errorTitle": "Registration error",
     "errorMessage": "Could not create account. Please try again.",
+    "emailInUse": "This email is already registered. Sign in or use a different email.",
     "permissionRequired": "Permission required",
     "permissionGallery": "We need access to your gallery to select a photo.",
     "loginLink": "Already have an account",
     "googleButton": "Sign up with Google"
+  },
+  "apiErrors": {
+    "400": "Check the information provided and try again.",
+    "403": "You don't have permission to do that.",
+    "404": "We couldn't find what you're looking for. Refresh the screen and try again.",
+    "409": "A record with these details already exists.",
+    "413": "The file is too large.",
+    "415": "That file format isn't supported.",
+    "429": "Too many attempts in a short time. Wait a moment and try again."
   },
   "passwordRules": {
     "hint": "Use at least 8 characters, with one uppercase letter, one number and one special character.",
@@ -540,7 +550,27 @@
     "acao": {
       "CRIACAO": "Recorded by",
       "EDICAO": "Changed by",
-      "EXCLUSAO": "Deleted by"
+      "EXCLUSAO": "Deleted by",
+      "ANEXO_ADICIONADO": "Attachment added by",
+      "ANEXO_REMOVIDO": "Attachment removed by",
+      "ANEXO_VERIFICADO": "Attachment verified by"
     }
+  },
+  "anexos": {
+    "titulo": "Proof of treatment",
+    "adicionar": "Attach photo",
+    "abrir": "Open attachment",
+    "remover": "Remove attachment",
+    "verificadoPor": "Verified by {{name}} ({{crmv}})",
+    "aguardandoVerificacao": "Awaiting veterinarian verification",
+    "removerTitulo": "Remove attachment",
+    "removerMensagem": "Remove \"{{name}}\" from the card? The file stays saved in the pet's history.",
+    "removerVerificadoMensagem": "\"{{name}}\" was verified by a veterinarian. Remove it from the card? The file and the verification stay saved in the pet's history.",
+    "tipoInvalido": "Unsupported format. Use a JPEG, PNG or WebP photo.",
+    "grandeDemais": "The file exceeds the 10 MB limit.",
+    "erroEnviar": "Could not upload the attachment. Please try again.",
+    "erroAbrir": "Could not open the attachment.",
+    "erroRemover": "Could not remove the attachment.",
+    "permissaoGaleria": "We need access to your gallery to select the attachment."
   }
 }
