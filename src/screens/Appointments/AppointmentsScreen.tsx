@@ -4,7 +4,6 @@ import {
   Alert,
   FlatList,
   KeyboardAvoidingView,
-  Linking,
   Modal,
   Platform,
   Pressable,
@@ -16,6 +15,8 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
 import type { PetResponseDto } from '@petcardorg/shared';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -34,6 +35,7 @@ import { appointmentService, calendarService } from '../../services';
 import type { AppointmentResponse } from '../../services/appointment.service';
 import { formatDateInput, parseDate } from '../../utils/dateUtils';
 import { colors, radii, spacing, typography } from '../../utils/theme';
+import { CalendarConnectedModal } from './CalendarConnectedModal';
 import { getRelativeDays } from './relativeDate';
 import { apiErrorMessage } from '../../utils/apiErrorMessage';
 
@@ -86,6 +88,7 @@ export function AppointmentsScreen() {
 
   // Calendar sync state
   const [calendarConnected, setCalendarConnected] = useState(false);
+  const [calendarSuccessVisible, setCalendarSuccessVisible] = useState(false);
 
   // Form state
   const [modalVisible, setModalVisible] = useState(false);
@@ -266,12 +269,32 @@ export function AppointmentsScreen() {
   }
 
   async function handleCalendarConnect() {
+    // A API devolve o tutor para este endereço ao fim do consentimento; a
+    // sessão de auth reconhece a volta e fecha a aba sozinha. A raiz ('/') não
+    // casa com nenhuma rota do linking, então a navegação não se mexe.
+    const returnUrl = Linking.createURL('/');
     try {
-      const url = await calendarService.getConnectUrl();
-      if (url) {
-        await Linking.openURL(url);
-      } else {
+      const url = await calendarService.getConnectUrl(returnUrl);
+      if (!url) {
         Alert.alert(t('common.error'), t('appointments.calendar.notConfigured'));
+        return;
+      }
+
+      const result = await WebBrowser.openAuthSessionAsync(url, returnUrl);
+      const outcome =
+        result.type === 'success' ? calendarService.parseConnectOutcome(result.url) : null;
+
+      if (outcome === 'connected') {
+        setCalendarConnected(true);
+        setCalendarSuccessVisible(true);
+      } else if (outcome === 'denied') {
+        Alert.alert(t('appointments.calendar.deniedTitle'), t('appointments.calendar.denied'));
+      } else if (outcome === 'error') {
+        Alert.alert(t('common.error'), t('appointments.calendar.connectError'));
+      } else {
+        // Aba fechada à mão (ou volta por um app antigo da API): o status do
+        // servidor é quem diz se conectou.
+        void checkCalendarStatus();
       }
     } catch {
       Alert.alert(t('common.error'), t('appointments.calendar.connectError'));
@@ -653,6 +676,11 @@ export function AppointmentsScreen() {
           </KeyboardAvoidingView>
         </View>
       </Modal>
+
+      <CalendarConnectedModal
+        onClose={() => setCalendarSuccessVisible(false)}
+        visible={calendarSuccessVisible}
+      />
     </View>
   );
 }

@@ -489,7 +489,20 @@
       "disconnectTitle": "Disconnect Google Calendar",
       "disconnectMessage": "Appointments will no longer be synced. Continue?",
       "disconnectConfirm": "Disconnect",
-      "disconnectError": "Could not disconnect Google Calendar."
+      "disconnectError": "Could not disconnect Google Calendar.",
+      "deniedTitle": "Connection cancelled",
+      "denied": "You did not authorize access to Google Calendar. Try again whenever you like.",
+      "success": {
+        "title": "Google Calendar connected!",
+        "subtitle": "From now on, PetCard keeps your calendar up to date.",
+        "appointmentsTitle": "Appointments in your calendar",
+        "appointmentsText": "Everything you schedule in the app shows up in Google Calendar.",
+        "remindersTitle": "Automatic reminders",
+        "remindersText": "A heads-up 1 hour and 15 minutes before each appointment.",
+        "syncTitle": "Always in sync",
+        "syncText": "Rescheduled or cancelled in the app? Your calendar follows along.",
+        "done": "Got it"
+      }
     }
   },
   "common": {
