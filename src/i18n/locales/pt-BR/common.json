@@ -489,7 +489,20 @@
       "disconnectTitle": "Desconectar Google Calendar",
       "disconnectMessage": "Os agendamentos não serão mais sincronizados. Deseja continuar?",
       "disconnectConfirm": "Desconectar",
-      "disconnectError": "Não foi possível desconectar o Google Calendar."
+      "disconnectError": "Não foi possível desconectar o Google Calendar.",
+      "deniedTitle": "Conexão cancelada",
+      "denied": "Você não autorizou o acesso ao Google Agenda. Tente de novo quando quiser.",
+      "success": {
+        "title": "Google Agenda conectado!",
+        "subtitle": "A partir de agora, o PetCard cuida da sua agenda.",
+        "appointmentsTitle": "Consultas na agenda",
+        "appointmentsText": "Tudo o que você agendar no app aparece no seu Google Agenda.",
+        "remindersTitle": "Lembretes automáticos",
+        "remindersText": "Aviso 1 hora e 15 minutos antes de cada compromisso.",
+        "syncTitle": "Sempre em dia",
+        "syncText": "Remarcou ou cancelou no app? A agenda acompanha sozinha.",
+        "done": "Entendi"
+      }
     }
   },
   "common": {
