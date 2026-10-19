@@ -28,6 +28,7 @@ import { formatDateInput, parseDate } from '../../utils/dateUtils';
 import { getPhotoUrl, SEX_CONFIG, SPECIES_CONFIG } from '../../utils/petConfig';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 import { apiErrorMessage } from '../../utils/apiErrorMessage';
+import { avatarPickerOptions } from '../../utils/avatarPicker';
 
 type PetDetailsScreenProps = NativeStackScreenProps<HomeStackParamList, 'PetDetails'>;
 
@@ -135,12 +136,7 @@ export function PetDetailsScreen({ route, navigation }: PetDetailsScreenProps) {
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
+    const result = await ImagePicker.launchImageLibraryAsync(avatarPickerOptions());
 
     if (!result.canceled && result.assets[0]) {
       setEditImageUri(result.assets[0].uri);

@@ -23,6 +23,7 @@ import { supportedLanguages } from '../../i18n';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 import { formatPhoneBR, unformatPhone } from '../../utils/phoneMask';
 import { apiErrorMessage } from '../../utils/apiErrorMessage';
+import { avatarPickerOptions } from '../../utils/avatarPicker';
 
 export function ProfileScreen() {
   const { user, logout, updateUser } = useAuth();
@@ -55,12 +56,7 @@ export function ProfileScreen() {
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
+    const result = await ImagePicker.launchImageLibraryAsync(avatarPickerOptions());
 
     if (!result.canceled && result.assets[0]) {
       setImageUri(result.assets[0].uri);

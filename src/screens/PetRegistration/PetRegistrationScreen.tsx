@@ -29,6 +29,7 @@ import type { HomeStackParamList } from '../../navigation/types';
 import { formatDateInput, parseDate } from '../../utils/dateUtils';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 import { apiErrorMessage } from '../../utils/apiErrorMessage';
+import { avatarPickerOptions } from '../../utils/avatarPicker';
 
 type PetFormData = Omit<CreatePetDto, 'photo_url'>;
 
@@ -135,12 +136,7 @@ export function PetRegistrationScreen() {
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
+    const result = await ImagePicker.launchImageLibraryAsync(avatarPickerOptions());
 
     if (!result.canceled && result.assets[0]) {
       setImageUri(result.assets[0].uri);
