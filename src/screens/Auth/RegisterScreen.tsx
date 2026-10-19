@@ -24,6 +24,7 @@ import { formatPhoneBR, unformatPhone } from '../../utils/phoneMask';
 import { PASSWORD_MAX_LENGTH, validatePasswordStrength } from '../../utils/passwordStrength';
 import type { AuthStackParamList } from '../../navigation/types';
 import { apiErrorMessage } from '../../utils/apiErrorMessage';
+import { avatarPickerOptions } from '../../utils/avatarPicker';
 
 type RegisterNav = NativeStackNavigationProp<AuthStackParamList, 'Register'>;
 
@@ -51,12 +52,7 @@ export function RegisterScreen() {
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
+    const result = await ImagePicker.launchImageLibraryAsync(avatarPickerOptions());
 
     if (!result.canceled && result.assets[0]) {
       setImageUri(result.assets[0].uri);
