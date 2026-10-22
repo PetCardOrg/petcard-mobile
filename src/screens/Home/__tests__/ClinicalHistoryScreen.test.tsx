@@ -48,6 +48,17 @@ describe('ClinicalHistoryScreen', () => {
     expect(mockGetHistorico).toHaveBeenCalledWith('p1');
   });
 
+  // Registro sem a trilha não pode derrubar a tela: o render lia `acoes.length`.
+  it('mostra o registro mesmo quando a trilha de ações não vem', async () => {
+    const semTrilha: Record<string, unknown> = { ...vacina };
+    delete semTrilha.acoes;
+    mockGetHistorico.mockResolvedValue(historico([semTrilha]));
+
+    renderWithProviders(<ClinicalHistoryScreen navigation={{} as never} route={route} />);
+
+    expect(await screen.findByText('Antirrábica')).toBeVisible();
+  });
+
   it('marca o que foi excluído e mostra a trilha de quem agiu', async () => {
     mockGetHistorico.mockResolvedValue(
       historico([

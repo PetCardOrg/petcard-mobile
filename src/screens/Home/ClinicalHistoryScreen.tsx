@@ -93,9 +93,9 @@ function HistoricoItem({ item }: { item: HistoricoClinicoItemResponseDto }) {
         </View>
       ) : null}
 
-      {item.acoes.length > 0 ? (
+      {(item.acoes ?? []).length > 0 ? (
         <View style={styles.trilha}>
-          {item.acoes.map((acao) => (
+          {(item.acoes ?? []).map((acao) => (
             <Text key={acao.id} style={styles.trilhaLinha}>
               {t(`clinicalHistory.acao.${acao.tipo}`)} · {acao.autor_nome}
               {acao.autor_crmv ? ` (${acao.autor_crmv})` : ''}
@@ -117,7 +117,7 @@ export function ClinicalHistoryScreen({ route }: Props) {
   const [error, setError] = useState(false);
 
   const carregar = useCallback(
-    async (mode: 'initial' | 'refresh' = 'initial') => {
+    async (mode?: 'initial' | 'refresh') => {
       if (mode === 'refresh') setIsRefreshing(true);
       else setIsLoading(true);
 

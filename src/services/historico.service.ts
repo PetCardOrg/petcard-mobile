@@ -1,6 +1,7 @@
 import type { HistoricoClinicoResponseDto } from '@petcardorg/shared';
 
 import { api } from './api';
+import { ensureList } from './ensureList';
 
 const getHistoricoEndpoint = (petId: string) => `/pets/${petId}/historico-clinico`;
 
@@ -13,5 +14,13 @@ const getHistoricoEndpoint = (petId: string) => `/pets/${petId}/historico-clinic
  */
 export async function getHistoricoClinico(petId: string): Promise<HistoricoClinicoResponseDto> {
   const { data } = await api.get<HistoricoClinicoResponseDto>(getHistoricoEndpoint(petId));
-  return data;
+  // A tela lê `itens.length`: sem a lista, a falha tem de nascer aqui e cair no
+  // estado de erro, e não no render.
+  return {
+    ...data,
+    itens: ensureList<HistoricoClinicoResponseDto['itens'][number]>(
+      data?.itens,
+      'histórico clínico',
+    ),
+  };
 }
