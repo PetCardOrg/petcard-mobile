@@ -110,7 +110,7 @@ export function DigitalWalletScreen({ route }: Props) {
   const isScreenActiveRef = useRef(false);
 
   const loadWallet = useCallback(
-    async (mode: 'initial' | 'refresh' = 'initial') => {
+    async (mode?: 'initial' | 'refresh') => {
       if (mode === 'refresh') {
         setIsRefreshing(true);
       } else {

@@ -93,6 +93,15 @@ describe('PetScansScreen', () => {
     expect(await screen.findByText(/não foi possível carregar/i)).toBeTruthy();
   });
 
+  // Regressão: o `undefined` ia para o estado e o `.length` do render derrubava
+  // o app inteiro em build Release.
+  it('não quebra quando a carga resolve sem lista', async () => {
+    mockGetByPet.mockResolvedValue(undefined);
+    renderWithProviders(<PetScansScreen route={route} navigation={{} as never} />);
+
+    expect(await screen.findByText(/nenhuma leitura ainda/i)).toBeTruthy();
+  });
+
   it('mostra estado vazio quando ninguém leu o QR ainda', async () => {
     mockGetByPet.mockResolvedValue([]);
     renderWithProviders(<PetScansScreen route={route} navigation={{} as never} />);

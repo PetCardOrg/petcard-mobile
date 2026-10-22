@@ -85,7 +85,7 @@ export function MedicationScreen() {
   const [formErrors, setFormErrors] = useState<FormErrors>({});
 
   const loadMedications = useCallback(
-    async (mode: 'initial' | 'refresh' = 'initial') => {
+    async (mode?: 'initial' | 'refresh') => {
       if (!selectedPetId) return;
 
       if (mode === 'refresh') {

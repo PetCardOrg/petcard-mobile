@@ -104,7 +104,7 @@ export function AppointmentsScreen() {
   const [formErrors, setFormErrors] = useState<FormErrors>({});
 
   const loadAppointments = useCallback(
-    async (mode: 'initial' | 'refresh' = 'initial') => {
+    async (mode?: 'initial' | 'refresh') => {
       if (mode === 'refresh') {
         setIsRefreshing(true);
       } else {

@@ -74,7 +74,7 @@ export function DewormingScreen() {
   const [formErrors, setFormErrors] = useState<FormErrors>({});
 
   const loadDewormings = useCallback(
-    async (mode: 'initial' | 'refresh' = 'initial') => {
+    async (mode?: 'initial' | 'refresh') => {
       if (!selectedPetId) return;
 
       if (mode === 'refresh') {

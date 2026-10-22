@@ -5,13 +5,14 @@ import type {
 } from '@petcardorg/shared';
 
 import { api } from './api';
+import { ensureList } from './ensureList';
 
 const VACCINES_ENDPOINT = '/vaccines';
 const getVaccinesByPetEndpoint = (petId: string) => `/pets/${petId}/vaccines`;
 
 export async function getVaccinesByPet(petId: string): Promise<VaccineRecordResponseDto[]> {
   const { data } = await api.get<VaccineRecordResponseDto[]>(getVaccinesByPetEndpoint(petId));
-  return data;
+  return ensureList<VaccineRecordResponseDto>(data, 'vacinas');
 }
 
 export async function getVaccineById(id: string): Promise<VaccineRecordResponseDto> {
