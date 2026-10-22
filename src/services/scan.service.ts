@@ -1,4 +1,5 @@
 import { api } from './api';
+import { ensureList } from './ensureList';
 
 /**
  * Uma leitura do QR da coleira do pet.
@@ -32,5 +33,5 @@ export async function getTag(petId: string): Promise<TagColeira> {
 
 export async function getByPet(petId: string): Promise<PetScan[]> {
   const { data } = await api.get<PetScan[]>(`/coleira/pets/${petId}/scans`);
-  return data;
+  return ensureList<PetScan>(data, 'leituras da coleira');
 }

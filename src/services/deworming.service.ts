@@ -5,13 +5,14 @@ import type {
 } from '@petcardorg/shared';
 
 import { api } from './api';
+import { ensureList } from './ensureList';
 
 const DEWORMINGS_ENDPOINT = '/dewormings';
 const getDewormingsByPetEndpoint = (petId: string) => `/pets/${petId}/dewormings`;
 
 export async function getDewormingsByPet(petId: string): Promise<DewormingRecordResponseDto[]> {
   const { data } = await api.get<DewormingRecordResponseDto[]>(getDewormingsByPetEndpoint(petId));
-  return data;
+  return ensureList<DewormingRecordResponseDto>(data, 'vermifugações');
 }
 
 export async function getDewormingById(id: string): Promise<DewormingRecordResponseDto> {

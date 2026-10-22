@@ -1,4 +1,5 @@
 import { api } from './api';
+import { ensureList } from './ensureList';
 
 const ENDPOINT = '/appointments';
 
@@ -29,14 +30,14 @@ export type UpdateAppointmentPayload = Partial<CreateAppointmentPayload>;
 
 export async function getAll(): Promise<AppointmentResponse[]> {
   const { data } = await api.get<AppointmentResponse[]>(ENDPOINT);
-  return data;
+  return ensureList<AppointmentResponse>(data, 'agendamentos');
 }
 
 export async function getUpcoming(): Promise<AppointmentResponse[]> {
   const { data } = await api.get<AppointmentResponse[]>(ENDPOINT, {
     params: { upcoming: 'true' },
   });
-  return data;
+  return ensureList<AppointmentResponse>(data, 'agendamentos');
 }
 
 export async function getById(id: string): Promise<AppointmentResponse> {

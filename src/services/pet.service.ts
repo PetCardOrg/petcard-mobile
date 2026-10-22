@@ -1,12 +1,13 @@
 import type { CreatePetDto, PetResponseDto, UpdatePetDto } from '@petcardorg/shared';
 
 import { api } from './api';
+import { ensureList } from './ensureList';
 
 const PETS_ENDPOINT = '/pets';
 
 export async function getMyPets(): Promise<PetResponseDto[]> {
   const { data } = await api.get<PetResponseDto[]>(PETS_ENDPOINT);
-  return data;
+  return ensureList<PetResponseDto>(data, 'pets');
 }
 
 export async function getPetById(id: string): Promise<PetResponseDto> {

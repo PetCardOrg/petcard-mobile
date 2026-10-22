@@ -137,13 +137,16 @@ export function PetScansScreen({ route }: Props) {
   const [error, setError] = useState(false);
 
   const carregar = useCallback(
-    async (mode: 'initial' | 'refresh' = 'initial') => {
+    async (mode?: 'initial' | 'refresh') => {
       if (mode === 'refresh') setIsRefreshing(true);
       else setIsLoading(true);
 
       try {
         setError(false);
-        setScans(await scanService.getByPet(petId));
+        const leituras = await scanService.getByPet(petId);
+        // Rede de segurança além da checagem do service: `scans` nunca pode
+        // ficar `undefined`, porque o render lê `.length` dele.
+        setScans(Array.isArray(leituras) ? leituras : []);
       } catch {
         setError(true);
       } finally {

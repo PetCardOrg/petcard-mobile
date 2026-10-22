@@ -1,6 +1,7 @@
 import type { PlacesClinicResponseDto } from '@petcardorg/shared';
 
 import { api } from './api';
+import { ensureList } from './ensureList';
 
 const CLINICS_ENDPOINT = '/clinicas';
 
@@ -18,7 +19,7 @@ export async function findNearbyPlaces(
   const { data } = await api.get<PlacesClinicResponseDto[]>(`${CLINICS_ENDPOINT}/places`, {
     params,
   });
-  return data;
+  return ensureList<PlacesClinicResponseDto>(data, 'clínicas');
 }
 
 /**
@@ -51,5 +52,5 @@ export async function autocompletePlaces({
     params,
     signal,
   });
-  return data;
+  return ensureList<PlaceSuggestion>(data, 'sugestões de local');
 }
