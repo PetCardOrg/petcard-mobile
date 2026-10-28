@@ -3,6 +3,12 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 const DEFAULT_API_URL = 'http://localhost:3000';
 const API_TIMEOUT_MS = 10000;
 
+/**
+ * Teto para envio de arquivo (foto, comprovante de até 10 MB). Em rede móvel
+ * sobe bem mais devagar que uma chamada JSON, e o teto padrão cortava no meio.
+ */
+export const UPLOAD_TIMEOUT_MS = 60000;
+
 type TokenProvider = () => Promise<string | null>;
 type UnauthorizedHandler = () => void;
 
