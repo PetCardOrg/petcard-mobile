@@ -16,7 +16,30 @@ if (!googleMapsApiKey) {
   );
 }
 
-export default ({ config }: ConfigContext): ExpoConfig => ({
+/** Perfis do `eas.json` que geram app para outras pessoas instalarem. */
+const PERFIS_DE_DISTRIBUICAO = ['preview', 'production'];
+
+/**
+ * Sem a URL, o app cai no fallback `http://localhost:3000` do `api.ts`, que no
+ * celular é o próprio aparelho: o build sai "verde" e nenhuma tela funciona.
+ * Por isso aqui é erro, e não aviso como a chave do Maps.
+ */
+function exigirUrlDaApiEmDistribuicao() {
+  const perfil = process.env.EAS_BUILD_PROFILE;
+  if (perfil && PERFIS_DE_DISTRIBUICAO.includes(perfil) && !process.env.EXPO_PUBLIC_API_URL) {
+    throw new Error(
+      `[app.config] EXPO_PUBLIC_API_URL ausente no build "${perfil}": o app chamaria localhost. ` +
+        `Defina a variável no ambiente "${perfil}" do EAS.`,
+    );
+  }
+}
+
+export default ({ config }: ConfigContext): ExpoConfig => {
+  exigirUrlDaApiEmDistribuicao();
+  return configDoApp(config);
+};
+
+const configDoApp = (config: ConfigContext['config']): ExpoConfig => ({
   ...config,
   name: 'petcard-mobile',
   slug: 'petcard-mobile',
