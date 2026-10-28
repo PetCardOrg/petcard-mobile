@@ -15,6 +15,14 @@ type UnauthorizedHandler = () => void;
 let tokenProvider: TokenProvider | null = null;
 let unauthorizedHandler: UnauthorizedHandler | null = null;
 
+// O build do EAS já falha sem a URL (app.config.ts). Isto cobre o que escapar
+// por outro caminho: fora do dev, localhost é o próprio celular e nada funciona.
+if (!process.env.EXPO_PUBLIC_API_URL && !__DEV__) {
+  console.error(
+    `[api] EXPO_PUBLIC_API_URL ausente: usando ${DEFAULT_API_URL}, que não existe no aparelho.`,
+  );
+}
+
 export const api = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_URL ?? DEFAULT_API_URL,
   timeout: API_TIMEOUT_MS,
