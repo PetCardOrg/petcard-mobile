@@ -9,7 +9,7 @@ import {
 } from 'react';
 import * as SecureStore from 'expo-secure-store';
 
-import { api, setTokenProvider, setUnauthorizedHandler } from '../services/api';
+import { setTokenProvider, setUnauthorizedHandler } from '../services/api';
 import { authService, tutorService, uploadService } from '../services';
 
 const STORE_ACCESS_TOKEN = 'auth_access_token';
@@ -105,60 +105,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await api.post('/auth/login', { email, password });
-      const { access_token, user: userData } = response.data;
-
-      await saveSession(access_token, userData);
-      setUser(userData);
-    } catch (e) {
-      const err = e instanceof Error ? e : new Error('Login failed');
-      setError(err);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const loginWithGoogle = useCallback(async (idToken: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const { access_token, user: userData } = await authService.googleLogin(idToken);
-
-      await saveSession(access_token, userData);
-      setUser(userData);
-    } catch (e) {
-      const err = e instanceof Error ? e : new Error('Google login failed');
-      setError(err);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const register = useCallback(
-    async (
-      name: string,
-      email: string,
-      password: string,
-      extras?: { phone?: string; photoUri?: string },
-    ) => {
+  /**
+   * Parte comum de login, login Google e cadastro: liga o loading, abre a
+   * sessão com `abrir` e grava o resultado. Em caso de erro, guarda e relança.
+   */
+  const startSession = useCallback(
+    async (fallback: string, abrir: () => Promise<{ access_token: string; user: User }>) => {
       try {
         setIsLoading(true);
         setError(null);
 
-        const response = await api.post('/auth/register', {
-          name,
-          email,
-          password,
-        });
-        const { access_token, user: userData } = response.data;
+        const { access_token, user: userData } = await abrir();
+
+        await saveSession(access_token, userData);
+        setUser(userData);
+      } catch (e) {
+        const err = e instanceof Error ? e : new Error(fallback);
+        setError(err);
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
+
+  const login = useCallback(
+    (email: string, password: string) =>
+      startSession('Login failed', () => authService.login(email, password)),
+    [startSession],
+  );
+
+  const loginWithGoogle = useCallback(
+    (idToken: string) =>
+      startSession('Google login failed', () => authService.googleLogin(idToken)),
+    [startSession],
+  );
+
+  const register = useCallback(
+    (
+      name: string,
+      email: string,
+      password: string,
+      extras?: { phone?: string; photoUri?: string },
+    ) =>
+      startSession('Registration failed', async () => {
+        const { access_token, user: userData } = await authService.register(name, email, password);
 
         // Salva o token antes de tentar foto/telefone: upload de imagem e
         // PATCH /tutors/me exigem Authorization, e o interceptor do axios lê
@@ -183,17 +175,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        await saveSession(access_token, finalUser);
-        setUser(finalUser);
-      } catch (e) {
-        const err = e instanceof Error ? e : new Error('Registration failed');
-        setError(err);
-        throw err;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [],
+        return { access_token, user: finalUser };
+      }),
+    [startSession],
   );
 
   const logout = useCallback(async () => {
