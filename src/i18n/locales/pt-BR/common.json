@@ -364,7 +364,8 @@
       "deleteMessage": "Deseja excluir o registro de \"{{name}}\"?",
       "startDate": "Início: {{date}}",
       "endDate": "Término: {{date}}",
-      "ongoing": "Em andamento"
+      "ongoing": "Em andamento",
+      "finished": "Concluída"
     },
     "vetRecord": {
       "editTitle": "Registro do veterinário",

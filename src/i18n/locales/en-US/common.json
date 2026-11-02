@@ -364,7 +364,8 @@
       "deleteMessage": "Delete the record for \"{{name}}\"?",
       "startDate": "Start: {{date}}",
       "endDate": "End: {{date}}",
-      "ongoing": "Ongoing"
+      "ongoing": "Ongoing",
+      "finished": "Finished"
     },
     "vetRecord": {
       "editTitle": "Veterinarian record",

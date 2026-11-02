@@ -84,7 +84,7 @@ const config: ConfigDaTelaDeSaude<MedicationRecordResponseDto> = {
     return (
       <View style={[styles.statusBadge, active ? styles.statusActive : styles.statusDone]}>
         <Text style={[styles.statusText, active ? styles.statusTextActive : styles.statusTextDone]}>
-          {active ? t('healthRecords.medication.ongoing') : 'Concluída'}
+          {active ? t('healthRecords.medication.ongoing') : t('healthRecords.medication.finished')}
         </Text>
       </View>
     );
