@@ -29,11 +29,11 @@ type Props = NativeStackScreenProps<HomeStackParamList, 'PetScans'>;
  * `created_at` é instante ISO (não dia de calendário), então `Date` é seguro
  * aqui — a ressalva de fuso do histórico clínico não se aplica.
  */
-function formatarInstante(iso: string): string {
+export function formatarInstante(iso: string, idioma: string): string {
   const instante = new Date(iso);
   if (Number.isNaN(instante.getTime())) return iso;
-  const data = instante.toLocaleDateString('pt-BR');
-  const hora = instante.toLocaleTimeString('pt-BR', {
+  const data = instante.toLocaleDateString(idioma);
+  const hora = instante.toLocaleTimeString(idioma, {
     hour: '2-digit',
     minute: '2-digit',
   });
@@ -75,7 +75,7 @@ async function abrirNoMapa(latitude: number, longitude: number, t: TFunction) {
 }
 
 function ScanItem({ scan }: { scan: PetScan }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const localizado = temLocalizacao(scan);
 
   return (
@@ -90,7 +90,7 @@ function ScanItem({ scan }: { scan: PetScan }) {
         </View>
         <View style={styles.cardHeaderText}>
           <Text style={styles.cardTitle}>{t('petScans.item.title')}</Text>
-          <Text style={styles.cardDate}>{formatarInstante(scan.created_at)}</Text>
+          <Text style={styles.cardDate}>{formatarInstante(scan.created_at, i18n.language)}</Text>
         </View>
       </View>
 

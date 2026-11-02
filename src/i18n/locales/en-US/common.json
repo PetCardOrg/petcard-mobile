@@ -21,7 +21,10 @@
     "authErrorTitle": "Authentication error",
     "registerLink": "Create account",
     "forgotPasswordLink": "Forgot my password",
-    "googleButton": "Sign in with Google"
+    "googleButton": "Sign in with Google",
+    "googleError": "Google authentication failed.",
+    "googleNoToken": "Google didn't return a valid token.",
+    "googleFailed": "Couldn't sign in with Google."
   },
   "register": {
     "title": "Create Account",
@@ -99,7 +102,9 @@
     "emptyTitle": "No pets registered",
     "emptyDescription": "Add your first pet to track vaccines, dewormings, and medications.",
     "emptyAction": "Add pet",
-    "addPetAccessibility": "Add pet"
+    "addPetAccessibility": "Add pet",
+    "loadError": "Couldn't load your pets. Please try again.",
+    "permissionError": "You don't have permission to access your pets. Ask the administrator to set up your account."
   },
   "petDetails": {
     "digitalWallet": "Digital Card",
@@ -476,7 +481,8 @@
       "titleRequired": "Title is required",
       "dateRequired": "Date is required",
       "timeRequired": "Time is required",
-      "timeInvalid": "Invalid time. Use HH:MM"
+      "timeInvalid": "Invalid time. Use HH:MM",
+      "pastDateTime": "This time has already passed. Choose a future date and time."
     },
     "calendar": {
       "connected": "Google Calendar connected",

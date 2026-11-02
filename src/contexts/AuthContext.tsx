@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import * as SecureStore from 'expo-secure-store';
 
 import { api, setTokenProvider, setUnauthorizedHandler } from '../services/api';
@@ -58,6 +66,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<Error | null>(null);
 
   const isAuthenticated = user !== null;
+
+  // Usuário atual para callbacks estáveis (`refreshUser`) lerem sem depender de `user`.
+  const userRef = useRef<User | null>(null);
+  userRef.current = user;
 
   // Restore session on mount
   useEffect(() => {
@@ -208,21 +220,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profile_image_url?: string | null;
         email_verified?: boolean;
       };
-      let next: User | null = null;
-      setUser((prev) => {
-        if (!prev) return prev;
-        next = {
-          ...prev,
-          name: me.name ?? prev.name,
-          phone: me.phone ?? prev.phone,
-          profile_image_url: me.profile_image_url ?? prev.profile_image_url,
-          email_verified: me.email_verified ?? prev.email_verified,
-        };
-        return next;
-      });
-      if (next) {
-        await SecureStore.setItemAsync(STORE_USER, JSON.stringify(next));
-      }
+      // Monta o usuário fora do updater do `setUser`: o React pode rodá-lo
+      // depois, e aí o SecureStore ficava com o usuário antigo.
+      const prev = userRef.current;
+      if (!prev) return;
+      const merged: User = {
+        ...prev,
+        name: me.name ?? prev.name,
+        phone: me.phone ?? prev.phone,
+        profile_image_url: me.profile_image_url ?? prev.profile_image_url,
+        email_verified: me.email_verified ?? prev.email_verified,
+      };
+      setUser(merged);
+      await SecureStore.setItemAsync(STORE_USER, JSON.stringify(merged));
     } catch {
       // Atualização em segundo plano — falha de rede não deve incomodar o usuário.
     }

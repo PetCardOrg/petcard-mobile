@@ -36,6 +36,7 @@ import type { AppointmentResponse } from '../../services/appointment.service';
 import { formatDateInput, parseDate } from '../../utils/dateUtils';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 import { CalendarConnectedModal } from './CalendarConnectedModal';
+import { horarioNoPassado } from './horarioNoPassado';
 import { getRelativeDays } from './relativeDate';
 import { apiErrorMessage } from '../../utils/apiErrorMessage';
 
@@ -222,18 +223,30 @@ export function AppointmentsScreen() {
     } else if (!parseTime(scheduledTime)) {
       errors.scheduledTime = t('appointments.validation.timeInvalid');
     }
+    if (
+      !errors.scheduledDate &&
+      !errors.scheduledTime &&
+      horarioNoPassado(montarScheduledAt(), new Date(), editingRecord?.scheduled_at)
+    ) {
+      errors.scheduledTime = t('appointments.validation.pastDateTime');
+    }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
+  }
+
+  /** Data e hora do formulário, no fuso do aparelho. Só chamar com os dois campos válidos. */
+  function montarScheduledAt(): Date {
+    const dateStr = parseDate(scheduledDate)!;
+    const time = parseTime(scheduledTime)!;
+    return new Date(
+      `${dateStr}T${String(time.hours).padStart(2, '0')}:${String(time.minutes).padStart(2, '0')}:00`,
+    );
   }
 
   async function handleSubmit() {
     if (!validateForm()) return;
 
-    const dateStr = parseDate(scheduledDate)!;
-    const time = parseTime(scheduledTime)!;
-    const scheduledAt = new Date(
-      `${dateStr}T${String(time.hours).padStart(2, '0')}:${String(time.minutes).padStart(2, '0')}:00`,
-    );
+    const scheduledAt = montarScheduledAt();
 
     setIsSubmitting(true);
     try {

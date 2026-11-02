@@ -34,7 +34,8 @@ export async function persistLanguage(lang: string): Promise<void> {
   try {
     await SecureStore.setItemAsync(LANGUAGE_STORAGE_KEY, lang);
   } catch {
-    // silently fail
+    // O idioma já foi trocado nesta sessão; se não gravar, o app só volta ao
+    // idioma do aparelho na próxima abertura. Não vale mostrar erro por isso.
   }
 }
 

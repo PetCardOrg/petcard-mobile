@@ -9,6 +9,7 @@ import {
 } from 'react';
 import type { PetResponseDto } from '@petcardorg/shared';
 import { isAxiosError } from 'axios';
+import { useTranslation } from 'react-i18next';
 
 import { petService } from '../services';
 
@@ -42,11 +43,10 @@ type PetsContextValue = {
 
 const PetsContext = createContext<PetsContextValue | null>(null);
 
-function mensagemDeErro(err: unknown): string {
-  if (isAxiosError(err) && err.response?.status === 403) {
-    return 'Sem permissão para acessar seus pets. Peça ao administrador para configurar sua conta.';
-  }
-  return 'Não foi possível carregar seus pets. Tente novamente.';
+/** Chave i18n do erro; traduzida só na exibição, para seguir a troca de idioma. */
+function chaveDoErro(err: unknown): string {
+  if (isAxiosError(err) && err.response?.status === 403) return 'home.permissionError';
+  return 'home.loadError';
 }
 
 /**
@@ -65,7 +65,8 @@ function mensagemDeErro(err: unknown): string {
  */
 export function PetsProvider({ children }: { children: ReactNode }) {
   const [pets, setPets] = useState<PetResponseDto[]>([]);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { t } = useTranslation();
+  const [erro, setErro] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -83,10 +84,10 @@ export function PetsProvider({ children }: { children: ReactNode }) {
       try {
         const data = await petService.getMyPets();
         setPets(data);
-        setErrorMessage(null);
+        setErro(null);
         carregadoEm.current = Date.now();
       } catch (err) {
-        setErrorMessage(mensagemDeErro(err));
+        setErro(chaveDoErro(err));
       } finally {
         setIsLoading(false);
         setIsRefreshing(false);
@@ -131,6 +132,8 @@ export function PetsProvider({ children }: { children: ReactNode }) {
     carregadoEm.current = null;
     void buscar('initial');
   }, [buscar]);
+
+  const errorMessage = erro ? t(erro) : null;
 
   const value = useMemo(
     () => ({

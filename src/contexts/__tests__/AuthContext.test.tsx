@@ -278,6 +278,9 @@ describe('AuthContext', () => {
 
     expect(tutorService.getCurrentTutor).toHaveBeenCalled();
     expect(result.current.user?.email_verified).toBe(true);
+    // Sem isto, o app reaberto voltava a pedir a verificação (AUD MOB-04).
+    const salvo = JSON.parse((await SecureStore.getItemAsync('auth_user')) ?? '{}');
+    expect(salvo.email_verified).toBe(true);
   });
 
   it('forgotPassword delega ao authService', async () => {

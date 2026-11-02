@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import i18n from 'i18next';
 import { Text } from 'react-native';
 import { act, render, screen, waitFor } from '@testing-library/react-native';
 
@@ -165,6 +166,28 @@ describe('PetsContext', () => {
     );
 
     await waitFor(() => expect(screen.getByTestId('tela-a')).toHaveTextContent(/Sem permissão/));
+  });
+
+  it('mostra o erro no idioma escolhido (AUD MOB-08)', async () => {
+    getMyPets.mockRejectedValueOnce(new Error('rede caiu'));
+    await act(async () => {
+      await i18n.changeLanguage('en-US');
+    });
+    try {
+      render(
+        <PetsProvider>
+          <Tela nome="a" />
+        </PetsProvider>,
+      );
+
+      await waitFor(() =>
+        expect(screen.getByTestId('tela-a')).toHaveTextContent(/Couldn't load your pets/),
+      );
+    } finally {
+      await act(async () => {
+        await i18n.changeLanguage('pt-BR');
+      });
+    }
   });
 
   describe('depois de mudar a lista no servidor', () => {

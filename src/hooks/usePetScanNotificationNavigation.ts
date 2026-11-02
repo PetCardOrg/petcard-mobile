@@ -5,6 +5,7 @@ import type { MaterialTopTabNavigationProp } from '@react-navigation/material-to
 import { usePetsContext } from '../contexts/PetsContext';
 import type { MainTabParamList } from '../navigation/types';
 import { isPushAvailable, loadNotifications } from '../utils/notifications';
+import type { NotificationResponse } from 'expo-notifications';
 
 /** `type` que a api manda no payload do push de leitura da coleira. */
 const PET_SCAN = 'pet_scan';
@@ -15,6 +16,24 @@ function extrairPetId(data: unknown): string | null {
   if (payload.type !== PET_SCAN) return null;
   // O FCM só transporta string no `data`, então pet_id chega sempre como texto.
   return typeof payload.pet_id === 'string' ? payload.pet_id : null;
+}
+
+/**
+ * Última notificação já tratada. Fica no módulo, e não no hook, porque logout e
+ * login remontam o hook e o `getLastNotificationResponseAsync` continua
+ * devolvendo o mesmo toque: sem isto, a tela reabria depois de cada login.
+ */
+let ultimaRespostaTratada: string | null = null;
+
+/** Pet da notificação de leitura, ou `null` se ela já foi tratada ou é de outro tipo. */
+function petIdNovo(response: NotificationResponse | null | undefined): string | null {
+  if (!response) return null;
+  const petId = extrairPetId(response.notification.request.content.data);
+  if (!petId) return null;
+  const id = response.notification.request.identifier;
+  if (id === ultimaRespostaTratada) return null;
+  ultimaRespostaTratada = id;
+  return petId;
 }
 
 /**
@@ -41,12 +60,12 @@ export function usePetScanNotificationNavigation(): void {
     // App aberto do zero pelo toque: a resposta não passa pelo listener, que
     // ainda não existia quando o usuário tocou.
     void Notifications.getLastNotificationResponseAsync().then((response) => {
-      const petId = extrairPetId(response?.notification.request.content.data);
+      const petId = petIdNovo(response);
       if (petId) setPetIdPendente(petId);
     });
 
     const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
-      const petId = extrairPetId(response.notification.request.content.data);
+      const petId = petIdNovo(response);
       if (petId) setPetIdPendente(petId);
     });
 
