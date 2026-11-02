@@ -481,7 +481,8 @@
       "titleRequired": "Title is required",
       "dateRequired": "Date is required",
       "timeRequired": "Time is required",
-      "timeInvalid": "Invalid time. Use HH:MM"
+      "timeInvalid": "Invalid time. Use HH:MM",
+      "pastDateTime": "This time has already passed. Choose a future date and time."
     },
     "calendar": {
       "connected": "Google Calendar connected",

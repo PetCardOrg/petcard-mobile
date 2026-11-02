@@ -481,7 +481,8 @@
       "titleRequired": "Título é obrigatório",
       "dateRequired": "Data é obrigatória",
       "timeRequired": "Hora é obrigatória",
-      "timeInvalid": "Hora inválida. Use HH:MM"
+      "timeInvalid": "Hora inválida. Use HH:MM",
+      "pastDateTime": "Esse horário já passou. Escolha uma data e hora futuras."
     },
     "calendar": {
       "connected": "Google Agenda conectado",
