@@ -11,6 +11,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  type DimensionValue,
   TextInput,
   View,
 } from 'react-native';
@@ -73,7 +74,11 @@ export type ConfigDaTelaDeSaude<R extends RegistroDeSaude> = {
   campos: CampoDoFormulario[];
   nome: (registro: R) => string;
   icone: (registro: R) => { name: IconeIonicons; color: string };
+  /** Selo ao lado do nome no card, ex. o status da medicação. */
+  selo?: (registro: R, t: TFunction) => ReactNode;
   detalhes: (registro: R, t: TFunction) => ReactNode;
+  /** Altura máxima do formulário; o padrão é 85% da tela. */
+  alturaMaximaDoModal?: DimensionValue;
   paraFormulario: (registro: R) => ValoresDoFormulario;
   carregar: (petId: string) => Promise<R[]>;
   criar: (valores: ValoresDoFormulario, petId: string) => Promise<unknown>;
@@ -86,17 +91,20 @@ export function LinhaDeDetalhe({
   icone,
   cor = colors.muted,
   numberOfLines,
+  expandir,
   children,
 }: {
   icone: IconeIonicons;
   cor?: string;
   numberOfLines?: number;
+  /** Texto ocupa o resto da linha, para quebrar dentro do card. */
+  expandir?: boolean;
   children: ReactNode;
 }) {
   return (
     <View style={styles.cardDetailRow}>
       <Ionicons color={cor} name={icone} size={16} />
-      <Text style={styles.cardDetailText} numberOfLines={numberOfLines}>
+      <Text style={[styles.cardDetailText, expandir && styles.flex1]} numberOfLines={numberOfLines}>
         {children}
       </Text>
     </View>
@@ -320,6 +328,7 @@ export function TelaDeRegistroDeSaude<R extends RegistroDeSaude>({
         <View style={styles.cardHeader}>
           <Ionicons color={icone.color} name={icone.name} size={20} />
           <Text style={styles.cardName}>{config.nome(item)}</Text>
+          {config.selo?.(item, t)}
           <Pressable onPress={() => openEditModal(item)} hitSlop={8} style={styles.actionButton}>
             <Ionicons color={colors.primaryDark} name="create-outline" size={18} />
           </Pressable>
@@ -440,7 +449,12 @@ export function TelaDeRegistroDeSaude<R extends RegistroDeSaude>({
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={styles.modalKeyboard}
           >
-            <View style={styles.modalContent}>
+            <View
+              style={[
+                styles.modalContent,
+                config.alturaMaximaDoModal ? { maxHeight: config.alturaMaximaDoModal } : null,
+              ]}
+            >
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>
                   {editingRecord ? t(`${prefixo}.editTitle`) : t(`${prefixo}.createTitle`)}
@@ -531,6 +545,9 @@ const styles = StyleSheet.create({
   cardDetailText: {
     ...typography.bodySmall,
     color: colors.muted,
+  },
+  flex1: {
+    flex: 1,
   },
 
   // Modal

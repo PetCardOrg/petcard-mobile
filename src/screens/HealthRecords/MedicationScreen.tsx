@@ -1,41 +1,15 @@
-import { useCallback, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import type {
-  CreateMedicationRecordDto,
-  MedicationRecordResponseDto,
-  PetResponseDto,
-} from '@petcardorg/shared';
-import { useFocusEffect } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
+import { StyleSheet, Text, View } from 'react-native';
+import type { CreateMedicationRecordDto, MedicationRecordResponseDto } from '@petcardorg/shared';
 
-import { AnexosDoRegistro } from '../../components/domain/AnexosDoRegistro';
-import { PetHeader } from '../../components/domain/PetHeader';
-import { PetSelector } from '../../components/domain/PetSelector';
-import { EmptyState } from '../../components/ui/EmptyState';
-import { ErrorState } from '../../components/ui/ErrorState';
-import { FAB } from '../../components/ui/FAB';
-import { useSelectedPet } from '../../contexts/SelectedPetContext';
-import { usePets } from '../../hooks/usePets';
 import { medicationService } from '../../services';
-import { formatDateDisplay, formatDateInput, parseDate } from '../../utils/dateUtils';
-import { confirmarAcaoEmRegistroDeVet, ehRegistroDeVeterinario } from '../../utils/vetRecordGuard';
+import { formatDateDisplay, parseDate } from '../../utils/dateUtils';
 import { colors, radii, spacing, typography } from '../../utils/theme';
-import { apiErrorMessage } from '../../utils/apiErrorMessage';
+import {
+  isoToDisplay,
+  LinhaDeDetalhe,
+  TelaDeRegistroDeSaude,
+  type ConfigDaTelaDeSaude,
+} from './TelaDeRegistroDeSaude';
 
 function isMedicationActive(item: MedicationRecordResponseDto): boolean {
   if (!item.end_date) return true;
@@ -45,556 +19,137 @@ function isMedicationActive(item: MedicationRecordResponseDto): boolean {
   return endDate >= today;
 }
 
-function isoToDisplay(iso: string): string {
-  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
-}
+// Fora do componente: a tela usa `carregar` como dependência do efeito de foco.
+const config: ConfigDaTelaDeSaude<MedicationRecordResponseDto> = {
+  escopo: 'medicacoes',
+  prefixo: 'healthRecords.medication',
+  seletor: {
+    subtitulo: 'healthRecords.petSelector.medicationSubtitle',
+    vazio: 'healthRecords.petSelector.medicationEmpty',
+  },
+  iconeDoVazio: 'medical-outline',
+  confirmarExclusao: 'healthRecords.medication.deleteTitle',
+  entidade: 'MEDICACAO',
+  alturaMaximaDoModal: '90%',
+  campos: [
+    {
+      chave: 'medicationName',
+      rotulo: 'healthRecords.medication.nameLabel',
+      placeholder: 'healthRecords.medication.namePlaceholder',
+      tipo: 'texto',
+      autoCapitalize: 'words',
+      obrigatorio: 'validation.medicationNameRequired',
+    },
+    {
+      chave: 'dosage',
+      rotulo: 'healthRecords.medication.dosageLabel',
+      placeholder: 'healthRecords.medication.dosagePlaceholder',
+      tipo: 'texto',
+      obrigatorio: 'validation.dosageRequired',
+    },
+    {
+      chave: 'frequency',
+      rotulo: 'healthRecords.medication.frequencyLabel',
+      placeholder: 'healthRecords.medication.frequencyPlaceholder',
+      tipo: 'texto',
+      obrigatorio: 'validation.frequencyRequired',
+    },
+    {
+      chave: 'startDate',
+      rotulo: 'healthRecords.medication.startDateLabel',
+      placeholder: 'common.datePlaceholder',
+      tipo: 'data',
+      obrigatorio: 'validation.startDateRequired',
+    },
+    {
+      chave: 'endDate',
+      rotulo: 'healthRecords.medication.endDateLabel',
+      placeholder: 'common.datePlaceholder',
+      tipo: 'data',
+    },
+    {
+      chave: 'notes',
+      rotulo: 'healthRecords.medication.notesLabel',
+      placeholder: 'healthRecords.medication.notesPlaceholder',
+      tipo: 'notas',
+    },
+  ],
+  nome: (item) => item.medication_name,
+  icone: (item) => ({
+    name: 'medical',
+    color: isMedicationActive(item) ? colors.primary : colors.muted,
+  }),
+  selo: (item, t) => {
+    const active = isMedicationActive(item);
+    return (
+      <View style={[styles.statusBadge, active ? styles.statusActive : styles.statusDone]}>
+        <Text style={[styles.statusText, active ? styles.statusTextActive : styles.statusTextDone]}>
+          {active ? t('healthRecords.medication.ongoing') : 'Concluída'}
+        </Text>
+      </View>
+    );
+  },
+  detalhes: (item, t) => (
+    <>
+      <LinhaDeDetalhe icone="flask-outline" expandir>
+        {item.dosage} — {item.frequency}
+      </LinhaDeDetalhe>
 
-type FormErrors = {
-  medicationName?: string;
-  dosage?: string;
-  frequency?: string;
-  startDate?: string;
-  endDate?: string;
+      <LinhaDeDetalhe icone="calendar-outline" expandir>
+        {t('healthRecords.medication.startDate', { date: formatDateDisplay(item.start_date) })}
+        {item.end_date
+          ? `  •  ${t('healthRecords.medication.endDate', { date: formatDateDisplay(item.end_date) })}`
+          : ''}
+      </LinhaDeDetalhe>
+
+      {item.notes ? (
+        <LinhaDeDetalhe icone="document-text-outline" numberOfLines={2} expandir>
+          {item.notes}
+        </LinhaDeDetalhe>
+      ) : null}
+    </>
+  ),
+  paraFormulario: (record) => ({
+    medicationName: record.medication_name,
+    dosage: record.dosage,
+    frequency: record.frequency,
+    startDate: isoToDisplay(record.start_date),
+    endDate: record.end_date ? isoToDisplay(record.end_date) : '',
+    notes: record.notes ?? '',
+  }),
+  carregar: (petId) => medicationService.getMedicationsByPet(petId),
+  criar: (v, petId) => {
+    const payload: CreateMedicationRecordDto = {
+      pet_id: petId,
+      medication_name: v.medicationName.trim(),
+      dosage: v.dosage.trim(),
+      frequency: v.frequency.trim(),
+      start_date: parseDate(v.startDate)!,
+    };
+
+    const parsedEndDate = v.endDate.trim() ? parseDate(v.endDate) : undefined;
+    if (parsedEndDate) payload.end_date = parsedEndDate;
+    if (v.notes.trim()) payload.notes = v.notes.trim();
+
+    return medicationService.createMedication(payload);
+  },
+  atualizar: (id, v) =>
+    medicationService.updateMedication(id, {
+      medication_name: v.medicationName.trim(),
+      dosage: v.dosage.trim(),
+      frequency: v.frequency.trim(),
+      start_date: parseDate(v.startDate)!,
+      end_date: v.endDate.trim() ? parseDate(v.endDate) : undefined,
+      notes: v.notes.trim() || undefined,
+    }),
+  apagar: (id) => medicationService.deleteMedication(id),
 };
 
 export function MedicationScreen() {
-  const { t } = useTranslation();
-  const { pets, isLoading: isPetsLoading } = usePets();
-
-  // Cada aba lembra o próprio pet. Resolvido na lista já carregada: pet
-  // renomeado aparece com o nome novo e pet excluído devolve o tutor para
-  // a seleção.
-  const { selectedPetId, selectPet, clearSelection } = useSelectedPet('medicacoes');
-  const selectedPet = pets.find((pet) => pet.id === selectedPetId) ?? null;
-  const [medications, setMedications] = useState<MedicationRecordResponseDto[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Form state
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editingRecord, setEditingRecord] = useState<MedicationRecordResponseDto | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [medicationName, setMedicationName] = useState('');
-  const [dosage, setDosage] = useState('');
-  const [frequency, setFrequency] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [notes, setNotes] = useState('');
-  const [formErrors, setFormErrors] = useState<FormErrors>({});
-
-  const loadMedications = useCallback(
-    async (mode?: 'initial' | 'refresh') => {
-      if (!selectedPetId) return;
-
-      if (mode === 'refresh') {
-        setIsRefreshing(true);
-      } else {
-        setIsLoading(true);
-      }
-      setError(null);
-
-      try {
-        const data = await medicationService.getMedicationsByPet(selectedPetId);
-        setMedications(data);
-      } catch (err) {
-        const message = apiErrorMessage(err, t('healthRecords.medication.errorLoad'), t);
-        setError(message);
-      } finally {
-        setIsLoading(false);
-        setIsRefreshing(false);
-      }
-    },
-    [selectedPetId, t],
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      if (selectedPetId) {
-        void loadMedications();
-      }
-    }, [loadMedications, selectedPetId]),
-  );
-
-  function handleSelectPet(pet: PetResponseDto) {
-    selectPet(pet);
-    setMedications([]);
-    setError(null);
-  }
-
-  function resetForm() {
-    setMedicationName('');
-    setDosage('');
-    setFrequency('');
-    setStartDate('');
-    setEndDate('');
-    setNotes('');
-    setFormErrors({});
-    setEditingRecord(null);
-  }
-
-  function openCreateModal() {
-    resetForm();
-    setModalVisible(true);
-  }
-
-  function openEditModal(record: MedicationRecordResponseDto) {
-    // Registro de veterinário avisa antes de abrir o formulário (mobile#58).
-    confirmarAcaoEmRegistroDeVet({
-      registro: record,
-      nomeDoRegistro: record.medication_name,
-      acao: 'editar',
-      t,
-      onConfirm: () => abrirFormularioDeEdicao(record),
-    });
-  }
-
-  function abrirFormularioDeEdicao(record: MedicationRecordResponseDto) {
-    setEditingRecord(record);
-    setMedicationName(record.medication_name);
-    setDosage(record.dosage);
-    setFrequency(record.frequency);
-    setStartDate(isoToDisplay(record.start_date));
-    setEndDate(record.end_date ? isoToDisplay(record.end_date) : '');
-    setNotes(record.notes ?? '');
-    setFormErrors({});
-    setModalVisible(true);
-  }
-
-  function confirmDelete(record: MedicationRecordResponseDto) {
-    // Registro de veterinário troca o texto da confirmação, em vez de somar
-    // um segundo diálogo em cima do que já existia (mobile#58).
-    if (ehRegistroDeVeterinario(record)) {
-      confirmarAcaoEmRegistroDeVet({
-        registro: record,
-        nomeDoRegistro: record.medication_name,
-        acao: 'apagar',
-        t,
-        onConfirm: () => void handleDelete(record.id),
-      });
-      return;
-    }
-
-    Alert.alert(
-      t('healthRecords.medication.deleteTitle'),
-      t('healthRecords.medication.deleteMessage', { name: record.medication_name }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('healthRecords.medication.deleteTitle'),
-          style: 'destructive',
-          onPress: () => void handleDelete(record.id),
-        },
-      ],
-    );
-  }
-
-  async function handleDelete(id: string) {
-    try {
-      await medicationService.deleteMedication(id);
-      void loadMedications();
-    } catch (err) {
-      const message = apiErrorMessage(err, t('healthRecords.medication.errorDelete'), t);
-      Alert.alert(t('common.error'), message);
-    }
-  }
-
-  function validateForm(): boolean {
-    const errors: FormErrors = {};
-    if (!medicationName.trim()) errors.medicationName = t('validation.medicationNameRequired');
-    if (!dosage.trim()) errors.dosage = t('validation.dosageRequired');
-    if (!frequency.trim()) errors.frequency = t('validation.frequencyRequired');
-    if (!startDate.trim()) {
-      errors.startDate = t('validation.startDateRequired');
-    } else if (!parseDate(startDate)) {
-      errors.startDate = t('validation.dateInvalid');
-    }
-    if (endDate.trim() && !parseDate(endDate)) {
-      errors.endDate = t('validation.dateInvalid');
-    }
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  }
-
-  async function handleSubmit() {
-    if (!validateForm() || !selectedPet) return;
-
-    setIsSubmitting(true);
-    try {
-      if (editingRecord) {
-        await medicationService.updateMedication(editingRecord.id, {
-          medication_name: medicationName.trim(),
-          dosage: dosage.trim(),
-          frequency: frequency.trim(),
-          start_date: parseDate(startDate)!,
-          end_date: endDate.trim() ? parseDate(endDate) : undefined,
-          notes: notes.trim() || undefined,
-        });
-        setModalVisible(false);
-        Alert.alert(t('common.success'), t('healthRecords.medication.successEdit'));
-      } else {
-        const payload: CreateMedicationRecordDto = {
-          pet_id: selectedPet.id,
-          medication_name: medicationName.trim(),
-          dosage: dosage.trim(),
-          frequency: frequency.trim(),
-          start_date: parseDate(startDate)!,
-        };
-
-        const parsedEndDate = endDate.trim() ? parseDate(endDate) : undefined;
-        if (parsedEndDate) payload.end_date = parsedEndDate;
-        if (notes.trim()) payload.notes = notes.trim();
-
-        await medicationService.createMedication(payload);
-        setModalVisible(false);
-        Alert.alert(t('common.success'), t('healthRecords.medication.successCreate'));
-      }
-      void loadMedications();
-    } catch (err) {
-      const message = apiErrorMessage(
-        err,
-        editingRecord
-          ? t('healthRecords.medication.errorEdit')
-          : t('healthRecords.medication.errorCreate'),
-        t,
-      );
-      Alert.alert(t('common.error'), message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  // --- Pet selector ---
-  if (!selectedPet) {
-    return (
-      <PetSelector
-        pets={pets}
-        isLoading={isPetsLoading}
-        onSelectPet={handleSelectPet}
-        subtitle={t('healthRecords.petSelector.medicationSubtitle')}
-        emptyDescription={t('healthRecords.petSelector.medicationEmpty')}
-      />
-    );
-  }
-
-  // --- Medication list ---
-  function renderMedicationItem({ item }: { item: MedicationRecordResponseDto }) {
-    const active = isMedicationActive(item);
-
-    return (
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Ionicons color={active ? colors.primary : colors.muted} name="medical" size={20} />
-          <Text style={styles.cardName}>{item.medication_name}</Text>
-          <View style={[styles.statusBadge, active ? styles.statusActive : styles.statusDone]}>
-            <Text
-              style={[styles.statusText, active ? styles.statusTextActive : styles.statusTextDone]}
-            >
-              {active ? t('healthRecords.medication.ongoing') : 'Concluída'}
-            </Text>
-          </View>
-          <Pressable onPress={() => openEditModal(item)} hitSlop={8} style={styles.actionButton}>
-            <Ionicons color={colors.primaryDark} name="create-outline" size={18} />
-          </Pressable>
-          <Pressable onPress={() => confirmDelete(item)} hitSlop={8} style={styles.actionButton}>
-            <Ionicons color={colors.danger} name="trash-outline" size={18} />
-          </Pressable>
-        </View>
-
-        <View style={styles.cardDetails}>
-          <View style={styles.cardDetailRow}>
-            <Ionicons color={colors.muted} name="flask-outline" size={16} />
-            <Text style={styles.cardDetailText}>
-              {item.dosage} — {item.frequency}
-            </Text>
-          </View>
-
-          <View style={styles.cardDetailRow}>
-            <Ionicons color={colors.muted} name="calendar-outline" size={16} />
-            <Text style={styles.cardDetailText}>
-              {t('healthRecords.medication.startDate', {
-                date: formatDateDisplay(item.start_date),
-              })}
-              {item.end_date
-                ? `  •  ${t('healthRecords.medication.endDate', { date: formatDateDisplay(item.end_date) })}`
-                : ''}
-            </Text>
-          </View>
-
-          {item.notes ? (
-            <View style={styles.cardDetailRow}>
-              <Ionicons color={colors.muted} name="document-text-outline" size={16} />
-              <Text style={styles.cardDetailText} numberOfLines={2}>
-                {item.notes}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-
-        <AnexosDoRegistro
-          petId={item.pet_id}
-          entidade="MEDICACAO"
-          entidadeId={item.id}
-          anexos={item.anexos ?? []}
-          onChanged={() => void loadMedications('refresh')}
-        />
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.container}>
-      {/* Pet header */}
-      <PetHeader petName={selectedPet.name} onBack={clearSelection} />
-
-      {/* Content */}
-      {isLoading ? (
-        <View style={styles.centered}>
-          <ActivityIndicator color={colors.primary} size="large" />
-        </View>
-      ) : error ? (
-        <View style={styles.centered}>
-          <ErrorState message={error} onRetry={() => void loadMedications()} />
-        </View>
-      ) : medications.length === 0 ? (
-        <View style={styles.centered}>
-          <EmptyState
-            icon="medical-outline"
-            title={t('healthRecords.medication.emptyTitle')}
-            description={t('healthRecords.medication.emptyDescription')}
-            actionLabel={t('healthRecords.medication.emptyAction')}
-            onActionPress={openCreateModal}
-          />
-        </View>
-      ) : (
-        <FlatList
-          data={medications}
-          keyExtractor={(item) => item.id}
-          renderItem={renderMedicationItem}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={() => void loadMedications('refresh')}
-              tintColor={colors.primary}
-            />
-          }
-        />
-      )}
-
-      {/* FAB */}
-      {!isLoading && !error && medications.length > 0 ? (
-        <FAB
-          accessibilityLabel={t('healthRecords.medication.addAccessibility')}
-          onPress={openCreateModal}
-        />
-      ) : null}
-
-      {/* Form Modal */}
-      <Modal
-        animationType="slide"
-        transparent
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            style={styles.modalKeyboard}
-          >
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>
-                  {editingRecord
-                    ? t('healthRecords.medication.editTitle')
-                    : t('healthRecords.medication.createTitle')}
-                </Text>
-                <Pressable onPress={() => setModalVisible(false)}>
-                  <Ionicons color={colors.muted} name="close" size={24} />
-                </Pressable>
-              </View>
-
-              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                {/* Medication name */}
-                <View style={styles.field}>
-                  <Text style={styles.label}>{t('healthRecords.medication.nameLabel')}</Text>
-                  <TextInput
-                    autoCapitalize="words"
-                    onChangeText={(text) => {
-                      setMedicationName(text);
-                      if (formErrors.medicationName)
-                        setFormErrors((e) => ({ ...e, medicationName: undefined }));
-                    }}
-                    placeholder={t('healthRecords.medication.namePlaceholder')}
-                    placeholderTextColor={colors.muted}
-                    style={[styles.input, formErrors.medicationName ? styles.inputError : null]}
-                    value={medicationName}
-                  />
-                  {formErrors.medicationName ? (
-                    <Text style={styles.errorText}>{formErrors.medicationName}</Text>
-                  ) : null}
-                </View>
-
-                {/* Dosage */}
-                <View style={styles.field}>
-                  <Text style={styles.label}>{t('healthRecords.medication.dosageLabel')}</Text>
-                  <TextInput
-                    onChangeText={(text) => {
-                      setDosage(text);
-                      if (formErrors.dosage) setFormErrors((e) => ({ ...e, dosage: undefined }));
-                    }}
-                    placeholder={t('healthRecords.medication.dosagePlaceholder')}
-                    placeholderTextColor={colors.muted}
-                    style={[styles.input, formErrors.dosage ? styles.inputError : null]}
-                    value={dosage}
-                  />
-                  {formErrors.dosage ? (
-                    <Text style={styles.errorText}>{formErrors.dosage}</Text>
-                  ) : null}
-                </View>
-
-                {/* Frequency */}
-                <View style={styles.field}>
-                  <Text style={styles.label}>{t('healthRecords.medication.frequencyLabel')}</Text>
-                  <TextInput
-                    onChangeText={(text) => {
-                      setFrequency(text);
-                      if (formErrors.frequency)
-                        setFormErrors((e) => ({ ...e, frequency: undefined }));
-                    }}
-                    placeholder={t('healthRecords.medication.frequencyPlaceholder')}
-                    placeholderTextColor={colors.muted}
-                    style={[styles.input, formErrors.frequency ? styles.inputError : null]}
-                    value={frequency}
-                  />
-                  {formErrors.frequency ? (
-                    <Text style={styles.errorText}>{formErrors.frequency}</Text>
-                  ) : null}
-                </View>
-
-                {/* Start date */}
-                <View style={styles.field}>
-                  <Text style={styles.label}>{t('healthRecords.medication.startDateLabel')}</Text>
-                  <TextInput
-                    keyboardType="number-pad"
-                    maxLength={10}
-                    onChangeText={(text) => {
-                      setStartDate(formatDateInput(text));
-                      if (formErrors.startDate)
-                        setFormErrors((e) => ({ ...e, startDate: undefined }));
-                    }}
-                    placeholder={t('common.datePlaceholder')}
-                    placeholderTextColor={colors.muted}
-                    style={[styles.input, formErrors.startDate ? styles.inputError : null]}
-                    value={startDate}
-                  />
-                  {formErrors.startDate ? (
-                    <Text style={styles.errorText}>{formErrors.startDate}</Text>
-                  ) : null}
-                </View>
-
-                {/* End date */}
-                <View style={styles.field}>
-                  <Text style={styles.label}>{t('healthRecords.medication.endDateLabel')}</Text>
-                  <TextInput
-                    keyboardType="number-pad"
-                    maxLength={10}
-                    onChangeText={(text) => {
-                      setEndDate(formatDateInput(text));
-                      if (formErrors.endDate) setFormErrors((e) => ({ ...e, endDate: undefined }));
-                    }}
-                    placeholder={t('common.datePlaceholder')}
-                    placeholderTextColor={colors.muted}
-                    style={[styles.input, formErrors.endDate ? styles.inputError : null]}
-                    value={endDate}
-                  />
-                  {formErrors.endDate ? (
-                    <Text style={styles.errorText}>{formErrors.endDate}</Text>
-                  ) : null}
-                </View>
-
-                {/* Notes */}
-                <View style={styles.field}>
-                  <Text style={styles.label}>{t('healthRecords.medication.notesLabel')}</Text>
-                  <TextInput
-                    multiline
-                    numberOfLines={3}
-                    onChangeText={setNotes}
-                    placeholder={t('healthRecords.medication.notesPlaceholder')}
-                    placeholderTextColor={colors.muted}
-                    style={[styles.input, styles.textArea]}
-                    textAlignVertical="top"
-                    value={notes}
-                  />
-                </View>
-
-                {/* Submit */}
-                <Pressable
-                  disabled={isSubmitting}
-                  onPress={handleSubmit}
-                  style={({ pressed }) => [
-                    styles.submitButton,
-                    isSubmitting && styles.submitButtonDisabled,
-                    pressed && !isSubmitting && styles.pressed,
-                  ]}
-                >
-                  {isSubmitting ? (
-                    <ActivityIndicator color={colors.white} size="small" />
-                  ) : (
-                    <Text style={styles.submitButtonText}>
-                      {editingRecord
-                        ? t('healthRecords.medication.submitEdit')
-                        : t('healthRecords.medication.submitCreate')}
-                    </Text>
-                  )}
-                </Pressable>
-              </ScrollView>
-            </View>
-          </KeyboardAvoidingView>
-        </View>
-      </Modal>
-    </View>
-  );
+  return <TelaDeRegistroDeSaude config={config} />;
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.background,
-    flex: 1,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-  },
-  centered: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
-  },
-
-  // List
-  listContent: {
-    gap: spacing.sm,
-    paddingBottom: spacing.xl + 60,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    padding: spacing.md,
-  },
-  cardHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  cardName: {
-    ...typography.h3,
-    color: colors.text,
-    flex: 1,
-  },
   statusBadge: {
     borderRadius: radii.xl,
     paddingHorizontal: spacing.sm,
@@ -614,100 +169,5 @@ const styles = StyleSheet.create({
   },
   statusTextDone: {
     color: colors.muted,
-  },
-  actionButton: {
-    padding: spacing.xs,
-  },
-  cardDetails: {
-    gap: spacing.xs,
-    marginTop: spacing.sm,
-  },
-  cardDetailRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  cardDetailText: {
-    ...typography.bodySmall,
-    color: colors.muted,
-    flex: 1,
-  },
-
-  // Modal
-  modalOverlay: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  modalKeyboard: {
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: radii.lg,
-    borderTopRightRadius: radii.lg,
-    maxHeight: '90%',
-    paddingBottom: spacing.xl,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-  },
-  modalHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.lg,
-  },
-  modalTitle: {
-    ...typography.h2,
-    color: colors.text,
-  },
-
-  // Form
-  field: {
-    marginBottom: spacing.md,
-  },
-  label: {
-    ...typography.label,
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  input: {
-    ...typography.body,
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    color: colors.text,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 14,
-  },
-  inputError: {
-    borderColor: colors.danger,
-  },
-  textArea: {
-    minHeight: 80,
-  },
-  errorText: {
-    ...typography.bodySmall,
-    color: colors.danger,
-    marginTop: spacing.xs,
-  },
-  submitButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radii.md,
-    marginBottom: spacing.lg,
-    marginTop: spacing.sm,
-    paddingVertical: 16,
-  },
-  submitButtonDisabled: {
-    opacity: 0.6,
-  },
-  submitButtonText: {
-    ...typography.button,
-    color: colors.white,
-  },
-  pressed: {
-    opacity: 0.82,
   },
 });
