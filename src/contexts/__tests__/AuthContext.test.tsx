@@ -9,6 +9,11 @@ jest.mock('../../services', () => ({
   tutorService: { updateCurrentTutor: jest.fn(), getCurrentTutor: jest.fn() },
   uploadService: { uploadImage: jest.fn() },
   authService: {
+    // login e cadastro usam o service real, para os testes verem o POST no `api`.
+    login: (...args: [string, string]) =>
+      jest.requireActual('../../services/auth.service').login(...args),
+    register: (...args: [string, string, string]) =>
+      jest.requireActual('../../services/auth.service').register(...args),
     googleLogin: jest.fn(),
     forgotPassword: jest.fn().mockResolvedValue(undefined),
     resendVerification: jest.fn().mockResolvedValue(undefined),
