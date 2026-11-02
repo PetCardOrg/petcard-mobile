@@ -222,6 +222,41 @@ describe('AuthContext', () => {
     expect(result.current.user?.email).toBe('ana@petcard.com');
   });
 
+  it('register avisa quando a foto ou o telefone ficaram pendentes (AUD MOB-16)', async () => {
+    jest.spyOn(api, 'post').mockResolvedValue({ data: SESSION });
+    uploadService.uploadImage.mockRejectedValueOnce(new Error('upload fora'));
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(result.current.isBootstrapping).toBe(false));
+
+    let resultado: unknown;
+    await act(async () => {
+      resultado = await result.current.register('Ana', 'ana@petcard.com', 'senha1234', {
+        photoUri: 'file:///tmp/foto.jpg',
+      });
+    });
+
+    expect(resultado).toEqual({ extrasPendentes: true });
+    expect(result.current.isAuthenticated).toBe(true);
+  });
+
+  it('register sem falha nos extras não avisa nada (AUD MOB-16)', async () => {
+    jest.spyOn(api, 'post').mockResolvedValue({ data: SESSION });
+    tutorService.updateCurrentTutor.mockResolvedValueOnce({ ...SESSION.user, phone: '1199' });
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(result.current.isBootstrapping).toBe(false));
+
+    let resultado: unknown;
+    await act(async () => {
+      resultado = await result.current.register('Ana', 'ana@petcard.com', 'senha1234', {
+        phone: '1199',
+      });
+    });
+
+    expect(resultado).toEqual({ extrasPendentes: false });
+  });
+
   it('login propaga email_verified vindo da api', async () => {
     jest.spyOn(api, 'post').mockResolvedValue({
       data: {

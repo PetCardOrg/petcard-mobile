@@ -51,7 +51,9 @@
     "permissionRequired": "Permissão necessária",
     "permissionGallery": "Precisamos de acesso à galeria para selecionar uma foto.",
     "loginLink": "Já tenho conta",
-    "googleButton": "Cadastrar com Google"
+    "googleButton": "Cadastrar com Google",
+    "extrasPendingTitle": "Conta criada",
+    "extrasPending": "Não conseguimos salvar a foto ou o telefone agora. Você pode completar pelo Perfil."
   },
   "apiErrors": {
     "400": "Confira os dados informados e tente novamente.",

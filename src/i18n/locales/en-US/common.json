@@ -51,7 +51,9 @@
     "permissionRequired": "Permission required",
     "permissionGallery": "We need access to your gallery to select a photo.",
     "loginLink": "Already have an account",
-    "googleButton": "Sign up with Google"
+    "googleButton": "Sign up with Google",
+    "extrasPendingTitle": "Account created",
+    "extrasPending": "We couldn't save your photo or phone right now. You can add them from your Profile."
   },
   "apiErrors": {
     "400": "Check the information provided and try again.",
