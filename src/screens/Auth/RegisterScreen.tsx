@@ -84,10 +84,15 @@ export function RegisterScreen() {
     try {
       setError(null);
       const rawPhone = unformatPhone(phone);
-      await register(name.trim(), email.trim(), password, {
+      const { extrasPendentes } = await register(name.trim(), email.trim(), password, {
         phone: rawPhone || undefined,
         photoUri: imageUri ?? undefined,
       });
+      // A sessão já abriu e a navegação troca de tela; o Alert é nativo e
+      // aparece mesmo assim.
+      if (extrasPendentes) {
+        Alert.alert(t('register.extrasPendingTitle'), t('register.extrasPending'));
+      }
     } catch (err) {
       const message = apiErrorMessage(err, t('register.errorMessage'), t, {
         409: t('register.emailInUse'),

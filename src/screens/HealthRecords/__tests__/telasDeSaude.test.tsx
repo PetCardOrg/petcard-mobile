@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react';
 import { Alert, type AlertButton } from 'react-native';
 import { Sex, Species, type PetResponseDto } from '@petcardorg/shared';
+import i18n from 'i18next';
 
 import {
   act,
@@ -437,5 +438,28 @@ describe('selo da medicação', () => {
 
     expect(await screen.findByText('Em andamento')).toBeTruthy();
     expect(screen.getByText('Concluída')).toBeTruthy();
+  });
+
+  it('traduz o selo de concluída (AUD MOB-17)', async () => {
+    mockMedicacao.getMedicationsByPet.mockResolvedValue([
+      { ...casos[2].registro, id: 'm2', end_date: '2020-01-10' },
+    ]);
+    await act(async () => {
+      await i18n.changeLanguage('en-US');
+    });
+    try {
+      renderWithProviders(
+        <SelectedPetProvider>
+          <MedicationScreen />
+        </SelectedPetProvider>,
+      );
+      fireEvent.press(screen.getByText('Rex'));
+
+      expect(await screen.findByText('Finished')).toBeTruthy();
+    } finally {
+      await act(async () => {
+        await i18n.changeLanguage('pt-BR');
+      });
+    }
   });
 });

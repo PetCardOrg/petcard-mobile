@@ -38,7 +38,10 @@ type AuthContextValue = {
     email: string,
     password: string,
     extras?: { phone?: string; photoUri?: string },
-  ) => Promise<void>;
+  ) => Promise<{
+    /** Conta criada, mas a foto ou o telefone não foram salvos. */
+    extrasPendentes: boolean;
+  }>;
   logout: () => Promise<void>;
   updateUser: (patch: Partial<User>) => Promise<void>;
   /** Re-busca o tutor em /tutors/me e atualiza a sessão (ex.: após verificar o e-mail pelo navegador). */
@@ -148,8 +151,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email: string,
       password: string,
       extras?: { phone?: string; photoUri?: string },
-    ) =>
-      startSession('Registration failed', async () => {
+    ) => {
+      let extrasPendentes = false;
+      return startSession('Registration failed', async () => {
         const { access_token, user: userData } = await authService.register(name, email, password);
 
         // Salva o token antes de tentar foto/telefone: upload de imagem e
@@ -171,12 +175,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } catch {
             // A conta já foi criada — segue sem foto/telefone, dá pra
             // completar depois no perfil. Não vale derrubar o cadastro por
-            // isso.
+            // isso, mas a tela avisa o tutor (AUD MOB-16).
+            extrasPendentes = true;
           }
         }
 
         return { access_token, user: finalUser };
-      }),
+      }).then(() => ({ extrasPendentes }));
+    },
     [startSession],
   );
 
