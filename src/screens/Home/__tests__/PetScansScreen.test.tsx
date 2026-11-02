@@ -33,7 +33,7 @@ const semLocalizacao = {
 describe('PetScansScreen', () => {
   beforeEach(() => {
     mockGetByPet.mockReset();
-    jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
   });
 
   afterEach(() => {

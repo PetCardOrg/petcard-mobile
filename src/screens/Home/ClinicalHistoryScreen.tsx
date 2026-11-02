@@ -170,7 +170,9 @@ export function ClinicalHistoryScreen({ route }: Props) {
         />
       }
       ListHeaderComponent={
-        itens.length > 0 ? <Text style={styles.intro}>{t('clinicalHistory.intro')}</Text> : null
+        itens.length > 0 ? (
+          <Text style={styles.intro}>{t('clinicalHistory.intro')}</Text>
+        ) : undefined
       }
       refreshControl={
         <RefreshControl onRefresh={() => void carregar('refresh')} refreshing={isRefreshing} />
