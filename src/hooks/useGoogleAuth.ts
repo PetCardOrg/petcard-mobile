@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
+import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../contexts/AuthContext';
 
@@ -43,6 +44,7 @@ type GoogleAuth = {
  */
 export function useGoogleAuth(onError?: (message: string) => void): GoogleAuth {
   const { loginWithGoogle } = useAuth();
+  const { t } = useTranslation();
   const [inProgress, setInProgress] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,7 +58,7 @@ export function useGoogleAuth(onError?: (message: string) => void): GoogleAuth {
     if (!response) return;
 
     if (response.type === 'error') {
-      const message = response.error?.message ?? 'Falha na autenticação com o Google.';
+      const message = response.error?.message ?? t('login.googleError');
       setError(message);
       onError?.(message);
       return;
@@ -66,7 +68,7 @@ export function useGoogleAuth(onError?: (message: string) => void): GoogleAuth {
 
     const idToken = response.params?.id_token ?? response.authentication?.idToken ?? null;
     if (!idToken) {
-      const message = 'O Google não retornou um token válido.';
+      const message = t('login.googleNoToken');
       setError(message);
       onError?.(message);
       return;
@@ -76,12 +78,12 @@ export function useGoogleAuth(onError?: (message: string) => void): GoogleAuth {
     setError(null);
     loginWithGoogle(idToken)
       .catch(() => {
-        const message = 'Não foi possível entrar com o Google.';
+        const message = t('login.googleFailed');
         setError(message);
         onError?.(message);
       })
       .finally(() => setInProgress(false));
-  }, [response, loginWithGoogle, onError]);
+  }, [response, loginWithGoogle, onError, t]);
 
   return {
     promptAsync: () => {

@@ -1,4 +1,5 @@
-import { renderHook, waitFor } from '@testing-library/react-native';
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import i18n from 'i18next';
 import type { AuthSessionResult } from 'expo-auth-session';
 
 import { useGoogleAuth } from '../useGoogleAuth';
@@ -66,6 +67,22 @@ describe('useGoogleAuth (AUD MOB-07)', () => {
     await waitFor(() => expect(result.current.error).not.toBeNull());
     expect(result.current.inProgress).toBe(false);
     expect(onError).toHaveBeenCalledTimes(1);
+  });
+
+  it('mostra o erro no idioma escolhido (AUD MOB-08)', async () => {
+    mockResponse = { type: 'success', params: {} };
+    await act(async () => {
+      await i18n.changeLanguage('en-US');
+    });
+    try {
+      const { result } = renderHook(() => useGoogleAuth());
+
+      await waitFor(() => expect(result.current.error).toBe("Google didn't return a valid token."));
+    } finally {
+      await act(async () => {
+        await i18n.changeLanguage('pt-BR');
+      });
+    }
   });
 
   it('não faz nada quando o usuário cancela o consentimento', () => {
