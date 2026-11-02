@@ -3,21 +3,11 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import * as Linking from 'expo-linking';
-import * as WebBrowser from 'expo-web-browser';
-import type { PetResponseDto } from '@petcardorg/shared';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,84 +15,43 @@ import { useTranslation } from 'react-i18next';
 
 import type { MainTabParamList } from '../../navigation/types';
 
-import { DurationOptions } from '../../components/ui/DurationOptions';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { FAB } from '../../components/ui/FAB';
-import { PlaceAutocompleteInput } from '../../components/ui/PlaceAutocompleteInput';
-import { usePets } from '../../hooks/usePets';
-import { appointmentService, calendarService } from '../../services';
+import { appointmentService } from '../../services';
 import type { AppointmentResponse } from '../../services/appointment.service';
-import { formatDateInput, parseDate } from '../../utils/dateUtils';
-import { colors, radii, spacing, typography } from '../../utils/theme';
-import { CalendarConnectedModal } from './CalendarConnectedModal';
-import { horarioNoPassado } from './horarioNoPassado';
-import { getRelativeDays } from './relativeDate';
+import { colors, spacing, typography } from '../../utils/theme';
 import { apiErrorMessage } from '../../utils/apiErrorMessage';
+import { AppointmentCard } from './AppointmentCard';
+import { AppointmentFormModal } from './AppointmentFormModal';
+import { CalendarBanner } from './CalendarBanner';
+import { CalendarConnectedModal } from './CalendarConnectedModal';
+import { useGoogleCalendar } from './useGoogleCalendar';
 
-type FormErrors = {
-  title?: string;
-  scheduledDate?: string;
-  scheduledTime?: string;
+type Formulario = {
+  record: AppointmentResponse | null;
+  initialLocation: string;
+  session: number;
 };
-
-function formatTime(text: string): string {
-  const digits = text.replace(/\D/g, '');
-  if (digits.length <= 2) return digits;
-  return `${digits.slice(0, 2)}:${digits.slice(2, 4)}`;
-}
-
-function parseTime(text: string): { hours: number; minutes: number } | undefined {
-  const match = text.match(/^(\d{2}):(\d{2})$/);
-  if (!match) return undefined;
-  const hours = Number(match[1]);
-  const minutes = Number(match[2]);
-  if (hours > 23 || minutes > 59) return undefined;
-  return { hours, minutes };
-}
-
-function formatScheduledAt(iso: string): { date: string; time: string } {
-  const d = new Date(iso);
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  const hours = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  return { date: `${day}/${month}/${year}`, time: `${hours}:${minutes}` };
-}
-
-function isUpcoming(iso: string): boolean {
-  return new Date(iso) >= new Date();
-}
 
 export function AppointmentsScreen() {
   const { t } = useTranslation();
-  const { pets } = usePets();
   const insets = useSafeAreaInsets();
   const route = useRoute<RouteProp<MainTabParamList, 'Appointments'>>();
   const lastPrefillTs = useRef(0);
+  const calendar = useGoogleCalendar();
 
   const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Calendar sync state
-  const [calendarConnected, setCalendarConnected] = useState(false);
-  const [calendarSuccessVisible, setCalendarSuccessVisible] = useState(false);
-
-  // Form state
   const [modalVisible, setModalVisible] = useState(false);
-  const [editingRecord, setEditingRecord] = useState<AppointmentResponse | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [scheduledDate, setScheduledDate] = useState('');
-  const [scheduledTime, setScheduledTime] = useState('');
-  const [durationMinutes, setDurationMinutes] = useState(60);
-  const [location, setLocation] = useState('');
-  const [selectedPetId, setSelectedPetId] = useState<string | undefined>();
-  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [formulario, setFormulario] = useState<Formulario>({
+    record: null,
+    initialLocation: '',
+    session: 0,
+  });
 
   const loadAppointments = useCallback(
     async (mode?: 'initial' | 'refresh') => {
@@ -127,20 +76,12 @@ export function AppointmentsScreen() {
     [t],
   );
 
-  const checkCalendarStatus = useCallback(async () => {
-    try {
-      const connected = await calendarService.getStatus();
-      setCalendarConnected(connected);
-    } catch {
-      // Silently fail — calendar status is not critical
-    }
-  }, []);
-
+  const { checkStatus } = calendar;
   useFocusEffect(
     useCallback(() => {
       void loadAppointments();
-      void checkCalendarStatus();
-    }, [loadAppointments, checkCalendarStatus]),
+      void checkStatus();
+    }, [loadAppointments, checkStatus]),
   );
 
   // Handle prefill from clinic screen
@@ -148,40 +89,13 @@ export function AppointmentsScreen() {
     const prefill = route.params?.prefill;
     if (prefill && prefill._ts !== lastPrefillTs.current) {
       lastPrefillTs.current = prefill._ts;
-      resetForm();
-      setLocation(prefill.location ?? '');
-      setModalVisible(true);
+      abrirFormulario(null, prefill.location ?? '');
     }
   }, [route.params?.prefill]);
 
-  function resetForm() {
-    setTitle('');
-    setDescription('');
-    setScheduledDate('');
-    setScheduledTime('');
-    setDurationMinutes(60);
-    setLocation('');
-    setSelectedPetId(undefined);
-    setFormErrors({});
-    setEditingRecord(null);
-  }
-
-  function openCreateModal() {
-    resetForm();
-    setModalVisible(true);
-  }
-
-  function openEditModal(record: AppointmentResponse) {
-    setEditingRecord(record);
-    const { date, time } = formatScheduledAt(record.scheduled_at);
-    setTitle(record.title);
-    setDescription(record.description ?? '');
-    setScheduledDate(date);
-    setScheduledTime(time);
-    setDurationMinutes(record.duration_minutes);
-    setLocation(record.location ?? '');
-    setSelectedPetId(record.pet_id);
-    setFormErrors({});
+  /** Abre o formulário do zero: em branco, com o local dado ou com o registro em edição. */
+  function abrirFormulario(record: AppointmentResponse | null, initialLocation = '') {
+    setFormulario((f) => ({ record, initialLocation, session: f.session + 1 }));
     setModalVisible(true);
   }
 
@@ -210,206 +124,6 @@ export function AppointmentsScreen() {
     }
   }
 
-  function validateForm(): boolean {
-    const errors: FormErrors = {};
-    if (!title.trim()) errors.title = t('appointments.validation.titleRequired');
-    if (!scheduledDate.trim()) {
-      errors.scheduledDate = t('appointments.validation.dateRequired');
-    } else if (!parseDate(scheduledDate)) {
-      errors.scheduledDate = t('validation.dateInvalid');
-    }
-    if (!scheduledTime.trim()) {
-      errors.scheduledTime = t('appointments.validation.timeRequired');
-    } else if (!parseTime(scheduledTime)) {
-      errors.scheduledTime = t('appointments.validation.timeInvalid');
-    }
-    if (
-      !errors.scheduledDate &&
-      !errors.scheduledTime &&
-      horarioNoPassado(montarScheduledAt(), new Date(), editingRecord?.scheduled_at)
-    ) {
-      errors.scheduledTime = t('appointments.validation.pastDateTime');
-    }
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  }
-
-  /** Data e hora do formulário, no fuso do aparelho. Só chamar com os dois campos válidos. */
-  function montarScheduledAt(): Date {
-    const dateStr = parseDate(scheduledDate)!;
-    const time = parseTime(scheduledTime)!;
-    return new Date(
-      `${dateStr}T${String(time.hours).padStart(2, '0')}:${String(time.minutes).padStart(2, '0')}:00`,
-    );
-  }
-
-  async function handleSubmit() {
-    if (!validateForm()) return;
-
-    const scheduledAt = montarScheduledAt();
-
-    setIsSubmitting(true);
-    try {
-      const payload = {
-        title: title.trim(),
-        description: description.trim() || undefined,
-        scheduled_at: scheduledAt.toISOString(),
-        duration_minutes: durationMinutes,
-        location: location.trim() || undefined,
-        pet_id: selectedPetId,
-      };
-
-      if (editingRecord) {
-        await appointmentService.update(editingRecord.id, payload);
-        setModalVisible(false);
-        Alert.alert(t('common.success'), t('appointments.successEdit'));
-      } else {
-        await appointmentService.create(payload);
-        setModalVisible(false);
-        Alert.alert(t('common.success'), t('appointments.successCreate'));
-      }
-      void loadAppointments();
-    } catch (err) {
-      const message = apiErrorMessage(
-        err,
-        editingRecord ? t('appointments.errorEdit') : t('appointments.errorCreate'),
-        t,
-      );
-      Alert.alert(t('common.error'), message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  async function handleCalendarConnect() {
-    // A API devolve o tutor para este endereço ao fim do consentimento; a
-    // sessão de auth reconhece a volta e fecha a aba sozinha. A raiz ('/') não
-    // casa com nenhuma rota do linking, então a navegação não se mexe.
-    const returnUrl = Linking.createURL('/');
-    try {
-      const url = await calendarService.getConnectUrl(returnUrl);
-      if (!url) {
-        Alert.alert(t('common.error'), t('appointments.calendar.notConfigured'));
-        return;
-      }
-
-      const result = await WebBrowser.openAuthSessionAsync(url, returnUrl);
-      const outcome =
-        result.type === 'success' ? calendarService.parseConnectOutcome(result.url) : null;
-
-      if (outcome === 'connected') {
-        setCalendarConnected(true);
-        setCalendarSuccessVisible(true);
-      } else if (outcome === 'denied') {
-        Alert.alert(t('appointments.calendar.deniedTitle'), t('appointments.calendar.denied'));
-      } else if (outcome === 'error') {
-        Alert.alert(t('common.error'), t('appointments.calendar.connectError'));
-      } else {
-        // Aba fechada à mão (ou volta por um app antigo da API): o status do
-        // servidor é quem diz se conectou.
-        void checkCalendarStatus();
-      }
-    } catch {
-      Alert.alert(t('common.error'), t('appointments.calendar.connectError'));
-    }
-  }
-
-  async function handleCalendarDisconnect() {
-    Alert.alert(
-      t('appointments.calendar.disconnectTitle'),
-      t('appointments.calendar.disconnectMessage'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('appointments.calendar.disconnectConfirm'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await calendarService.disconnect();
-              setCalendarConnected(false);
-            } catch {
-              Alert.alert(t('common.error'), t('appointments.calendar.disconnectError'));
-            }
-          },
-        },
-      ],
-    );
-  }
-
-  function renderAppointmentItem({ item }: { item: AppointmentResponse }) {
-    const { date, time } = formatScheduledAt(item.scheduled_at);
-    const upcoming = isUpcoming(item.scheduled_at);
-
-    return (
-      <View style={[styles.appointmentCard, !upcoming && styles.pastCard]}>
-        <View style={styles.appointmentHeader}>
-          <View style={styles.dateTimeBadge}>
-            <Ionicons color={colors.white} name="calendar" size={14} />
-            <Text style={styles.dateTimeBadgeText}>{date}</Text>
-            <Text style={styles.dateTimeBadgeText}>{time}</Text>
-          </View>
-          <View style={styles.headerActions}>
-            <Pressable onPress={() => openEditModal(item)} hitSlop={8} style={styles.actionButton}>
-              <Ionicons color={colors.primaryDark} name="create-outline" size={18} />
-            </Pressable>
-            <Pressable onPress={() => confirmDelete(item)} hitSlop={8} style={styles.actionButton}>
-              <Ionicons color={colors.danger} name="trash-outline" size={18} />
-            </Pressable>
-          </View>
-        </View>
-
-        <Text style={styles.appointmentTitle}>{item.title}</Text>
-
-        {item.description ? (
-          <Text style={styles.appointmentDescription} numberOfLines={2}>
-            {item.description}
-          </Text>
-        ) : null}
-
-        <View style={styles.appointmentMeta}>
-          <View style={styles.metaRow}>
-            <Ionicons color={colors.muted} name="time-outline" size={15} />
-            <Text style={styles.metaText}>
-              {item.duration_minutes} {t('appointments.minutes')}
-            </Text>
-          </View>
-
-          {item.location ? (
-            <View style={styles.metaRow}>
-              <Ionicons color={colors.muted} name="location-outline" size={15} />
-              <Text style={styles.metaText} numberOfLines={1}>
-                {item.location}
-              </Text>
-            </View>
-          ) : null}
-
-          {item.pet_name ? (
-            <View style={styles.metaRow}>
-              <Ionicons color={colors.muted} name="paw-outline" size={15} />
-              <Text style={styles.metaText}>{item.pet_name}</Text>
-            </View>
-          ) : null}
-        </View>
-
-        {upcoming ? (
-          <View style={styles.relativeContainer}>
-            <Text style={styles.relativeText}>
-              {(() => {
-                const days = getRelativeDays(item.scheduled_at);
-                if (days === 0) return t('appointments.today');
-                if (days === 1) return t('appointments.tomorrow');
-                if (days > 1 && days <= 7) return `${days} ${t('appointments.daysAway')}`;
-                // `date` já vem em horário local; fatiar o ISO daria a data UTC,
-                // um dia à frente para agendamentos à noite.
-                return date;
-              })()}
-            </Text>
-          </View>
-        ) : null}
-      </View>
-    );
-  }
-
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
       {/* Header */}
@@ -420,44 +134,11 @@ export function AppointmentsScreen() {
         </View>
       </View>
 
-      {/* Google Calendar Banner */}
-      <View style={styles.calendarBanner}>
-        <View style={styles.calendarBannerLeft}>
-          <Ionicons
-            name={calendarConnected ? 'checkmark-circle' : 'logo-google'}
-            size={20}
-            color={calendarConnected ? colors.success : colors.primaryDark}
-          />
-          {/* Único lugar que fala de sincronização: a regra é dita uma vez
-              aqui, em vez de repetida em cada card. */}
-          <View style={styles.calendarBannerTexts}>
-            <Text style={styles.calendarBannerText}>
-              {calendarConnected
-                ? t('appointments.calendar.connected')
-                : t('appointments.calendar.notConnected')}
-            </Text>
-            <Text style={styles.calendarBannerHint}>
-              {calendarConnected
-                ? t('appointments.calendar.connectedHint')
-                : t('appointments.calendar.notConnectedHint')}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.calendarBannerActions}>
-          {calendarConnected ? (
-            <Pressable onPress={handleCalendarDisconnect} hitSlop={8}>
-              <Ionicons name="close-circle-outline" size={22} color={colors.danger} />
-            </Pressable>
-          ) : (
-            <Pressable
-              onPress={handleCalendarConnect}
-              style={({ pressed }) => [styles.connectButton, pressed && styles.pressed]}
-            >
-              <Text style={styles.connectButtonText}>{t('appointments.calendar.connect')}</Text>
-            </Pressable>
-          )}
-        </View>
-      </View>
+      <CalendarBanner
+        connected={calendar.connected}
+        onConnect={() => void calendar.connect()}
+        onDisconnect={calendar.disconnect}
+      />
 
       {/* Content */}
       {isLoading ? (
@@ -475,14 +156,20 @@ export function AppointmentsScreen() {
             title={t('appointments.emptyTitle')}
             description={t('appointments.emptyDescription')}
             actionLabel={t('appointments.emptyAction')}
-            onActionPress={openCreateModal}
+            onActionPress={() => abrirFormulario(null)}
           />
         </View>
       ) : (
         <FlatList
           data={appointments}
           keyExtractor={(item) => item.id}
-          renderItem={renderAppointmentItem}
+          renderItem={({ item }) => (
+            <AppointmentCard
+              item={item}
+              onDelete={confirmDelete}
+              onEdit={(record) => abrirFormulario(record)}
+            />
+          )}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -497,203 +184,22 @@ export function AppointmentsScreen() {
 
       {/* FAB */}
       {!isLoading && !error && appointments.length > 0 ? (
-        <FAB accessibilityLabel={t('appointments.addAccessibility')} onPress={openCreateModal} />
+        <FAB
+          accessibilityLabel={t('appointments.addAccessibility')}
+          onPress={() => abrirFormulario(null)}
+        />
       ) : null}
 
-      {/* Form Modal */}
-      <Modal
-        animationType="slide"
-        transparent
+      <AppointmentFormModal
+        initialLocation={formulario.initialLocation}
+        onClose={() => setModalVisible(false)}
+        onSaved={() => void loadAppointments()}
+        record={formulario.record}
+        session={formulario.session}
         visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            style={styles.modalKeyboard}
-          >
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>
-                  {editingRecord ? t('appointments.editTitle') : t('appointments.createTitle')}
-                </Text>
-                <Pressable onPress={() => setModalVisible(false)}>
-                  <Ionicons color={colors.muted} name="close" size={24} />
-                </Pressable>
-              </View>
-
-              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                {/* Title */}
-                <View style={styles.field}>
-                  <Text style={styles.label}>{t('appointments.form.titleLabel')}</Text>
-                  <TextInput
-                    autoCapitalize="sentences"
-                    onChangeText={(text) => {
-                      setTitle(text);
-                      if (formErrors.title) setFormErrors((e) => ({ ...e, title: undefined }));
-                    }}
-                    placeholder={t('appointments.form.titlePlaceholder')}
-                    placeholderTextColor={colors.muted}
-                    style={[styles.input, formErrors.title ? styles.inputError : null]}
-                    value={title}
-                  />
-                  {formErrors.title ? (
-                    <Text style={styles.errorText}>{formErrors.title}</Text>
-                  ) : null}
-                </View>
-
-                {/* Date & Time row */}
-                <View style={styles.row}>
-                  <View style={[styles.field, styles.flex1]}>
-                    <Text style={styles.label}>{t('appointments.form.dateLabel')}</Text>
-                    <TextInput
-                      keyboardType="number-pad"
-                      maxLength={10}
-                      onChangeText={(text) => {
-                        setScheduledDate(formatDateInput(text));
-                        if (formErrors.scheduledDate)
-                          setFormErrors((e) => ({ ...e, scheduledDate: undefined }));
-                      }}
-                      placeholder={t('common.datePlaceholder')}
-                      placeholderTextColor={colors.muted}
-                      style={[styles.input, formErrors.scheduledDate ? styles.inputError : null]}
-                      value={scheduledDate}
-                    />
-                    {formErrors.scheduledDate ? (
-                      <Text style={styles.errorText}>{formErrors.scheduledDate}</Text>
-                    ) : null}
-                  </View>
-
-                  <View style={[styles.field, { flex: 0.6 }]}>
-                    <Text style={styles.label}>{t('appointments.form.timeLabel')}</Text>
-                    <TextInput
-                      keyboardType="number-pad"
-                      maxLength={5}
-                      onChangeText={(text) => {
-                        setScheduledTime(formatTime(text));
-                        if (formErrors.scheduledTime)
-                          setFormErrors((e) => ({ ...e, scheduledTime: undefined }));
-                      }}
-                      placeholder="HH:MM"
-                      placeholderTextColor={colors.muted}
-                      style={[styles.input, formErrors.scheduledTime ? styles.inputError : null]}
-                      value={scheduledTime}
-                    />
-                    {formErrors.scheduledTime ? (
-                      <Text style={styles.errorText}>{formErrors.scheduledTime}</Text>
-                    ) : null}
-                  </View>
-                </View>
-
-                <View style={styles.field}>
-                  <Text style={styles.label}>{t('appointments.form.durationLabel')}</Text>
-                  <DurationOptions
-                    accessibilityLabel={t('appointments.form.durationLabel')}
-                    onChange={setDurationMinutes}
-                    value={durationMinutes}
-                  />
-                </View>
-
-                {/* Location */}
-                <View style={styles.field}>
-                  <Text style={styles.label}>{t('appointments.form.locationLabel')}</Text>
-                  <PlaceAutocompleteInput
-                    onChangeText={setLocation}
-                    placeholder={t('appointments.form.locationPlaceholder')}
-                    value={location}
-                  />
-                </View>
-
-                {/* Pet selector */}
-                {pets.length > 0 ? (
-                  <View style={styles.field}>
-                    <Text style={styles.label}>{t('appointments.form.petLabel')}</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                      <View style={styles.petChipRow}>
-                        <Pressable
-                          onPress={() => setSelectedPetId(undefined)}
-                          style={[styles.petChip, !selectedPetId && styles.petChipActive]}
-                        >
-                          <Text
-                            style={[styles.petChipText, !selectedPetId && styles.petChipTextActive]}
-                          >
-                            {t('appointments.form.noPet')}
-                          </Text>
-                        </Pressable>
-                        {pets.map((pet: PetResponseDto) => (
-                          <Pressable
-                            key={pet.id}
-                            onPress={() => setSelectedPetId(pet.id)}
-                            style={[
-                              styles.petChip,
-                              selectedPetId === pet.id && styles.petChipActive,
-                            ]}
-                          >
-                            <Ionicons
-                              name="paw"
-                              size={14}
-                              color={selectedPetId === pet.id ? colors.white : colors.primaryDark}
-                            />
-                            <Text
-                              style={[
-                                styles.petChipText,
-                                selectedPetId === pet.id && styles.petChipTextActive,
-                              ]}
-                            >
-                              {pet.name}
-                            </Text>
-                          </Pressable>
-                        ))}
-                      </View>
-                    </ScrollView>
-                  </View>
-                ) : null}
-
-                {/* Description */}
-                <View style={styles.field}>
-                  <Text style={styles.label}>{t('appointments.form.descriptionLabel')}</Text>
-                  <TextInput
-                    multiline
-                    numberOfLines={3}
-                    onChangeText={setDescription}
-                    placeholder={t('appointments.form.descriptionPlaceholder')}
-                    placeholderTextColor={colors.muted}
-                    style={[styles.input, styles.textArea]}
-                    textAlignVertical="top"
-                    value={description}
-                  />
-                </View>
-
-                {/* Submit */}
-                <Pressable
-                  disabled={isSubmitting}
-                  onPress={handleSubmit}
-                  style={({ pressed }) => [
-                    styles.submitButton,
-                    isSubmitting && styles.submitButtonDisabled,
-                    pressed && !isSubmitting && styles.pressed,
-                  ]}
-                >
-                  {isSubmitting ? (
-                    <ActivityIndicator color={colors.white} size="small" />
-                  ) : (
-                    <Text style={styles.submitButtonText}>
-                      {editingRecord
-                        ? t('appointments.submitEdit')
-                        : t('appointments.submitCreate')}
-                    </Text>
-                  )}
-                </Pressable>
-              </ScrollView>
-            </View>
-          </KeyboardAvoidingView>
-        </View>
-      </Modal>
-
-      <CalendarConnectedModal
-        onClose={() => setCalendarSuccessVisible(false)}
-        visible={calendarSuccessVisible}
       />
+
+      <CalendarConnectedModal onClose={calendar.closeSuccess} visible={calendar.successVisible} />
     </View>
   );
 }
@@ -722,250 +228,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
   },
-
-  // Calendar Banner
-  calendarBanner: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.md,
-    padding: spacing.md,
-  },
-  calendarBannerLeft: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    flex: 1,
-    gap: spacing.sm,
-  },
-  calendarBannerTexts: {
-    flex: 1,
-    gap: 2,
-  },
-  calendarBannerText: {
-    ...typography.bodySmall,
-    color: colors.text,
-  },
-  calendarBannerHint: {
-    color: colors.muted,
-    fontSize: 12,
-  },
-  calendarBannerActions: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  connectButton: {
-    backgroundColor: colors.primarySoft,
-    borderRadius: radii.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  connectButtonText: {
-    ...typography.caption,
-    color: colors.primaryDark,
-  },
-  syncButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primaryDark,
-    borderRadius: radii.sm,
-    flexDirection: 'row',
-    gap: 4,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  syncButtonText: {
-    ...typography.caption,
-    color: colors.white,
-  },
-
-  // List
   listContent: {
     gap: spacing.sm,
     paddingBottom: spacing.xl + 60,
-  },
-  appointmentCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    padding: spacing.md,
-  },
-  pastCard: {
-    opacity: 0.6,
-  },
-  appointmentHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.sm,
-  },
-  dateTimeBadge: {
-    alignItems: 'center',
-    backgroundColor: colors.primaryDark,
-    borderRadius: radii.sm,
-    flexDirection: 'row',
-    gap: 4,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  dateTimeBadgeText: {
-    ...typography.caption,
-    color: colors.white,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  actionButton: {
-    padding: spacing.xs,
-  },
-  appointmentTitle: {
-    ...typography.h3,
-    color: colors.text,
-  },
-  appointmentDescription: {
-    ...typography.bodySmall,
-    color: colors.muted,
-    marginTop: spacing.xs,
-  },
-  appointmentMeta: {
-    gap: spacing.xs,
-    marginTop: spacing.sm,
-  },
-  metaRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  metaText: {
-    ...typography.bodySmall,
-    color: colors.muted,
-    flex: 1,
-  },
-  relativeContainer: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.primarySoft,
-    borderRadius: radii.sm,
-    marginTop: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-  },
-  relativeText: {
-    ...typography.caption,
-    color: colors.primaryDark,
-  },
-
-  // Modal
-  modalOverlay: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  modalKeyboard: {
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: radii.lg,
-    borderTopRightRadius: radii.lg,
-    maxHeight: '90%',
-    paddingBottom: spacing.xl,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-  },
-  modalHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.lg,
-  },
-  modalTitle: {
-    ...typography.h2,
-    color: colors.text,
-  },
-
-  // Form
-  field: {
-    marginBottom: spacing.md,
-  },
-  label: {
-    ...typography.label,
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  input: {
-    ...typography.body,
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    color: colors.text,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 14,
-  },
-  inputError: {
-    borderColor: colors.danger,
-  },
-  textArea: {
-    minHeight: 80,
-  },
-  errorText: {
-    ...typography.bodySmall,
-    color: colors.danger,
-    marginTop: spacing.xs,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  flex1: {
-    flex: 1,
-  },
-  petChipRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  petChip: {
-    alignItems: 'center',
-    borderColor: colors.border,
-    borderRadius: radii.sm,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 4,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  petChipActive: {
-    backgroundColor: colors.primaryDark,
-    borderColor: colors.primaryDark,
-  },
-  petChipText: {
-    ...typography.caption,
-    color: colors.primaryDark,
-  },
-  petChipTextActive: {
-    color: colors.white,
-  },
-  submitButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radii.md,
-    marginBottom: spacing.lg,
-    marginTop: spacing.sm,
-    paddingVertical: 16,
-  },
-  submitButtonDisabled: {
-    opacity: 0.6,
-  },
-  submitButtonText: {
-    ...typography.button,
-    color: colors.white,
-  },
-  pressed: {
-    opacity: 0.82,
   },
 });
