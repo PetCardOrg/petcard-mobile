@@ -94,3 +94,31 @@ export function useGoogleAuth(onError?: (message: string) => void): GoogleAuth {
     error,
   };
 }
+
+/**
+ * ID token do Google obtido na hora, **sem** abrir sessão (AUD MOB-14): é a
+ * prova de identidade da conta Google para excluir a conta (D2). Nada é
+ * guardado; a API aceita o token por poucos minutos.
+ *
+ * Mesmo cuidado do `useGoogleAuth`: só montar depois de `isGoogleAuthConfigured()`.
+ */
+export function useGoogleIdToken(): {
+  pronto: boolean;
+  /** Abre o consentimento; `null` se a pessoa cancelar ou o Google não devolver token. */
+  obterIdToken: () => Promise<string | null>;
+} {
+  const [request, , promptAsync] = Google.useAuthRequest({
+    webClientId: WEB_CLIENT_ID,
+    iosClientId: IOS_CLIENT_ID,
+    androidClientId: ANDROID_CLIENT_ID,
+  });
+
+  return {
+    pronto: request !== null,
+    obterIdToken: async () => {
+      const result = await promptAsync();
+      if (result.type !== 'success') return null;
+      return result.params?.id_token ?? result.authentication?.idToken ?? null;
+    },
+  };
+}

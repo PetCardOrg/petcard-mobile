@@ -1,4 +1,9 @@
-import type { CreateTutorDto, TutorResponseDto, UpdateTutorDto } from '@petcardorg/shared';
+import type {
+  CreateTutorDto,
+  DeleteTutorDto,
+  TutorResponseDto,
+  UpdateTutorDto,
+} from '@petcardorg/shared';
 
 import { api } from './api';
 
@@ -31,7 +36,12 @@ export async function updateCurrentTutor(payload: UpdateTutorDto): Promise<Tutor
   return data;
 }
 
-/** Exclusão definitiva da conta. Leva pets e prontuário junto. */
-export async function deleteCurrentTutor(): Promise<void> {
-  await api.delete(`${TUTORS_ENDPOINT}/me`);
+/**
+ * Exclusão definitiva da conta. Leva pets e prontuário junto.
+ *
+ * Exige a prova de identidade no corpo (AUD API-04): `senha_atual` ou um
+ * `google_id_token` obtido na hora.
+ */
+export async function deleteCurrentTutor(prova: DeleteTutorDto): Promise<void> {
+  await api.delete(`${TUTORS_ENDPOINT}/me`, { data: prova });
 }

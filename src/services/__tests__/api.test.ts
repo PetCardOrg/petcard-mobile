@@ -52,10 +52,10 @@ describe('interceptor de request (Authorization)', () => {
 });
 
 describe('interceptor de response (401)', () => {
-  function failWith(status: number): AxiosAdapter {
+  function failWith(status: number, data: object = {}): AxiosAdapter {
     return async (config) => {
       const error = Object.assign(new Error(`HTTP ${status}`), {
-        response: { status, data: {}, headers: {}, config, statusText: '' },
+        response: { status, data, headers: {}, config, statusText: '' },
         config,
         isAxiosError: true,
       });
@@ -79,6 +79,16 @@ describe('interceptor de response (401)', () => {
     api.defaults.adapter = failWith(401);
 
     await expect(api.post('/auth/login', {})).rejects.toBeDefined();
+    expect(onUnauthorized).not.toHaveBeenCalled();
+  });
+
+  it('não chama o handler no 401 da prova de identidade (AUD MOB-14)', async () => {
+    const onUnauthorized = jest.fn();
+    setTokenProvider(async () => 'tok-123');
+    setUnauthorizedHandler(onUnauthorized);
+    api.defaults.adapter = failWith(401, { message: 'Senha atual incorreta.' });
+
+    await expect(api.delete('/tutors/me')).rejects.toBeDefined();
     expect(onUnauthorized).not.toHaveBeenCalled();
   });
 

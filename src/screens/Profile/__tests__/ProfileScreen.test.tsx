@@ -41,11 +41,19 @@ jest.mock('expo-image-picker', () => ({
   }),
 }));
 
+let mockGoogleConfigurado = false;
+const mockObterIdToken = jest.fn();
+jest.mock('../../../hooks/useGoogleAuth', () => ({
+  isGoogleAuthConfigured: () => mockGoogleConfigurado,
+  useGoogleIdToken: () => ({ pronto: true, obterIdToken: mockObterIdToken }),
+}));
+
 const { tutorService, uploadService } = jest.requireMock('../../../services');
 
 describe('ProfileScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGoogleConfigurado = false;
   });
 
   it('mostra nome, email e telefone do tutor', () => {
@@ -154,18 +162,30 @@ describe('ProfileScreen', () => {
     expect(screen.queryByText('Rascunho')).toBeNull();
   });
 
-  it('exclui a conta só depois dos dois passos de confirmação', async () => {
-    tutorService.deleteCurrentTutor.mockResolvedValueOnce(undefined);
-    // O primeiro Alert dispara o segundo; o segundo dispara a exclusão de fato.
+  /** Passa pelos dois Alerts de confirmação e chega ao pedido de senha. */
+  function abrirConfirmacaoDeIdentidade() {
+    // O primeiro Alert dispara o segundo; o segundo abre a prova de identidade.
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((title, _msg, buttons) => {
       const destructive = buttons?.find((b) => b.style === 'destructive');
       destructive?.onPress?.();
     });
-
     renderWithProviders(<ProfileScreen />);
     fireEvent.press(screen.getByLabelText('Excluir conta'));
+    return alertSpy;
+  }
 
-    await waitFor(() => expect(tutorService.deleteCurrentTutor).toHaveBeenCalled());
+  it('exclui a conta só depois dos dois passos e da senha atual (AUD MOB-14)', async () => {
+    tutorService.deleteCurrentTutor.mockResolvedValueOnce(undefined);
+
+    const alertSpy = abrirConfirmacaoDeIdentidade();
+
+    expect(tutorService.deleteCurrentTutor).not.toHaveBeenCalled();
+    fireEvent.changeText(screen.getByLabelText('Senha atual'), 'SenhaAtual1!');
+    fireEvent.press(screen.getByText('Excluir definitivamente'));
+
+    await waitFor(() =>
+      expect(tutorService.deleteCurrentTutor).toHaveBeenCalledWith({ senha_atual: 'SenhaAtual1!' }),
+    );
     expect(alertSpy).toHaveBeenCalledTimes(2);
     expect(alertSpy).toHaveBeenNthCalledWith(
       1,
@@ -180,6 +200,53 @@ describe('ProfileScreen', () => {
       expect.any(Array),
     );
     await waitFor(() => expect(mockLogout).toHaveBeenCalled());
+  });
+
+  it('não chama a API sem a senha (AUD MOB-14)', () => {
+    abrirConfirmacaoDeIdentidade();
+
+    fireEvent.press(screen.getByText('Excluir definitivamente'));
+
+    expect(tutorService.deleteCurrentTutor).not.toHaveBeenCalled();
+  });
+
+  it('senha errada mostra o erro e mantém a sessão (AUD MOB-14)', async () => {
+    tutorService.deleteCurrentTutor.mockRejectedValueOnce(
+      Object.assign(new Error('HTTP 401'), {
+        isAxiosError: true,
+        response: { status: 401, data: { message: 'Senha atual incorreta.' } },
+      }),
+    );
+
+    abrirConfirmacaoDeIdentidade();
+    fireEvent.changeText(screen.getByLabelText('Senha atual'), 'chute');
+    fireEvent.press(screen.getByText('Excluir definitivamente'));
+
+    expect(await screen.findByText('Senha atual incorreta.')).toBeVisible();
+    expect(mockLogout).not.toHaveBeenCalled();
+  });
+
+  it('conta Google confirma com um id_token obtido na hora (AUD MOB-14, D2)', async () => {
+    mockGoogleConfigurado = true;
+    mockObterIdToken.mockResolvedValueOnce('google-tok');
+    tutorService.deleteCurrentTutor.mockResolvedValueOnce(undefined);
+
+    abrirConfirmacaoDeIdentidade();
+    fireEvent.press(screen.getByText('Confirmar com Google'));
+
+    await waitFor(() =>
+      expect(tutorService.deleteCurrentTutor).toHaveBeenCalledWith({
+        google_id_token: 'google-tok',
+      }),
+    );
+    await waitFor(() => expect(mockLogout).toHaveBeenCalled());
+  });
+
+  it('não mostra o Google quando ele não está configurado (AUD MOB-14)', () => {
+    abrirConfirmacaoDeIdentidade();
+
+    expect(screen.getByLabelText('Senha atual')).toBeVisible();
+    expect(screen.queryByText('Confirmar com Google')).toBeNull();
   });
 
   it('não exclui a conta se o usuário cancelar no primeiro passo', () => {
