@@ -21,7 +21,10 @@
     "authErrorTitle": "Erro de autenticação",
     "registerLink": "Criar conta",
     "forgotPasswordLink": "Esqueci minha senha",
-    "googleButton": "Entrar com Google"
+    "googleButton": "Entrar com Google",
+    "googleError": "Falha na autenticação com o Google.",
+    "googleNoToken": "O Google não retornou um token válido.",
+    "googleFailed": "Não foi possível entrar com o Google."
   },
   "register": {
     "title": "Criar Conta",
@@ -48,7 +51,9 @@
     "permissionRequired": "Permissão necessária",
     "permissionGallery": "Precisamos de acesso à galeria para selecionar uma foto.",
     "loginLink": "Já tenho conta",
-    "googleButton": "Cadastrar com Google"
+    "googleButton": "Cadastrar com Google",
+    "extrasPendingTitle": "Conta criada",
+    "extrasPending": "Não conseguimos salvar a foto ou o telefone agora. Você pode completar pelo Perfil."
   },
   "apiErrors": {
     "400": "Confira os dados informados e tente novamente.",
@@ -99,7 +104,9 @@
     "emptyTitle": "Nenhum pet cadastrado",
     "emptyDescription": "Adicione seu primeiro pet para acompanhar vacinas, vermifugações e medicações.",
     "emptyAction": "Adicionar pet",
-    "addPetAccessibility": "Adicionar pet"
+    "addPetAccessibility": "Adicionar pet",
+    "loadError": "Não foi possível carregar seus pets. Tente novamente.",
+    "permissionError": "Sem permissão para acessar seus pets. Peça ao administrador para configurar sua conta."
   },
   "petDetails": {
     "digitalWallet": "Carteira Digital",
@@ -359,7 +366,8 @@
       "deleteMessage": "Deseja excluir o registro de \"{{name}}\"?",
       "startDate": "Início: {{date}}",
       "endDate": "Término: {{date}}",
-      "ongoing": "Em andamento"
+      "ongoing": "Em andamento",
+      "finished": "Concluída"
     },
     "vetRecord": {
       "editTitle": "Registro do veterinário",
@@ -422,6 +430,12 @@
     "deleteConfirmCancel": "Cancelar",
     "deleteConfirmButton": "Excluir definitivamente",
     "deleteError": "Não foi possível excluir a conta. Tente novamente.",
+    "deleteReauthTitle": "Confirme que é você",
+    "deleteReauthMessage": "Para excluir a conta, digite sua senha atual. Se você entra com o Google, confirme com a sua conta Google.",
+    "deleteReauthPasswordLabel": "Senha atual",
+    "deleteReauthGoogle": "Confirmar com Google",
+    "deleteReauthWrongPassword": "Senha atual incorreta.",
+    "deleteReauthGoogleFailed": "Não foi possível confirmar com essa conta Google. Use a conta vinculada ao PetCard.",
     "logout": "Sair da conta",
     "logoutAccessibility": "Sair da conta",
     "logoutTitle": "Sair da conta",
@@ -476,7 +490,8 @@
       "titleRequired": "Título é obrigatório",
       "dateRequired": "Data é obrigatória",
       "timeRequired": "Hora é obrigatória",
-      "timeInvalid": "Hora inválida. Use HH:MM"
+      "timeInvalid": "Hora inválida. Use HH:MM",
+      "pastDateTime": "Esse horário já passou. Escolha uma data e hora futuras."
     },
     "calendar": {
       "connected": "Google Agenda conectado",

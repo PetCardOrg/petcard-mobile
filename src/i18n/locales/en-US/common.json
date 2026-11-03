@@ -21,7 +21,10 @@
     "authErrorTitle": "Authentication error",
     "registerLink": "Create account",
     "forgotPasswordLink": "Forgot my password",
-    "googleButton": "Sign in with Google"
+    "googleButton": "Sign in with Google",
+    "googleError": "Google authentication failed.",
+    "googleNoToken": "Google didn't return a valid token.",
+    "googleFailed": "Couldn't sign in with Google."
   },
   "register": {
     "title": "Create Account",
@@ -48,7 +51,9 @@
     "permissionRequired": "Permission required",
     "permissionGallery": "We need access to your gallery to select a photo.",
     "loginLink": "Already have an account",
-    "googleButton": "Sign up with Google"
+    "googleButton": "Sign up with Google",
+    "extrasPendingTitle": "Account created",
+    "extrasPending": "We couldn't save your photo or phone right now. You can add them from your Profile."
   },
   "apiErrors": {
     "400": "Check the information provided and try again.",
@@ -99,7 +104,9 @@
     "emptyTitle": "No pets registered",
     "emptyDescription": "Add your first pet to track vaccines, dewormings, and medications.",
     "emptyAction": "Add pet",
-    "addPetAccessibility": "Add pet"
+    "addPetAccessibility": "Add pet",
+    "loadError": "Couldn't load your pets. Please try again.",
+    "permissionError": "You don't have permission to access your pets. Ask the administrator to set up your account."
   },
   "petDetails": {
     "digitalWallet": "Digital Card",
@@ -359,7 +366,8 @@
       "deleteMessage": "Delete the record for \"{{name}}\"?",
       "startDate": "Start: {{date}}",
       "endDate": "End: {{date}}",
-      "ongoing": "Ongoing"
+      "ongoing": "Ongoing",
+      "finished": "Finished"
     },
     "vetRecord": {
       "editTitle": "Veterinarian record",
@@ -422,6 +430,12 @@
     "deleteConfirmCancel": "Cancel",
     "deleteConfirmButton": "Permanently delete",
     "deleteError": "Could not delete your account. Please try again.",
+    "deleteReauthTitle": "Confirm it's you",
+    "deleteReauthMessage": "To delete your account, enter your current password. If you sign in with Google, confirm with your Google account.",
+    "deleteReauthPasswordLabel": "Current password",
+    "deleteReauthGoogle": "Confirm with Google",
+    "deleteReauthWrongPassword": "Incorrect current password.",
+    "deleteReauthGoogleFailed": "Couldn't confirm with this Google account. Use the account linked to PetCard.",
     "logout": "Sign out",
     "logoutAccessibility": "Sign out",
     "logoutTitle": "Sign out",
@@ -476,7 +490,8 @@
       "titleRequired": "Title is required",
       "dateRequired": "Date is required",
       "timeRequired": "Time is required",
-      "timeInvalid": "Invalid time. Use HH:MM"
+      "timeInvalid": "Invalid time. Use HH:MM",
+      "pastDateTime": "This time has already passed. Choose a future date and time."
     },
     "calendar": {
       "connected": "Google Calendar connected",

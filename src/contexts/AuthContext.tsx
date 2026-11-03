@@ -1,7 +1,15 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import * as SecureStore from 'expo-secure-store';
 
-import { api, setTokenProvider, setUnauthorizedHandler } from '../services/api';
+import { setTokenProvider, setUnauthorizedHandler } from '../services/api';
 import { authService, tutorService, uploadService } from '../services';
 
 const STORE_ACCESS_TOKEN = 'auth_access_token';
@@ -30,7 +38,10 @@ type AuthContextValue = {
     email: string,
     password: string,
     extras?: { phone?: string; photoUri?: string },
-  ) => Promise<void>;
+  ) => Promise<{
+    /** Conta criada, mas a foto ou o telefone não foram salvos. */
+    extrasPendentes: boolean;
+  }>;
   logout: () => Promise<void>;
   updateUser: (patch: Partial<User>) => Promise<void>;
   /** Re-busca o tutor em /tutors/me e atualiza a sessão (ex.: após verificar o e-mail pelo navegador). */
@@ -58,6 +69,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<Error | null>(null);
 
   const isAuthenticated = user !== null;
+
+  // Usuário atual para callbacks estáveis (`refreshUser`) lerem sem depender de `user`.
+  const userRef = useRef<User | null>(null);
+  userRef.current = user;
 
   // Restore session on mount
   useEffect(() => {
@@ -93,60 +108,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
+  /**
+   * Parte comum de login, login Google e cadastro: liga o loading, abre a
+   * sessão com `abrir` e grava o resultado. Em caso de erro, guarda e relança.
+   */
+  const startSession = useCallback(
+    async (fallback: string, abrir: () => Promise<{ access_token: string; user: User }>) => {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-      const response = await api.post('/auth/login', { email, password });
-      const { access_token, user: userData } = response.data;
+        const { access_token, user: userData } = await abrir();
 
-      await saveSession(access_token, userData);
-      setUser(userData);
-    } catch (e) {
-      const err = e instanceof Error ? e : new Error('Login failed');
-      setError(err);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+        await saveSession(access_token, userData);
+        setUser(userData);
+      } catch (e) {
+        const err = e instanceof Error ? e : new Error(fallback);
+        setError(err);
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
 
-  const loginWithGoogle = useCallback(async (idToken: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
+  const login = useCallback(
+    (email: string, password: string) =>
+      startSession('Login failed', () => authService.login(email, password)),
+    [startSession],
+  );
 
-      const { access_token, user: userData } = await authService.googleLogin(idToken);
-
-      await saveSession(access_token, userData);
-      setUser(userData);
-    } catch (e) {
-      const err = e instanceof Error ? e : new Error('Google login failed');
-      setError(err);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const loginWithGoogle = useCallback(
+    (idToken: string) =>
+      startSession('Google login failed', () => authService.googleLogin(idToken)),
+    [startSession],
+  );
 
   const register = useCallback(
-    async (
+    (
       name: string,
       email: string,
       password: string,
       extras?: { phone?: string; photoUri?: string },
     ) => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const response = await api.post('/auth/register', {
-          name,
-          email,
-          password,
-        });
-        const { access_token, user: userData } = response.data;
+      let extrasPendentes = false;
+      return startSession('Registration failed', async () => {
+        const { access_token, user: userData } = await authService.register(name, email, password);
 
         // Salva o token antes de tentar foto/telefone: upload de imagem e
         // PATCH /tutors/me exigem Authorization, e o interceptor do axios lê
@@ -167,21 +175,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } catch {
             // A conta já foi criada — segue sem foto/telefone, dá pra
             // completar depois no perfil. Não vale derrubar o cadastro por
-            // isso.
+            // isso, mas a tela avisa o tutor (AUD MOB-16).
+            extrasPendentes = true;
           }
         }
 
-        await saveSession(access_token, finalUser);
-        setUser(finalUser);
-      } catch (e) {
-        const err = e instanceof Error ? e : new Error('Registration failed');
-        setError(err);
-        throw err;
-      } finally {
-        setIsLoading(false);
-      }
+        return { access_token, user: finalUser };
+      }).then(() => ({ extrasPendentes }));
     },
-    [],
+    [startSession],
   );
 
   const logout = useCallback(async () => {
@@ -208,21 +210,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profile_image_url?: string | null;
         email_verified?: boolean;
       };
-      let next: User | null = null;
-      setUser((prev) => {
-        if (!prev) return prev;
-        next = {
-          ...prev,
-          name: me.name ?? prev.name,
-          phone: me.phone ?? prev.phone,
-          profile_image_url: me.profile_image_url ?? prev.profile_image_url,
-          email_verified: me.email_verified ?? prev.email_verified,
-        };
-        return next;
-      });
-      if (next) {
-        await SecureStore.setItemAsync(STORE_USER, JSON.stringify(next));
-      }
+      // Monta o usuário fora do updater do `setUser`: o React pode rodá-lo
+      // depois, e aí o SecureStore ficava com o usuário antigo.
+      const prev = userRef.current;
+      if (!prev) return;
+      const merged: User = {
+        ...prev,
+        name: me.name ?? prev.name,
+        phone: me.phone ?? prev.phone,
+        profile_image_url: me.profile_image_url ?? prev.profile_image_url,
+        email_verified: me.email_verified ?? prev.email_verified,
+      };
+      setUser(merged);
+      await SecureStore.setItemAsync(STORE_USER, JSON.stringify(merged));
     } catch {
       // Atualização em segundo plano — falha de rede não deve incomodar o usuário.
     }

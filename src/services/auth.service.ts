@@ -15,6 +15,26 @@ type SessionResponse = {
   };
 };
 
+/** Login com e-mail e senha. */
+export async function login(email: string, password: string): Promise<SessionResponse> {
+  const { data } = await api.post<SessionResponse>(`${AUTH_ENDPOINT}/login`, { email, password });
+  return data;
+}
+
+/** Cria a conta do tutor e já devolve a sessão. */
+export async function register(
+  name: string,
+  email: string,
+  password: string,
+): Promise<SessionResponse> {
+  const { data } = await api.post<SessionResponse>(`${AUTH_ENDPOINT}/register`, {
+    name,
+    email,
+    password,
+  });
+  return data;
+}
+
 /**
  * Inicia o "esqueci minha senha". A API sempre responde 202 (anti-enumeração).
  *

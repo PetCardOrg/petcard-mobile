@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-import { api } from './api';
+import { api, UPLOAD_TIMEOUT_MS } from './api';
 
 interface UploadImageResponse {
   url: string;
@@ -31,6 +31,7 @@ export async function uploadImage(
 
   const { data } = await api.post<UploadImageResponse>(`/upload/image?folder=${folder}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: UPLOAD_TIMEOUT_MS,
   });
 
   return data.url;

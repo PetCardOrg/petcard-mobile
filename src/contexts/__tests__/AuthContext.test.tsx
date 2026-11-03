@@ -9,6 +9,11 @@ jest.mock('../../services', () => ({
   tutorService: { updateCurrentTutor: jest.fn(), getCurrentTutor: jest.fn() },
   uploadService: { uploadImage: jest.fn() },
   authService: {
+    // login e cadastro usam o service real, para os testes verem o POST no `api`.
+    login: (...args: [string, string]) =>
+      jest.requireActual('../../services/auth.service').login(...args),
+    register: (...args: [string, string, string]) =>
+      jest.requireActual('../../services/auth.service').register(...args),
     googleLogin: jest.fn(),
     forgotPassword: jest.fn().mockResolvedValue(undefined),
     resendVerification: jest.fn().mockResolvedValue(undefined),
@@ -217,6 +222,41 @@ describe('AuthContext', () => {
     expect(result.current.user?.email).toBe('ana@petcard.com');
   });
 
+  it('register avisa quando a foto ou o telefone ficaram pendentes (AUD MOB-16)', async () => {
+    jest.spyOn(api, 'post').mockResolvedValue({ data: SESSION });
+    uploadService.uploadImage.mockRejectedValueOnce(new Error('upload fora'));
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(result.current.isBootstrapping).toBe(false));
+
+    let resultado: unknown;
+    await act(async () => {
+      resultado = await result.current.register('Ana', 'ana@petcard.com', 'senha1234', {
+        photoUri: 'file:///tmp/foto.jpg',
+      });
+    });
+
+    expect(resultado).toEqual({ extrasPendentes: true });
+    expect(result.current.isAuthenticated).toBe(true);
+  });
+
+  it('register sem falha nos extras não avisa nada (AUD MOB-16)', async () => {
+    jest.spyOn(api, 'post').mockResolvedValue({ data: SESSION });
+    tutorService.updateCurrentTutor.mockResolvedValueOnce({ ...SESSION.user, phone: '1199' });
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(result.current.isBootstrapping).toBe(false));
+
+    let resultado: unknown;
+    await act(async () => {
+      resultado = await result.current.register('Ana', 'ana@petcard.com', 'senha1234', {
+        phone: '1199',
+      });
+    });
+
+    expect(resultado).toEqual({ extrasPendentes: false });
+  });
+
   it('login propaga email_verified vindo da api', async () => {
     jest.spyOn(api, 'post').mockResolvedValue({
       data: {
@@ -278,6 +318,9 @@ describe('AuthContext', () => {
 
     expect(tutorService.getCurrentTutor).toHaveBeenCalled();
     expect(result.current.user?.email_verified).toBe(true);
+    // Sem isto, o app reaberto voltava a pedir a verificação (AUD MOB-04).
+    const salvo = JSON.parse((await SecureStore.getItemAsync('auth_user')) ?? '{}');
+    expect(salvo.email_verified).toBe(true);
   });
 
   it('forgotPassword delega ao authService', async () => {

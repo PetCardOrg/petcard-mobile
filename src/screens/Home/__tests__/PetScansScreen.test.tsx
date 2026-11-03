@@ -1,7 +1,7 @@
 import { Alert, Linking } from 'react-native';
 
 import { fireEvent, renderWithProviders, screen, waitFor } from '../../../test/renderWithProviders';
-import { PetScansScreen } from '../PetScansScreen';
+import { formatarInstante, PetScansScreen } from '../PetScansScreen';
 
 const mockGetByPet = jest.fn();
 
@@ -33,7 +33,7 @@ const semLocalizacao = {
 describe('PetScansScreen', () => {
   beforeEach(() => {
     mockGetByPet.mockReset();
-    jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -107,5 +107,13 @@ describe('PetScansScreen', () => {
     renderWithProviders(<PetScansScreen route={route} navigation={{} as never} />);
 
     expect(await screen.findByText(/nenhuma leitura ainda/i)).toBeTruthy();
+  });
+
+  it('formata a data da leitura no idioma escolhido (AUD MOB-08)', () => {
+    const iso = '2026-09-05T15:30:00.000Z';
+    const instante = new Date(iso);
+
+    expect(formatarInstante(iso, 'en-US')).toContain(instante.toLocaleDateString('en-US'));
+    expect(formatarInstante(iso, 'pt-BR')).toContain(instante.toLocaleDateString('pt-BR'));
   });
 });

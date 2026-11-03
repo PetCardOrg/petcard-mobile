@@ -5,10 +5,7 @@ import type {
   EntidadeComAnexo,
 } from '@petcardorg/shared';
 
-import { api } from './api';
-
-/** Comprovante de até 10 MB: sobe mais devagar que o teto padrão de 10 s. */
-const UPLOAD_TIMEOUT_MS = 60000;
+import { api, UPLOAD_TIMEOUT_MS } from './api';
 
 export interface ArquivoParaEnvio {
   uri: string;

@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
+import type { DeleteTutorDto } from '@petcardorg/shared';
 
 import { useAuth } from '../../contexts/AuthContext';
 import { tutorService, uploadService } from '../../services';
@@ -24,6 +25,7 @@ import { colors, radii, spacing, typography } from '../../utils/theme';
 import { formatPhoneBR, unformatPhone } from '../../utils/phoneMask';
 import { apiErrorMessage } from '../../utils/apiErrorMessage';
 import { avatarPickerOptions } from '../../utils/avatarPicker';
+import { ConfirmarExclusaoModal } from './ConfirmarExclusaoModal';
 
 export function ProfileScreen() {
   const { user, logout, updateUser } = useAuth();
@@ -34,6 +36,7 @@ export function ProfileScreen() {
   const [phone, setPhone] = useState(user?.phone ?? '');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [confirmandoIdentidade, setConfirmandoIdentidade] = useState(false);
 
   const avatarUri = imageUri ?? user?.profile_image_url ?? null;
 
@@ -117,20 +120,21 @@ export function ProfileScreen() {
             {
               text: t('profile.deleteConfirmButton'),
               style: 'destructive',
-              onPress: async () => {
-                try {
-                  await tutorService.deleteCurrentTutor();
-                  await logout();
-                } catch {
-                  Alert.alert(t('common.error'), t('profile.deleteError'));
-                }
-              },
+              onPress: () => setConfirmandoIdentidade(true),
             },
           ]);
         },
       },
     ]);
   };
+
+  // A prova de identidade é o último passo (AUD MOB-14): só o token não basta
+  // para apagar a conta. O modal mostra o erro e deixa tentar de novo.
+  async function handleExcluirComProva(prova: DeleteTutorDto) {
+    await tutorService.deleteCurrentTutor(prova);
+    setConfirmandoIdentidade(false);
+    await logout();
+  }
 
   const handleLanguageChange = (langCode: string) => {
     i18n.changeLanguage(langCode);
@@ -289,6 +293,12 @@ export function ProfileScreen() {
           </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <ConfirmarExclusaoModal
+        onClose={() => setConfirmandoIdentidade(false)}
+        onExcluir={handleExcluirComProva}
+        visible={confirmandoIdentidade}
+      />
     </SafeAreaView>
   );
 }

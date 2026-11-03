@@ -1,3 +1,5 @@
+import { Alert } from 'react-native';
+
 import {
   renderWithProviders,
   screen,
@@ -82,7 +84,7 @@ describe('RegisterScreen', () => {
   });
 
   it('cadastra com os dados básicos, sem telefone nem foto', async () => {
-    mockRegister.mockResolvedValueOnce(undefined);
+    mockRegister.mockResolvedValueOnce({ extrasPendentes: false });
     renderWithProviders(<RegisterScreen />);
     preencherCamposObrigatorios();
 
@@ -97,7 +99,7 @@ describe('RegisterScreen', () => {
   });
 
   it('cadastra com telefone e foto quando informados', async () => {
-    mockRegister.mockResolvedValueOnce(undefined);
+    mockRegister.mockResolvedValueOnce({ extrasPendentes: false });
     renderWithProviders(<RegisterScreen />);
     preencherCamposObrigatorios();
     fireEvent.changeText(screen.getByPlaceholderText('(00) 00000-0000'), '11999990000');
@@ -159,5 +161,37 @@ describe('RegisterScreen', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Já tenho conta' }));
 
     expect(mockGoBack).toHaveBeenCalled();
+  });
+
+  // A conta foi criada, mas a foto ou o telefone não: o tutor precisa saber,
+  // em vez de descobrir depois que a foto que escolheu sumiu.
+  it('avisa quando a foto ou o telefone não foram salvos (AUD MOB-16)', async () => {
+    const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    mockRegister.mockResolvedValueOnce({ extrasPendentes: true });
+    renderWithProviders(<RegisterScreen />);
+    preencherCamposObrigatorios();
+
+    fireEvent.press(screen.getByRole('button', { name: 'Cadastrar' }));
+
+    await waitFor(() =>
+      expect(alerta).toHaveBeenCalledWith(
+        'Conta criada',
+        'Não conseguimos salvar a foto ou o telefone agora. Você pode completar pelo Perfil.',
+      ),
+    );
+    alerta.mockRestore();
+  });
+
+  it('não avisa nada quando tudo foi salvo (AUD MOB-16)', async () => {
+    const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    mockRegister.mockResolvedValueOnce({ extrasPendentes: false });
+    renderWithProviders(<RegisterScreen />);
+    preencherCamposObrigatorios();
+
+    fireEvent.press(screen.getByRole('button', { name: 'Cadastrar' }));
+
+    await waitFor(() => expect(mockRegister).toHaveBeenCalled());
+    expect(alerta).not.toHaveBeenCalled();
+    alerta.mockRestore();
   });
 });
