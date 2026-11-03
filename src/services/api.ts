@@ -1,4 +1,4 @@
-import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, isAxiosError, type InternalAxiosRequestConfig } from 'axios';
 
 const DEFAULT_API_URL = 'http://localhost:3000';
 const API_TIMEOUT_MS = 10000;
@@ -51,12 +51,23 @@ async function withAuthorizationHeader(config: InternalAxiosRequestConfig) {
   return config;
 }
 
+/**
+ * 401 da prova de identidade (AUD API-04): senha atual errada ou conta Google
+ * recusada ao excluir a conta. A sessão continua válida; a pessoa só precisa
+ * tentar de novo. As duas mensagens da API citam a "senha atual".
+ */
+export function isFalhaDeReautenticacao(error: unknown): boolean {
+  if (!isAxiosError(error) || error.response?.status !== 401) return false;
+  const message = (error.response.data as { message?: unknown } | undefined)?.message;
+  return typeof message === 'string' && /senha atual/i.test(message);
+}
+
 function handleApiError(error: AxiosError) {
   // Um 401 só significa "sessão expirou" quando a requisição já ia autenticada
   // — senão o próprio login com senha errada dispara o logout global. A regra
   // vale para toda rota futura que responda 401 legitimamente sem token.
   const wasAuthenticated = Boolean(error.config?.headers?.Authorization);
-  if (error.response?.status === 401 && wasAuthenticated) {
+  if (error.response?.status === 401 && wasAuthenticated && !isFalhaDeReautenticacao(error)) {
     unauthorizedHandler?.();
   }
 

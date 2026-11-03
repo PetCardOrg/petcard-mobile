@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import i18n from 'i18next';
 import type { AuthSessionResult } from 'expo-auth-session';
 
-import { useGoogleAuth } from '../useGoogleAuth';
+import { useGoogleAuth, useGoogleIdToken } from '../useGoogleAuth';
 
 const mockLoginWithGoogle = jest.fn();
 jest.mock('../../contexts/AuthContext', () => ({
@@ -11,9 +11,10 @@ jest.mock('../../contexts/AuthContext', () => ({
 
 // Resposta do consentimento do Google; cada teste define a sua antes de montar.
 let mockResponse: Partial<AuthSessionResult> | null = null;
+const mockPromptAsync = jest.fn();
 jest.mock('expo-auth-session/providers/google', () => ({
   __esModule: true,
-  useAuthRequest: () => [{}, mockResponse, jest.fn()],
+  useAuthRequest: () => [{}, mockResponse, mockPromptAsync],
 }));
 
 describe('useGoogleAuth (AUD MOB-07)', () => {
@@ -92,5 +93,30 @@ describe('useGoogleAuth (AUD MOB-07)', () => {
 
     expect(mockLoginWithGoogle).not.toHaveBeenCalled();
     expect(result.current.error).toBeNull();
+  });
+});
+
+describe('useGoogleIdToken (AUD MOB-14)', () => {
+  beforeEach(() => {
+    mockPromptAsync.mockReset();
+    mockLoginWithGoogle.mockReset();
+    mockResponse = null;
+  });
+
+  it('devolve o id_token do Google sem abrir sessão', async () => {
+    mockPromptAsync.mockResolvedValue({ type: 'success', params: { id_token: 'google-tok' } });
+
+    const { result } = renderHook(() => useGoogleIdToken());
+
+    await expect(result.current.obterIdToken()).resolves.toBe('google-tok');
+    expect(mockLoginWithGoogle).not.toHaveBeenCalled();
+  });
+
+  it('devolve null quando a pessoa cancela', async () => {
+    mockPromptAsync.mockResolvedValue({ type: 'cancel' });
+
+    const { result } = renderHook(() => useGoogleIdToken());
+
+    await expect(result.current.obterIdToken()).resolves.toBeNull();
   });
 });
