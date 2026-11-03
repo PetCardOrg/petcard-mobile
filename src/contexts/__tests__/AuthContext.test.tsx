@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from '../AuthContext';
 jest.mock('../../services', () => ({
   tutorService: { updateCurrentTutor: jest.fn(), getCurrentTutor: jest.fn() },
   uploadService: { uploadImage: jest.fn() },
+  deviceService: { unregisterCurrent: jest.fn().mockResolvedValue(undefined) },
   authService: {
     // login e cadastro usam o service real, para os testes verem o POST no `api`.
     login: (...args: [string, string]) =>
@@ -20,7 +21,8 @@ jest.mock('../../services', () => ({
   },
 }));
 
-const { tutorService, uploadService, authService } = jest.requireMock('../../services');
+const { tutorService, uploadService, authService, deviceService } =
+  jest.requireMock('../../services');
 
 const wrapper = ({ children }: { children: ReactNode }) => <AuthProvider>{children}</AuthProvider>;
 
@@ -114,6 +116,44 @@ describe('AuthContext', () => {
     await act(async () => {
       await result.current.login('ana@petcard.com', 'senha123');
     });
+    await act(async () => {
+      await result.current.logout();
+    });
+
+    expect(result.current.isAuthenticated).toBe(false);
+    expect(await SecureStore.getItemAsync('auth_access_token')).toBeNull();
+  });
+
+  it('logout descadastra o push antes de limpar a sessão (AUD MOB-01)', async () => {
+    // A rota exige o Bearer: o descadastro precisa rodar com o token ainda salvo.
+    let tokenNaHora: string | null = 'não chamado';
+    deviceService.unregisterCurrent.mockImplementationOnce(async () => {
+      tokenNaHora = await SecureStore.getItemAsync('auth_access_token');
+    });
+    jest.spyOn(api, 'post').mockResolvedValue({ data: SESSION });
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(result.current.isBootstrapping).toBe(false));
+    await act(async () => {
+      await result.current.login('ana@petcard.com', 'senha123');
+    });
+
+    await act(async () => {
+      await result.current.logout();
+    });
+
+    expect(tokenNaHora).toBe('tok-abc');
+    expect(await SecureStore.getItemAsync('auth_access_token')).toBeNull();
+  });
+
+  it('logout limpa a sessão mesmo se o descadastro falhar (AUD MOB-01)', async () => {
+    deviceService.unregisterCurrent.mockRejectedValueOnce(new Error('rede caiu'));
+    jest.spyOn(api, 'post').mockResolvedValue({ data: SESSION });
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(result.current.isBootstrapping).toBe(false));
+    await act(async () => {
+      await result.current.login('ana@petcard.com', 'senha123');
+    });
+
     await act(async () => {
       await result.current.logout();
     });
