@@ -56,6 +56,18 @@ jest.mock('expo-auth-session/providers/google', () => ({
   useAuthRequest: () => [null, null, jest.fn()],
 }));
 
+// Login nativo do Google no Android: o módulo nativo não existe no Jest.
+jest.mock('@react-native-google-signin/google-signin', () => ({
+  __esModule: true,
+  GoogleSignin: {
+    configure: jest.fn(),
+    hasPlayServices: jest.fn().mockResolvedValue(true),
+    signOut: jest.fn().mockResolvedValue(null),
+    signIn: jest.fn().mockResolvedValue({ type: 'cancelled', data: null }),
+  },
+  isCancelledResponse: (r: { type: string }) => r.type === 'cancelled',
+}));
+
 jest.mock('expo-web-browser', () => ({
   __esModule: true,
   maybeCompleteAuthSession: jest.fn(),

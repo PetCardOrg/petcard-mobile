@@ -19,9 +19,13 @@ if (!googleMapsApiKey) {
 /** Perfis do `eas.json` que geram app para outras pessoas instalarem. */
 const PERFIS_DE_DISTRIBUICAO = ['preview', 'production'];
 
-/** Client ID do Google que o login usa em cada plataforma (`useGoogleAuth`). */
+/**
+ * Client ID do Google que o login usa em cada plataforma (`useGoogleAuth`). No
+ * Android o login é nativo e pede o client **Web** (o client Android é achado
+ * pelo pacote + SHA-1, não pelo ID).
+ */
 const CLIENT_ID_GOOGLE_POR_PLATAFORMA: Record<string, string> = {
-  android: 'EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID',
+  android: 'EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID',
   ios: 'EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID',
 };
 
