@@ -123,6 +123,22 @@ const configDoApp = (config: ConfigContext['config']): ExpoConfig => ({
         backgroundColor: '#ffffff',
       },
     ],
+    // O build de distribuição passa pelo R8, que renomeia/remove a classe
+    // `WorkDatabase_Impl` que o Room procura por reflexão. O WorkManager (trazido
+    // pelo push) sobe na abertura do app e, sem a classe, o app fecha antes de
+    // abrir ("Failed to create an instance of class
+    // androidx.work.impl.WorkDatabase").
+    [
+      'expo-build-properties',
+      {
+        android: {
+          extraProguardRules: [
+            '-keep class * extends androidx.room.RoomDatabase { <init>(); }',
+            '-keep class androidx.work.impl.WorkDatabase_Impl { *; }',
+          ].join('\n'),
+        },
+      },
+    ],
     [
       'react-native-maps',
       {
