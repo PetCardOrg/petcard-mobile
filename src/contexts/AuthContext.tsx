@@ -10,7 +10,7 @@ import {
 import * as SecureStore from 'expo-secure-store';
 
 import { setTokenProvider, setUnauthorizedHandler } from '../services/api';
-import { authService, tutorService, uploadService } from '../services';
+import { authService, deviceService, tutorService, uploadService } from '../services';
 
 const STORE_ACCESS_TOKEN = 'auth_access_token';
 const STORE_USER = 'auth_user';
@@ -187,6 +187,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const logout = useCallback(async () => {
+    // Antes de limpar a sessão, porque a rota precisa do Bearer (AUD MOB-01).
+    // No logout forçado por 401 o token já não vale; lá a limpeza fica com a
+    // API, que apaga o token quando o FCM o recusa.
+    try {
+      await deviceService.unregisterCurrent();
+    } catch {
+      // Sair da conta nunca depende da rede.
+    }
     await clearSession();
     setUser(null);
     setError(null);
