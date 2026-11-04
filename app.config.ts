@@ -19,23 +19,43 @@ if (!googleMapsApiKey) {
 /** Perfis do `eas.json` que geram app para outras pessoas instalarem. */
 const PERFIS_DE_DISTRIBUICAO = ['preview', 'production'];
 
+/** Client ID do Google que o login usa em cada plataforma (`useGoogleAuth`). */
+const CLIENT_ID_GOOGLE_POR_PLATAFORMA: Record<string, string> = {
+  android: 'EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID',
+  ios: 'EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID',
+};
+
 /**
- * Sem a URL, o app cai no fallback `http://localhost:3000` do `api.ts`, que no
- * celular é o próprio aparelho: o build sai "verde" e nenhuma tela funciona.
- * Por isso aqui é erro, e não aviso como a chave do Maps.
+ * Num build de distribuição, variável faltando não pode virar app "verde" que
+ * não funciona:
+ * - sem a URL, o app cai no fallback `http://localhost:3000` do `api.ts`, que
+ *   no celular é o próprio aparelho (AUD MOB-03);
+ * - sem a chave do Maps, o mapa abre em branco;
+ * - sem o client ID do Google da plataforma, o botão do Google some sem aviso
+ *   (`isGoogleAuthConfigured`) (AUD MOB-15).
+ * O client ID só é cobrado quando a plataforma do build é conhecida: o builder
+ * do EAS define `EAS_BUILD_PLATFORM` e avalia este arquivo de novo.
  */
-function exigirUrlDaApiEmDistribuicao() {
+function exigirVariaveisEmDistribuicao() {
   const perfil = process.env.EAS_BUILD_PROFILE;
-  if (perfil && PERFIS_DE_DISTRIBUICAO.includes(perfil) && !process.env.EXPO_PUBLIC_API_URL) {
+  if (!perfil || !PERFIS_DE_DISTRIBUICAO.includes(perfil)) return;
+
+  const exigidas = ['EXPO_PUBLIC_API_URL', 'EXPO_PUBLIC_GOOGLE_MAPS_API_KEY'];
+  const clientIdDaPlataforma =
+    CLIENT_ID_GOOGLE_POR_PLATAFORMA[process.env.EAS_BUILD_PLATFORM ?? ''];
+  if (clientIdDaPlataforma) exigidas.push(clientIdDaPlataforma);
+
+  const ausentes = exigidas.filter((nome) => !process.env[nome]);
+  if (ausentes.length > 0) {
     throw new Error(
-      `[app.config] EXPO_PUBLIC_API_URL ausente no build "${perfil}": o app chamaria localhost. ` +
-        `Defina a variável no ambiente "${perfil}" do EAS.`,
+      `[app.config] ${ausentes.join(', ')} ausente(s) no build "${perfil}". ` +
+        `Defina no ambiente "${perfil}" do EAS.`,
     );
   }
 }
 
 export default ({ config }: ConfigContext): ExpoConfig => {
-  exigirUrlDaApiEmDistribuicao();
+  exigirVariaveisEmDistribuicao();
   return configDoApp(config);
 };
 
