@@ -471,6 +471,12 @@
     "today": "Today",
     "tomorrow": "Tomorrow",
     "daysAway": "days away",
+    "sync": {
+      "synced": "On your calendar",
+      "pending": "Waiting to sync",
+      "needsConnection": "Connect Google Calendar to sync",
+      "failed": "Could not sync with Google Calendar"
+    },
     "form": {
       "titleLabel": "Appointment title *",
       "titlePlaceholder": "E.g.: Routine checkup, Vaccination...",

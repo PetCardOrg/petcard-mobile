@@ -1,8 +1,6 @@
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
@@ -30,7 +28,12 @@ import type { AuthStackParamList, HomeStackParamList, MainTabParamList } from '.
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const HomeStack = createNativeStackNavigator<HomeStackParamList>();
-const MainTabs = createMaterialTopTabNavigator<MainTabParamList>();
+// Abas inferiores nativas, e não `material-top-tabs`: este usa o `react-native-pager-view`
+// (SwiftUI), que recria o controller de cada página e deixa o `RNSNavigationController` da
+// Home preso ao antigo. O iOS aborta o app com `UIViewControllerHierarchyInconsistency`
+// ao voltar para a Home (reproduzido no iOS 26.4 e no 27.0, SDK 58). Sem pager, sem esse
+// reparenting; o custo é não deslizar entre as abas.
+const MainTabs = createBottomTabNavigator<MainTabParamList>();
 
 function AuthNavigator() {
   return (
@@ -91,16 +94,14 @@ function HomeNavigator() {
 
 function MainNavigator() {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
   usePushNotifications();
   // Dentro do PetsProvider e do NavigationContainer, que o hook precisa.
   usePetScanNotificationNavigation();
 
   return (
     <MainTabs.Navigator
-      tabBarPosition="bottom"
       screenOptions={{
-        swipeEnabled: true,
+        headerShown: false,
         tabBarActiveTintColor: colors.primaryDark,
         tabBarInactiveTintColor: colors.muted,
         tabBarLabelStyle: {
@@ -119,16 +120,7 @@ function MainNavigator() {
           // valor vem do sistema, então cobre gestos (~16), três botões (~48) e
           // o home indicator do iOS (~34) — antes era um 20 fixo que só
           // aproximava o caso do iOS e ignorava o Android.
-          paddingBottom: insets.bottom + 8,
-          paddingTop: 6,
-          height: insets.bottom + 64,
         },
-        tabBarIndicatorStyle: {
-          backgroundColor: colors.primaryDark,
-          height: 2,
-          top: 0,
-        },
-        tabBarShowIcon: true,
         tabBarItemStyle: {
           paddingVertical: 2,
         },
@@ -137,13 +129,8 @@ function MainNavigator() {
       <MainTabs.Screen
         component={HomeNavigator}
         name="Home"
-        options={({ route }) => ({
+        options={() => ({
           title: t('tabs.home'),
-          swipeEnabled:
-            getFocusedRouteNameFromRoute(route) !== 'PetDetails' &&
-            getFocusedRouteNameFromRoute(route) !== 'DigitalWallet' &&
-            getFocusedRouteNameFromRoute(route) !== 'ClinicalHistory' &&
-            getFocusedRouteNameFromRoute(route) !== 'PetRegistration',
           tabBarIcon: ({ color }) => <Ionicons color={color} name="home-outline" size={20} />,
         })}
       />
@@ -168,7 +155,6 @@ function MainNavigator() {
         name="Clinics"
         options={{
           title: t('tabs.clinics'),
-          swipeEnabled: false,
           tabBarIcon: ({ color }) => <Ionicons color={color} name="map-outline" size={20} />,
         }}
       />

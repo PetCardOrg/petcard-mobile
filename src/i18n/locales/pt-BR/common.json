@@ -471,6 +471,12 @@
     "today": "Hoje",
     "tomorrow": "Amanhã",
     "daysAway": "dias restantes",
+    "sync": {
+      "synced": "Na sua agenda",
+      "pending": "Aguardando sincronizar",
+      "needsConnection": "Conecte o Google Agenda para sincronizar",
+      "failed": "Não sincronizou com o Google Agenda"
+    },
     "form": {
       "titleLabel": "Título da consulta *",
       "titlePlaceholder": "Ex: Consulta de rotina, Vacinação...",
