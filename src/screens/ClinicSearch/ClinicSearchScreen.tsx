@@ -16,7 +16,6 @@ import type { MaterialTopTabNavigationProp } from '@react-navigation/material-to
 import * as Location from 'expo-location';
 import { isRunningInExpoGo } from 'expo';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import type { Region } from 'react-native-maps';
 import { useTranslation } from 'react-i18next';
 import type { PlacesClinicResponseDto } from '@petcardorg/shared';
 
@@ -25,14 +24,7 @@ import * as clinicService from '../../services/clinic.service';
 import { useAuth } from '../../contexts/AuthContext';
 import { ClinicDetailCard } from './ClinicDetailCard';
 import type { MainTabParamList } from '../../navigation/types';
-import {
-  DEFAULT_RADIUS,
-  RADIUS_OPTIONS,
-  formatRadius,
-  radiusFromRegion,
-  regionForRadius,
-  snapRadiusToOption,
-} from './radius';
+import { DEFAULT_RADIUS, RADIUS_OPTIONS, formatRadius, regionForRadius } from './radius';
 
 /** Janela em que os marcadores são redesenhados após mudar o resultado. */
 const MARKER_REDRAW_MS = 600;
@@ -76,9 +68,6 @@ export function ClinicSearchScreen() {
   // eles só apareciam depois de uma interação. Redesenha por uma janela curta
   // a cada resultado novo e desliga depois, para não ficar redesenhando à toa.
   const [tracksViewChanges, setTracksViewChanges] = useState(true);
-
-  // Distingue o reenquadramento que nós disparamos do gesto do usuário.
-  const programmaticRegion = useRef(false);
 
   useEffect(() => {
     setTracksViewChanges(true);
@@ -189,10 +178,12 @@ export function ClinicSearchScreen() {
     [userLocation, loadClinics],
   );
 
+  // O raio é um filtro explícito, escolhido só pelos chips: zoom e arraste são
+  // navegação e não refazem a busca. Antes o raio acompanhava o zoom, e ao
+  // aproximar de uma clínica distante ela saía do filtro e sumia do mapa.
   const focusRadius = useCallback(
     (radiusKm: number) => {
       if (!userLocation) return;
-      programmaticRegion.current = true;
       mapRef.current?.animateToRegion(
         regionForRadius(userLocation.lat, userLocation.lng, radiusKm),
         350,
@@ -208,25 +199,6 @@ export function ClinicSearchScreen() {
       applyFilters(radius, openNowFilter);
     },
     [applyFilters, openNowFilter, focusRadius],
-  );
-
-  // Ao dar zoom, o raio acompanha o que está visível. Como o valor é encaixado
-  // nas opções da barra, só refaz a busca quando a faixa realmente muda.
-  const handleRegionChangeComplete = useCallback(
-    (region: Region) => {
-      if (programmaticRegion.current) {
-        programmaticRegion.current = false;
-        return;
-      }
-      if (!userLocation) return;
-
-      const nextRadius = snapRadiusToOption(radiusFromRegion(region));
-      if (nextRadius === selectedRadius) return;
-
-      setSelectedRadius(nextRadius);
-      applyFilters(nextRadius, openNowFilter);
-    },
-    [userLocation, selectedRadius, openNowFilter, applyFilters],
   );
 
   const handleOpenNowToggle = useCallback(() => {
@@ -314,7 +286,6 @@ export function ClinicSearchScreen() {
           showsUserLocation
           showsMyLocationButton
           onPress={handleDismissCard}
-          onRegionChangeComplete={handleRegionChangeComplete}
         >
           {clinics.map((clinic) => (
             <Marker
