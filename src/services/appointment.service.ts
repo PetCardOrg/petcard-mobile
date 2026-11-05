@@ -3,6 +3,14 @@ import { ensureList } from './ensureList';
 
 const ENDPOINT = '/appointments';
 
+/** Estado do agendamento no Google Agenda, como a API devolve. */
+export type AppointmentSyncStatus =
+  | 'PENDING_CREATE'
+  | 'PENDING_UPDATE'
+  | 'PENDING_DELETE'
+  | 'SYNCED'
+  | 'FAILED';
+
 export type AppointmentResponse = {
   id: string;
   title: string;
@@ -12,7 +20,7 @@ export type AppointmentResponse = {
   location?: string;
   pet_id?: string;
   pet_name?: string;
-  sync_status: string;
+  sync_status: AppointmentSyncStatus;
   created_at: string;
   updated_at: string;
 };

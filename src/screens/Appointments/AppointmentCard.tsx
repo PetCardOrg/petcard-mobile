@@ -5,18 +5,22 @@ import { useTranslation } from 'react-i18next';
 import type { AppointmentResponse } from '../../services/appointment.service';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 import { formatScheduledAt, isUpcoming } from './horarioDoAgendamento';
+import { estadoDeSincronizacao } from './estadoDeSincronizacao';
 import { getRelativeDays } from './relativeDate';
 
 type Props = {
   item: AppointmentResponse;
+  /** Se o Google Agenda do tutor está conectado: muda o que um pendente significa. */
+  calendarConnected: boolean;
   onEdit: (item: AppointmentResponse) => void;
   onDelete: (item: AppointmentResponse) => void;
 };
 
-export function AppointmentCard({ item, onEdit, onDelete }: Props) {
+export function AppointmentCard({ item, calendarConnected, onEdit, onDelete }: Props) {
   const { t } = useTranslation();
   const { date, time } = formatScheduledAt(item.scheduled_at);
   const upcoming = isUpcoming(item.scheduled_at);
+  const sync = estadoDeSincronizacao(item.sync_status, calendarConnected);
 
   return (
     <View style={[styles.appointmentCard, !upcoming && styles.pastCard]}>
@@ -67,6 +71,15 @@ export function AppointmentCard({ item, onEdit, onDelete }: Props) {
             <Text style={styles.metaText}>{item.pet_name}</Text>
           </View>
         ) : null}
+
+        {sync ? (
+          <View style={styles.metaRow}>
+            <Ionicons color={CORES_DO_ESTADO[sync.tom]} name={sync.icone} size={15} />
+            <Text style={[styles.metaText, sync.tom === 'falha' && styles.syncFalhou]}>
+              {t(`appointments.sync.${sync.chave}`)}
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       {upcoming ? (
@@ -88,6 +101,12 @@ export function AppointmentCard({ item, onEdit, onDelete }: Props) {
   );
 }
 
+const CORES_DO_ESTADO = {
+  ok: colors.success,
+  neutro: colors.muted,
+  falha: colors.danger,
+};
+
 const styles = StyleSheet.create({
   appointmentCard: {
     backgroundColor: colors.surface,
@@ -98,6 +117,9 @@ const styles = StyleSheet.create({
   },
   pastCard: {
     opacity: 0.6,
+  },
+  syncFalhou: {
+    color: colors.danger,
   },
   appointmentHeader: {
     alignItems: 'center',
