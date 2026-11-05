@@ -12,7 +12,7 @@ describe('app.config — variáveis de distribuição', () => {
   const VARIAVEIS_COMPLETAS = {
     EXPO_PUBLIC_API_URL: 'https://api.petcard.example',
     EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: 'maps-key',
-    EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID: 'android.apps.googleusercontent.com',
+    EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: 'web.apps.googleusercontent.com',
     EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: 'ios.apps.googleusercontent.com',
   };
 
@@ -50,7 +50,7 @@ describe('app.config — variáveis de distribuição', () => {
   });
 
   it.each([
-    ['android', 'EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID'],
+    ['android', 'EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID'],
     ['ios', 'EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'],
   ])('falha o build %s sem o client ID do Google da plataforma', (plataforma, variavel) => {
     process.env.EAS_BUILD_PROFILE = 'preview';
