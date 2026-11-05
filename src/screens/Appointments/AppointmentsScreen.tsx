@@ -28,6 +28,13 @@ import { CalendarBanner } from './CalendarBanner';
 import { CalendarConnectedModal } from './CalendarConnectedModal';
 import { useGoogleCalendar } from './useGoogleCalendar';
 
+/**
+ * Quanto esperar, depois de salvar, para consultar de novo. O envio ao Google
+ * Agenda corre em segundo plano; passado esse tempo o cartão já mostra se foi
+ * ou não, e o banner se corrige se o Google tiver recusado o token.
+ */
+const RECONFERENCIA_MS = 4000;
+
 type Formulario = {
   record: AppointmentResponse | null;
   initialLocation: string;
@@ -39,6 +46,7 @@ export function AppointmentsScreen() {
   const insets = useSafeAreaInsets();
   const route = useRoute<RouteProp<MainTabParamList, 'Appointments'>>();
   const lastPrefillTs = useRef(0);
+  const reconferencia = useRef<ReturnType<typeof setTimeout> | null>(null);
   const calendar = useGoogleCalendar();
 
   const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
@@ -54,23 +62,29 @@ export function AppointmentsScreen() {
   });
 
   const loadAppointments = useCallback(
-    async (mode?: 'initial' | 'refresh') => {
+    // `silent` é a reconferência de fundo: não pisca carga e, se falhar, deixa
+    // a lista que já está na tela em vez de trocá-la por uma mensagem de erro.
+    async (mode?: 'initial' | 'refresh' | 'silent') => {
       if (mode === 'refresh') {
         setIsRefreshing(true);
-      } else {
+      } else if (mode !== 'silent') {
         setIsLoading(true);
       }
-      setError(null);
+      if (mode !== 'silent') setError(null);
 
       try {
         const data = await appointmentService.getUpcoming();
         setAppointments(data);
       } catch (err) {
-        const message = apiErrorMessage(err, t('appointments.errorLoad'), t);
-        setError(message);
+        if (mode !== 'silent') {
+          const message = apiErrorMessage(err, t('appointments.errorLoad'), t);
+          setError(message);
+        }
       } finally {
-        setIsLoading(false);
-        setIsRefreshing(false);
+        if (mode !== 'silent') {
+          setIsLoading(false);
+          setIsRefreshing(false);
+        }
       }
     },
     [t],
@@ -83,6 +97,22 @@ export function AppointmentsScreen() {
       void checkStatus();
     }, [loadAppointments, checkStatus]),
   );
+
+  useEffect(
+    () => () => {
+      if (reconferencia.current) clearTimeout(reconferencia.current);
+    },
+    [],
+  );
+
+  function aposSalvar() {
+    void loadAppointments();
+    if (reconferencia.current) clearTimeout(reconferencia.current);
+    reconferencia.current = setTimeout(() => {
+      void loadAppointments('silent');
+      void checkStatus();
+    }, RECONFERENCIA_MS);
+  }
 
   // Handle prefill from clinic screen
   useEffect(() => {
@@ -165,6 +195,7 @@ export function AppointmentsScreen() {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <AppointmentCard
+              calendarConnected={calendar.connected}
               item={item}
               onDelete={confirmDelete}
               onEdit={(record) => abrirFormulario(record)}
@@ -193,7 +224,7 @@ export function AppointmentsScreen() {
       <AppointmentFormModal
         initialLocation={formulario.initialLocation}
         onClose={() => setModalVisible(false)}
-        onSaved={() => void loadAppointments()}
+        onSaved={aposSalvar}
         record={formulario.record}
         session={formulario.session}
         visible={modalVisible}

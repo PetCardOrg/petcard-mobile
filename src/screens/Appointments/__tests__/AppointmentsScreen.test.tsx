@@ -77,7 +77,7 @@ function agendamento(over: Partial<AppointmentResponse> = {}): AppointmentRespon
     location: 'Clínica Amigo Fiel',
     pet_id: 'p1',
     pet_name: 'Rex',
-    sync_status: 'synced',
+    sync_status: 'SYNCED',
     created_at: '2026-10-01T00:00:00.000Z',
     updated_at: '2026-10-01T00:00:00.000Z',
     ...over,
@@ -308,6 +308,107 @@ describe('AppointmentsScreen', () => {
 
     await waitFor(() => expect(mockAppointments.remove).toHaveBeenCalledWith('a1'));
     await waitFor(() => expect(mockAppointments.getUpcoming).toHaveBeenCalledTimes(2));
+  });
+
+  describe('sincronização com o Google Agenda', () => {
+    it('diz que o agendamento está na agenda quando foi sincronizado', async () => {
+      mockCalendar.getStatus.mockResolvedValue(true);
+      mockAppointments.getUpcoming.mockResolvedValue([agendamento({ sync_status: 'SYNCED' })]);
+      renderWithProviders(<AppointmentsScreen />);
+
+      expect(await screen.findByText('Na sua agenda')).toBeTruthy();
+    });
+
+    it('diz que aguarda, quando o Google Agenda está conectado e o envio ainda não terminou', async () => {
+      mockCalendar.getStatus.mockResolvedValue(true);
+      mockAppointments.getUpcoming.mockResolvedValue([
+        agendamento({ sync_status: 'PENDING_CREATE' }),
+      ]);
+      renderWithProviders(<AppointmentsScreen />);
+
+      expect(await screen.findByText('Aguardando sincronizar')).toBeTruthy();
+    });
+
+    // O tutor que agendou sem conectar não tinha como saber por que nada chegou
+    // à agenda dele.
+    it('pede para conectar quando o agendamento está pendente e o Google Agenda não', async () => {
+      mockCalendar.getStatus.mockResolvedValue(false);
+      mockAppointments.getUpcoming.mockResolvedValue([
+        agendamento({ sync_status: 'PENDING_CREATE' }),
+      ]);
+      renderWithProviders(<AppointmentsScreen />);
+
+      expect(await screen.findByText('Conecte o Google Agenda para sincronizar')).toBeTruthy();
+    });
+
+    it('avisa quando o envio ao Google Agenda falhou', async () => {
+      mockCalendar.getStatus.mockResolvedValue(true);
+      mockAppointments.getUpcoming.mockResolvedValue([agendamento({ sync_status: 'FAILED' })]);
+      renderWithProviders(<AppointmentsScreen />);
+
+      expect(await screen.findByText('Não sincronizou com o Google Agenda')).toBeTruthy();
+    });
+
+    /** Cria um agendamento e devolve o que a tela agendou para daqui a pouco. */
+    async function criarAgendamento(timers: jest.SpyInstance) {
+      renderWithProviders(<AppointmentsScreen />);
+      await screen.findByText('Consulta de rotina');
+      fireEvent.press(screen.getByLabelText('Agendar consulta'));
+      fireEvent.changeText(
+        screen.getByPlaceholderText('Ex: Consulta de rotina, Vacinação...'),
+        'Vacina anual',
+      );
+      fireEvent.changeText(screen.getByPlaceholderText('DD/MM/AAAA'), '15032099');
+      fireEvent.changeText(screen.getByPlaceholderText('HH:MM'), '1030');
+      enviar();
+      await waitFor(() =>
+        expect(alerta).toHaveBeenCalledWith('Sucesso', 'Agendamento criado com sucesso!'),
+      );
+      const reconferencia = timers.mock.calls.find(([, ms]) => ms === 4000);
+      expect(reconferencia).toBeDefined();
+      return reconferencia![0] as () => void;
+    }
+
+    // O envio corre em segundo plano: sem reconsultar, o cartão ficaria
+    // "aguardando" para sempre e o banner não perceberia um token recusado.
+    it('depois de salvar, reconsulta a lista e a conexão uma vez, em silêncio', async () => {
+      const timers = jest.spyOn(global, 'setTimeout');
+      mockCalendar.getStatus.mockResolvedValue(true);
+      mockAppointments.getUpcoming.mockResolvedValue([
+        agendamento({ sync_status: 'PENDING_CREATE' }),
+      ]);
+
+      const reconferir = await criarAgendamento(timers);
+      // Carga inicial e recarga logo depois de salvar; a conexão foi lida ao abrir.
+      expect(mockAppointments.getUpcoming).toHaveBeenCalledTimes(2);
+      expect(mockCalendar.getStatus).toHaveBeenCalledTimes(1);
+
+      mockAppointments.getUpcoming.mockResolvedValue([agendamento({ sync_status: 'SYNCED' })]);
+      await act(async () => {
+        reconferir();
+      });
+
+      expect(mockAppointments.getUpcoming).toHaveBeenCalledTimes(3);
+      expect(mockCalendar.getStatus).toHaveBeenCalledTimes(2);
+      expect(await screen.findByText('Na sua agenda')).toBeTruthy();
+    });
+
+    it('se a reconsulta de fundo falhar, mantém a lista em vez de mostrar erro', async () => {
+      const timers = jest.spyOn(global, 'setTimeout');
+      mockCalendar.getStatus.mockResolvedValue(true);
+      mockAppointments.getUpcoming.mockResolvedValue([
+        agendamento({ sync_status: 'PENDING_CREATE' }),
+      ]);
+
+      const reconferir = await criarAgendamento(timers);
+      mockAppointments.getUpcoming.mockRejectedValue(new Error('rede fora'));
+      await act(async () => {
+        reconferir();
+      });
+
+      expect(screen.getByText('Consulta de rotina')).toBeTruthy();
+      expect(screen.queryByText('Não foi possível carregar os agendamentos.')).toBeNull();
+    });
   });
 
   describe('Google Agenda', () => {
