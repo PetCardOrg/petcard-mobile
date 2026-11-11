@@ -1,16 +1,8 @@
+import type { CalendarConnectResponseDto, CalendarStatusResponseDto } from '@petcardorg/shared';
+
 import { api } from './api';
 
 const ENDPOINT = '/calendar';
-
-type ConnectResponse = {
-  auth_url?: string;
-  connected?: boolean;
-  message?: string;
-};
-
-type StatusResponse = {
-  connected: boolean;
-};
 
 /** Como o consentimento terminou, lido do `?calendar=` da volta ao app. */
 export type CalendarConnectOutcome = 'connected' | 'denied' | 'error';
@@ -20,7 +12,7 @@ export type CalendarConnectOutcome = 'connected' | 'denied' | 'error';
  * consentimento — é o que fecha a aba do navegador sozinha.
  */
 export async function getConnectUrl(returnUrl?: string): Promise<string | null> {
-  const { data } = await api.get<ConnectResponse>(`${ENDPOINT}/connect`, {
+  const { data } = await api.get<CalendarConnectResponseDto>(`${ENDPOINT}/connect`, {
     params: returnUrl ? { return_url: returnUrl } : undefined,
   });
   return data.auth_url ?? null;
@@ -33,7 +25,7 @@ export function parseConnectOutcome(url: string): CalendarConnectOutcome | null 
 }
 
 export async function getStatus(): Promise<boolean> {
-  const { data } = await api.get<StatusResponse>(`${ENDPOINT}/status`);
+  const { data } = await api.get<CalendarStatusResponseDto>(`${ENDPOINT}/status`);
   return data.connected;
 }
 

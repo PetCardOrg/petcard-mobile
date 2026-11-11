@@ -20,7 +20,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import type { HomeStackParamList } from '../../navigation/types';
 import { scanService } from '../../services';
-import type { PetScan } from '../../services/scan.service';
+import type { PetScanResponseDto } from '@petcardorg/shared';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'PetScans'>;
@@ -41,8 +41,8 @@ export function formatarInstante(iso: string, idioma: string): string {
 }
 
 export function temLocalizacao(
-  scan: PetScan,
-): scan is PetScan & { latitude: number; longitude: number } {
+  scan: PetScanResponseDto,
+): scan is PetScanResponseDto & { latitude: number; longitude: number } {
   return scan.latitude !== undefined && scan.longitude !== undefined;
 }
 
@@ -74,7 +74,7 @@ async function abrirNoMapa(latitude: number, longitude: number, t: TFunction) {
   }
 }
 
-function ScanItem({ scan }: { scan: PetScan }) {
+function ScanItem({ scan }: { scan: PetScanResponseDto }) {
   const { t, i18n } = useTranslation();
   const localizado = temLocalizacao(scan);
 
@@ -131,7 +131,7 @@ export function PetScansScreen({ route }: Props) {
   const { t } = useTranslation();
   const { petId } = route.params;
 
-  const [scans, setScans] = useState<PetScan[]>([]);
+  const [scans, setScans] = useState<PetScanResponseDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(false);

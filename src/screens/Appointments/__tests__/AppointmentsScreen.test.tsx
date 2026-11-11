@@ -10,7 +10,7 @@ import {
   waitFor,
 } from '../../../test/renderWithProviders';
 import { mockRotaDeTeste } from '../../../test/mockRotaDeTeste';
-import type { AppointmentResponse } from '../../../services/appointment.service';
+import type { AppointmentResponseDto } from '@petcardorg/shared';
 import { AppointmentsScreen } from '../AppointmentsScreen';
 
 // Fixa o comportamento da tela antes de dividi-la (AUD MOB-11): estes testes
@@ -67,7 +67,7 @@ function amanhaAsDez(): Date {
   return d;
 }
 
-function agendamento(over: Partial<AppointmentResponse> = {}): AppointmentResponse {
+function agendamento(over: Partial<AppointmentResponseDto> = {}): AppointmentResponseDto {
   return {
     id: 'a1',
     title: 'Consulta de rotina',
@@ -78,8 +78,8 @@ function agendamento(over: Partial<AppointmentResponse> = {}): AppointmentRespon
     pet_id: 'p1',
     pet_name: 'Rex',
     sync_status: 'SYNCED',
-    created_at: '2026-10-01T00:00:00.000Z',
-    updated_at: '2026-10-01T00:00:00.000Z',
+    created_at: new Date('2026-10-01T00:00:00.000Z'),
+    updated_at: new Date('2026-10-01T00:00:00.000Z'),
     ...over,
   };
 }

@@ -19,7 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { ErrorState } from '../../components/ui/ErrorState';
 import type { HomeStackParamList } from '../../navigation/types';
 import { cardService, scanService } from '../../services';
-import type { TagColeira } from '../../services/scan.service';
+import type { TagColeiraResponseDto } from '@petcardorg/shared';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'ColeiraQr'>;
@@ -38,7 +38,7 @@ export function ColeiraQrScreen({ route }: Props) {
   const { t } = useTranslation();
   const { petId, petName } = route.params;
 
-  const [tag, setTag] = useState<TagColeira | null>(null);
+  const [tag, setTag] = useState<TagColeiraResponseDto | null>(null);
   const [estado, setEstado] = useState<Estado>('carregando');
   const [gerando, setGerando] = useState(false);
 

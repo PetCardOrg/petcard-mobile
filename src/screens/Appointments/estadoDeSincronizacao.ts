@@ -1,7 +1,7 @@
 import type { ComponentProps } from 'react';
 import type { Ionicons } from '@expo/vector-icons';
 
-import type { AppointmentSyncStatus } from '../../services/appointment.service';
+import type { AppointmentSyncStatus } from '@petcardorg/shared';
 
 export type EstadoDeSincronizacao = {
   /** Sufixo da chave de texto `appointments.sync.<chave>`. */
