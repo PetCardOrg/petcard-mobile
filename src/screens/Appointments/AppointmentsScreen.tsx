@@ -19,7 +19,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { FAB } from '../../components/ui/FAB';
 import { appointmentService } from '../../services';
-import type { AppointmentResponse } from '../../services/appointment.service';
+import type { AppointmentResponseDto } from '@petcardorg/shared';
 import { colors, spacing, typography } from '../../utils/theme';
 import { apiErrorMessage } from '../../utils/apiErrorMessage';
 import { AppointmentCard } from './AppointmentCard';
@@ -36,7 +36,7 @@ import { useGoogleCalendar } from './useGoogleCalendar';
 const RECONFERENCIA_MS = 4000;
 
 type Formulario = {
-  record: AppointmentResponse | null;
+  record: AppointmentResponseDto | null;
   initialLocation: string;
   session: number;
 };
@@ -49,7 +49,7 @@ export function AppointmentsScreen() {
   const reconferencia = useRef<ReturnType<typeof setTimeout> | null>(null);
   const calendar = useGoogleCalendar();
 
-  const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
+  const [appointments, setAppointments] = useState<AppointmentResponseDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -124,12 +124,12 @@ export function AppointmentsScreen() {
   }, [route.params?.prefill]);
 
   /** Abre o formulário do zero: em branco, com o local dado ou com o registro em edição. */
-  function abrirFormulario(record: AppointmentResponse | null, initialLocation = '') {
+  function abrirFormulario(record: AppointmentResponseDto | null, initialLocation = '') {
     setFormulario((f) => ({ record, initialLocation, session: f.session + 1 }));
     setModalVisible(true);
   }
 
-  function confirmDelete(record: AppointmentResponse) {
+  function confirmDelete(record: AppointmentResponseDto) {
     Alert.alert(
       t('appointments.deleteTitle'),
       t('appointments.deleteMessage', { name: record.title }),

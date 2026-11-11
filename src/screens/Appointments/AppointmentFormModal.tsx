@@ -13,14 +13,13 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { PetResponseDto } from '@petcardorg/shared';
+import type { AppointmentResponseDto, PetResponseDto } from '@petcardorg/shared';
 import { useTranslation } from 'react-i18next';
 
 import { DurationOptions } from '../../components/ui/DurationOptions';
 import { PlaceAutocompleteInput } from '../../components/ui/PlaceAutocompleteInput';
 import { usePets } from '../../hooks/usePets';
 import { appointmentService } from '../../services';
-import type { AppointmentResponse } from '../../services/appointment.service';
 import { apiErrorMessage } from '../../utils/apiErrorMessage';
 import { formatDateInput, parseDate } from '../../utils/dateUtils';
 import { colors, radii, spacing, typography } from '../../utils/theme';
@@ -36,7 +35,7 @@ type FormErrors = {
 type Props = {
   visible: boolean;
   /** Agendamento em edição; `null` cria um novo. */
-  record: AppointmentResponse | null;
+  record: AppointmentResponseDto | null;
   /** Local já preenchido ao criar (vindo da tela de clínicas). */
   initialLocation: string;
   /**

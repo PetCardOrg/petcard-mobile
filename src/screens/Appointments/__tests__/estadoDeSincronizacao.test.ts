@@ -1,4 +1,4 @@
-import type { AppointmentSyncStatus } from '../../../services/appointment.service';
+import type { AppointmentSyncStatus } from '@petcardorg/shared';
 import { estadoDeSincronizacao } from '../estadoDeSincronizacao';
 
 // É o que o tutor lê para saber se o agendamento chegou à agenda dele: errar

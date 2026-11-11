@@ -1,68 +1,41 @@
+import type {
+  AppointmentResponseDto,
+  CreateAppointmentDto,
+  UpdateAppointmentDto,
+} from '@petcardorg/shared';
+
 import { api } from './api';
 import { ensureList } from './ensureList';
 
 const ENDPOINT = '/appointments';
 
-/** Estado do agendamento no Google Agenda, como a API devolve. */
-export type AppointmentSyncStatus =
-  | 'PENDING_CREATE'
-  | 'PENDING_UPDATE'
-  | 'PENDING_DELETE'
-  | 'SYNCED'
-  | 'FAILED';
-
-export type AppointmentResponse = {
-  id: string;
-  title: string;
-  description?: string;
-  scheduled_at: string;
-  duration_minutes: number;
-  location?: string;
-  pet_id?: string;
-  pet_name?: string;
-  sync_status: AppointmentSyncStatus;
-  created_at: string;
-  updated_at: string;
-};
-
-export type CreateAppointmentPayload = {
-  title: string;
-  description?: string;
-  scheduled_at: string;
-  duration_minutes?: number;
-  location?: string;
-  pet_id?: string;
-};
-
-export type UpdateAppointmentPayload = Partial<CreateAppointmentPayload>;
-
-export async function getAll(): Promise<AppointmentResponse[]> {
-  const { data } = await api.get<AppointmentResponse[]>(ENDPOINT);
-  return ensureList<AppointmentResponse>(data, 'agendamentos');
+export async function getAll(): Promise<AppointmentResponseDto[]> {
+  const { data } = await api.get<AppointmentResponseDto[]>(ENDPOINT);
+  return ensureList<AppointmentResponseDto>(data, 'agendamentos');
 }
 
-export async function getUpcoming(): Promise<AppointmentResponse[]> {
-  const { data } = await api.get<AppointmentResponse[]>(ENDPOINT, {
+export async function getUpcoming(): Promise<AppointmentResponseDto[]> {
+  const { data } = await api.get<AppointmentResponseDto[]>(ENDPOINT, {
     params: { upcoming: 'true' },
   });
-  return ensureList<AppointmentResponse>(data, 'agendamentos');
+  return ensureList<AppointmentResponseDto>(data, 'agendamentos');
 }
 
-export async function getById(id: string): Promise<AppointmentResponse> {
-  const { data } = await api.get<AppointmentResponse>(`${ENDPOINT}/${id}`);
+export async function getById(id: string): Promise<AppointmentResponseDto> {
+  const { data } = await api.get<AppointmentResponseDto>(`${ENDPOINT}/${id}`);
   return data;
 }
 
-export async function create(payload: CreateAppointmentPayload): Promise<AppointmentResponse> {
-  const { data } = await api.post<AppointmentResponse>(ENDPOINT, payload);
+export async function create(payload: CreateAppointmentDto): Promise<AppointmentResponseDto> {
+  const { data } = await api.post<AppointmentResponseDto>(ENDPOINT, payload);
   return data;
 }
 
 export async function update(
   id: string,
-  payload: UpdateAppointmentPayload,
-): Promise<AppointmentResponse> {
-  const { data } = await api.patch<AppointmentResponse>(`${ENDPOINT}/${id}`, payload);
+  payload: UpdateAppointmentDto,
+): Promise<AppointmentResponseDto> {
+  const { data } = await api.patch<AppointmentResponseDto>(`${ENDPOINT}/${id}`, payload);
   return data;
 }
 

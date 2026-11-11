@@ -1,14 +1,11 @@
+import type { UploadFolder, UploadImageResponseDto } from '@petcardorg/shared';
 import { Platform } from 'react-native';
 
 import { api, UPLOAD_TIMEOUT_MS } from './api';
 
-interface UploadImageResponse {
-  url: string;
-}
-
 export async function uploadImage(
   uri: string,
-  folder: 'pets' | 'tutors' = 'pets',
+  folder: Exclude<UploadFolder, 'vets'> = 'pets',
 ): Promise<string> {
   const filename = uri.split('/').pop() ?? 'photo.jpg';
   const match = /\.(\w+)$/.exec(filename);
@@ -29,10 +26,14 @@ export async function uploadImage(
     type,
   } as unknown as Blob);
 
-  const { data } = await api.post<UploadImageResponse>(`/upload/image?folder=${folder}`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-    timeout: UPLOAD_TIMEOUT_MS,
-  });
+  const { data } = await api.post<UploadImageResponseDto>(
+    `/upload/image?folder=${folder}`,
+    formData,
+    {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: UPLOAD_TIMEOUT_MS,
+    },
+  );
 
   return data.url;
 }
