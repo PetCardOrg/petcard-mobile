@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import type { TutorSessionUserDto } from '@petcardorg/shared';
 
 import { setTokenProvider, setUnauthorizedHandler } from '../services/api';
 import { authService, deviceService, tutorService, uploadService } from '../services';
@@ -15,15 +16,7 @@ import { authService, deviceService, tutorService, uploadService } from '../serv
 const STORE_ACCESS_TOKEN = 'auth_access_token';
 const STORE_USER = 'auth_user';
 
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  phone?: string;
-  profile_image_url?: string;
-  email_verified?: boolean;
-};
+type User = Omit<TutorSessionUserDto, 'email_verified'> & { email_verified?: boolean };
 
 type AuthContextValue = {
   user: User | null;

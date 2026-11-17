@@ -1,20 +1,17 @@
-import type { PlacesClinicResponseDto } from '@petcardorg/shared';
+import type {
+  AutocompleteQueryDto,
+  FindNearbyPlacesQueryDto,
+  PlaceSuggestionResponseDto,
+  PlacesClinicResponseDto,
+} from '@petcardorg/shared';
 
 import { api } from './api';
 import { ensureList } from './ensureList';
 
 const CLINICS_ENDPOINT = '/clinicas';
 
-type FindNearbyPlacesParams = {
-  lat: number;
-  lng: number;
-  radiusKm: number;
-  openNow?: boolean;
-  maxResults?: number;
-};
-
 export async function findNearbyPlaces(
-  params: FindNearbyPlacesParams,
+  params: FindNearbyPlacesQueryDto,
 ): Promise<PlacesClinicResponseDto[]> {
   const { data } = await api.get<PlacesClinicResponseDto[]>(`${CLINICS_ENDPOINT}/places`, {
     params,
@@ -22,35 +19,15 @@ export async function findNearbyPlaces(
   return ensureList<PlacesClinicResponseDto>(data, 'clínicas');
 }
 
-/**
- * Uma sugestão do autocomplete de local.
- *
- * Tipo local, e não do `@petcardorg/shared`, porque nada disso é persistido: o
- * agendamento guarda apenas `fullText` no campo `location`.
- */
-export type PlaceSuggestion = {
-  placeId: string;
-  mainText: string;
-  secondaryText?: string;
-  fullText: string;
-};
-
-type AutocompleteParams = {
-  input: string;
-  lat?: number;
-  lng?: number;
-  /** Agrupa as teclas de uma mesma edição numa sessão de cobrança do Places. */
-  sessionToken?: string;
-  signal?: AbortSignal;
-};
+type AutocompleteParams = AutocompleteQueryDto & { signal?: AbortSignal };
 
 export async function autocompletePlaces({
   signal,
   ...params
-}: AutocompleteParams): Promise<PlaceSuggestion[]> {
-  const { data } = await api.get<PlaceSuggestion[]>(`${CLINICS_ENDPOINT}/autocomplete`, {
+}: AutocompleteParams): Promise<PlaceSuggestionResponseDto[]> {
+  const { data } = await api.get<PlaceSuggestionResponseDto[]>(`${CLINICS_ENDPOINT}/autocomplete`, {
     params,
     signal,
   });
-  return ensureList<PlaceSuggestion>(data, 'sugestões de local');
+  return ensureList<PlaceSuggestionResponseDto>(data, 'sugestões de local');
 }

@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
 import { MIN_QUERY_LENGTH, usePlaceAutocomplete } from '../../hooks/usePlaceAutocomplete';
-import type { PlaceSuggestion } from '../../services/clinic.service';
+import type { PlaceSuggestionResponseDto } from '@petcardorg/shared';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 
 type PlaceAutocompleteInputProps = {
@@ -45,7 +45,7 @@ export function PlaceAutocompleteInput({
   );
 
   const handleSelect = useCallback(
-    (suggestion: PlaceSuggestion) => {
+    (suggestion: PlaceSuggestionResponseDto) => {
       onChangeText(suggestion.fullText);
       setAberto(false);
       reset();

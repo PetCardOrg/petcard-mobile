@@ -4,7 +4,7 @@ import * as Crypto from 'expo-crypto';
 import * as Location from 'expo-location';
 
 import * as clinicService from '../services/clinic.service';
-import type { PlaceSuggestion } from '../services/clinic.service';
+import type { PlaceSuggestionResponseDto } from '@petcardorg/shared';
 
 /**
  * Piso de caracteres antes de consultar o Google.
@@ -18,7 +18,7 @@ export const MIN_QUERY_LENGTH = 3;
 export const DEBOUNCE_MS = 350;
 
 type UsePlaceAutocomplete = {
-  suggestions: PlaceSuggestion[];
+  suggestions: PlaceSuggestionResponseDto[];
   isLoading: boolean;
   /** Agenda uma busca; cancela a anterior que ainda estiver no ar. */
   search: (query: string) => void;
@@ -38,7 +38,7 @@ type UsePlaceAutocomplete = {
  * Sem permissão concedida, o Google enviesa pelo IP.
  */
 export function usePlaceAutocomplete(): UsePlaceAutocomplete {
-  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<PlaceSuggestionResponseDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const sessionToken = useRef<string | null>(null);

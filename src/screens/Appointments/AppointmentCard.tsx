@@ -2,18 +2,18 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
-import type { AppointmentResponse } from '../../services/appointment.service';
+import type { AppointmentResponseDto } from '@petcardorg/shared';
 import { colors, radii, spacing, typography } from '../../utils/theme';
 import { formatScheduledAt, isUpcoming } from './horarioDoAgendamento';
 import { estadoDeSincronizacao } from './estadoDeSincronizacao';
 import { getRelativeDays } from './relativeDate';
 
 type Props = {
-  item: AppointmentResponse;
+  item: AppointmentResponseDto;
   /** Se o Google Agenda do tutor está conectado: muda o que um pendente significa. */
   calendarConnected: boolean;
-  onEdit: (item: AppointmentResponse) => void;
-  onDelete: (item: AppointmentResponse) => void;
+  onEdit: (item: AppointmentResponseDto) => void;
+  onDelete: (item: AppointmentResponseDto) => void;
 };
 
 export function AppointmentCard({ item, calendarConnected, onEdit, onDelete }: Props) {
